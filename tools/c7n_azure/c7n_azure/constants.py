@@ -16,12 +16,15 @@
 Azure Functions
 """
 # Docker version from https://hub.docker.com/r/microsoft/azure-functions/
-FUNCTION_DOCKER_VERSION = 'DOCKER|mcr.microsoft.com/azure-functions/python:2.0-python3.6-appservice'
-FUNCTION_EXT_VERSION = '~2'
+FUNCTION_DOCKER_VERSION = 'DOCKER|mcr.microsoft.com/azure-functions/python:3.0-python3.8'
+FUNCTION_EXT_VERSION = '~3'
 FUNCTION_EVENT_TRIGGER_MODE = 'azure-event-grid'
 FUNCTION_TIME_TRIGGER_MODE = 'azure-periodic'
 FUNCTION_KEY_URL = 'hostruntime/admin/host/systemkeys/_master?api-version=2018-02-01'
 FUNCTION_AUTOSCALE_NAME = 'cloud_custodian_default'
+AUTH_TYPE_EMBED = "Embedded"
+AUTH_TYPE_MSI = "SystemAssigned"
+AUTH_TYPE_UAI = "UserAssigned"
 
 """
 Azure Container Host
@@ -58,6 +61,7 @@ ENV_TENANT_ID = 'AZURE_TENANT_ID'
 ENV_CLIENT_ID = 'AZURE_CLIENT_ID'
 ENV_SUB_ID = 'AZURE_SUBSCRIPTION_ID'
 ENV_CLIENT_SECRET = 'AZURE_CLIENT_SECRET'
+ENV_REGION = 'AZURE_DEFAULT_REGION'
 
 ENV_KEYVAULT_CLIENT_ID = 'AZURE_KEYVAULT_CLIENT_ID'
 ENV_KEYVAULT_SECRET_ID = 'AZURE_KEYVAULT_SECRET'
@@ -82,6 +86,7 @@ Authentication Resource
 RESOURCE_ACTIVE_DIRECTORY = 'https://management.core.windows.net/'
 RESOURCE_STORAGE = 'https://storage.azure.com/'
 RESOURCE_VAULT = 'https://vault.azure.net'
+RESOURCE_GLOBAL_MGMT = 'https://management.azure.com/'
 
 """
 Threading Variable
@@ -114,8 +119,14 @@ FUNCTION_HOST_CONFIG = {
     "functionTimeout": "00:10:00",
     "logging": {
         "fileLoggingMode": "always",
+        "console": {
+            "isEnabled": "true"
+        },
         "logLevel": {
-            "default": "Debug"
+            "default": "Debug",
+            "Host.Results": "Trace",
+            "Function": "Trace",
+            "Host.Aggregator": "Trace"
         }
     },
     "extensions": {

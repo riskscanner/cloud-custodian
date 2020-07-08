@@ -22,16 +22,18 @@ import sys
 import types
 from collections import namedtuple
 
-import jwt
 from azure.common.credentials import (BasicTokenAuthentication,
                                       ServicePrincipalCredentials)
 from azure.keyvault import KeyVaultAuthentication, AccessToken
-from c7n_azure import constants
-from c7n_azure.utils import (ResourceIdParser, StringUtils, custodian_azure_send_override,
-                             ManagedGroupHelper, get_keyvault_secret)
+import jwt
 from msrest.exceptions import AuthenticationError
 from msrestazure.azure_active_directory import MSIAuthentication
 from requests import HTTPError
+
+from c7n_azure import constants
+from c7n_azure.utils import (ResourceIdParser, StringUtils, custodian_azure_send_override,
+                             ManagedGroupHelper, get_keyvault_secret)
+
 
 try:
     from azure.cli.core._profile import Profile
@@ -133,6 +135,7 @@ class Session:
                 'client_secret': os.environ.get(constants.ENV_CLIENT_SECRET),
                 'access_token': os.environ.get(constants.ENV_ACCESS_TOKEN),
                 'tenant_id': os.environ.get(constants.ENV_TENANT_ID),
+                'region': os.environ.get(constants.ENV_REGION),
                 'use_msi': bool(os.environ.get(constants.ENV_USE_MSI)),
                 'subscription_id':
                     self.subscription_id_override or os.environ.get(constants.ENV_SUB_ID),
@@ -261,13 +264,10 @@ class Session:
             ), data.get('subscription', None))
 
     def get_functions_auth_string(self, target_subscription_id):
-        """
-        Build auth json string for deploying
-        Azure Functions.  Look for dedicated
-        Functions environment variables or
-        fall back to normal Service Principal
-        variables.
+        """Build auth json string for deploying Azure Functions.
 
+        Look for dedicated Functions environment variables or fall
+        back to normal Service Principal variables.
         """
 
         self._initialize_session()
@@ -275,7 +275,8 @@ class Session:
         function_auth_variables = [
             constants.ENV_FUNCTION_TENANT_ID,
             constants.ENV_FUNCTION_CLIENT_ID,
-            constants.ENV_FUNCTION_CLIENT_SECRET
+            constants.ENV_FUNCTION_CLIENT_SECRET,
+            constants.ENV_REGION
         ]
 
         required_params = ['client_id', 'client_secret', 'tenant_id']
@@ -289,6 +290,7 @@ class Session:
             function_auth_params['client_id'] = os.environ[constants.ENV_FUNCTION_CLIENT_ID]
             function_auth_params['client_secret'] = os.environ[constants.ENV_FUNCTION_CLIENT_SECRET]
             function_auth_params['tenant_id'] = os.environ[constants.ENV_FUNCTION_TENANT_ID]
+            function_auth_params['region'] = os.environ[constants.ENV_REGION]
 
         # Verify SP authentication parameters
         if any(k not in function_auth_params.keys() for k in required_params):
