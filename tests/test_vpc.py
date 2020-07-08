@@ -17,6 +17,7 @@ from unittest.mock import MagicMock
 
 from botocore.exceptions import ClientError as BotoClientError
 from c7n.exceptions import PolicyValidationError
+from c7n.resources.aws import shape_validate
 
 
 class VpcTest(BaseTest):
@@ -90,23 +91,25 @@ class VpcTest(BaseTest):
         resources = p.resource_manager.resources()
         post_finding = p.resource_manager.actions[0]
         formatted = post_finding.format_resource(resources[0])
-        formatted['Details']['Other'].pop('Tags')
-        formatted['Details']['Other'].pop('CidrBlockAssociationSet')
+        self.maxDiff = None
         self.assertEqual(
             formatted,
-            {'Details': {'Other': {'CidrBlock': '10.0.42.0/24',
-                                   'DhcpOptionsId': 'dopt-24ff1940',
-                                   'InstanceTenancy': 'default',
-                                   'IsDefault': 'False',
-                                   'OwnerId': '644160558196',
-                                   'State': 'available',
-                                   'VpcId': 'vpc-f1516b97',
-                                   'c7n:resource-type': 'vpc'}},
+            {'Details': {
+                'AwsEc2Vpc': {
+                    'DhcpOptionsId': 'dopt-24ff1940',
+                    'State': 'available',
+                    'CidrBlockAssociationSet': [{
+                        'AssociationId': 'vpc-cidr-assoc-98ba93f0',
+                        'CidrBlock': '10.0.42.0/24',
+                        'CidrBlockState': 'associated'}]}},
              'Id': 'arn:aws:ec2:us-east-1:644160558196:vpc/vpc-f1516b97',
              'Partition': 'aws',
              'Region': 'us-east-1',
              'Tags': {'Name': 'FancyTestVPC', 'tagfancykey': 'tagfanncyvalue'},
              'Type': 'AwsEc2Vpc'})
+        shape_validate(
+            formatted['Details']['AwsEc2Vpc'],
+            'AwsEc2VpcDetails', 'securityhub')
 
     def test_flow_logs_s3_destination(self):
         factory = self.replay_flight_data('test_vpc_flow_log_s3_dest')
@@ -532,6 +535,30 @@ class NetworkLocationTest(BaseTest):
                 {"security-groups": {web_sg_id: "web"},
                 "resource": None,
                 "reason": "SecurityGroupMismatch"}],
+        )
+
+    def test_network_compare_location_resource_missing(self):
+        self.factory = self.replay_flight_data("test_network_compare_location_resource_missing")
+        p = self.load_policy(
+            {
+                "name": "compare",
+                "resource": "aws.app-elb",
+                "filters": [
+                    {"type": "network-location", "key": "tag:NetworkLocation",
+                     "compare": ["subnet", "security-group"]}
+                ],
+            },
+            session_factory=self.factory,
+        )
+        resources = p.run()
+        self.assertEqual(len(resources), 1)
+        matched = resources.pop()
+        self.assertEqual(
+            matched["c7n:NetworkLocation"],
+            [
+                {'reason': 'LocationMismatch', 'security-groups': {},
+                 'subnets': {'subnet-914763e7': 'Public', 'subnet-efbcccb7': 'Public'}}
+            ],
         )
 
     @functional
