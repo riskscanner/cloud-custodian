@@ -25,10 +25,13 @@ from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 from c7n.filters.offhours import OffHour, OnHour
 from c7n_aliyun.filters.filter import AliyunAgeFilter
+from c7n_aliyun.filters.filter import MetricsFilter
 import operator
 from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
 from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceRequest
 from aliyunsdkecs.request.v20140526.DeleteInstanceRequest import DeleteInstanceRequest
+from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
+
 from c7n import utils
 
 @resources.register('ecs')
@@ -38,6 +41,7 @@ class Ecs(QueryResourceManager):
         service = 'ecs'
         enum_spec = (None, 'Instances.Instance', None)
         id = 'InstanceId'
+        dimension = 'InstanceId'
 
     def get_requst(self):
         request = DescribeInstancesRequest()
@@ -74,7 +78,13 @@ class EcsAgeFilter(AliyunAgeFilter):
     def get_resource_date(self, i):
         return i['CreationTime']
 
+@Ecs.filter_registry.register('metrics')
+class EcsMetricsFilter(MetricsFilter):
 
+    def get_requst(self):
+        request = DescribeMetricListRequest()
+        request.set_accept_format('json')
+        return request
 
 # TODO: offhour and onhour
 # @Ecs.filter_registry.register('offhour')
