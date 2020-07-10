@@ -7,6 +7,7 @@
 -r tools/c7n_kube/requirements.txt
 -r tools/c7n_mailer/requirements.txt
 -r tools/c7n_org/requirements.txt
+-r tools/c7n_aliyun/requirements.txt
 
 # Setup source directories as editable/development distributions
 -e .
@@ -20,6 +21,8 @@
 -e tools/c7n_kube
 # Local package required for c7n_org tests
 -e tools/c7n_org
+# Local package required for c7n_aliyun tests
+-e tools/c7n_aliyun
 
 # we don't export dev requirements of subpackages (due to editable/distribution above)
 # so explicitly list them here..

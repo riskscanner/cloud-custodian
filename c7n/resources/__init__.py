@@ -49,7 +49,7 @@ def should_load_provider(name, provider_types):
     return False
 
 
-PROVIDER_NAMES = ('aws', 'azure', 'gcp', 'k8s')
+PROVIDER_NAMES = ('aws', 'azure', 'gcp', 'k8s', 'aliyun')
 
 
 def load_available(resources=True):
@@ -95,5 +95,9 @@ def load_providers(provider_types):
 
     if should_load_provider('c7n', provider_types):
         from c7n import data  # noqa
+
+    if should_load_provider('aliyun', provider_types):
+        from c7n_aliyun.entry import initialize_aliyun
+        initialize_aliyun()
 
     LOADED.update(provider_types)
