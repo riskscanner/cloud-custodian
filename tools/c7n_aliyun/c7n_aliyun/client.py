@@ -48,4 +48,3 @@ class Session:
         # clt.do_action_with_exception()
         return clt
 
-# ALIYUN_ACCESSKEYID='LTAIHlH2EaYXRLNP' ALIYUN_ACCESSSECRET='pr8OIrmhf7xCMtkrQiTkjIJLGIu7YM' ALIYUN_DEFAULT_REGION='cn-shenzhen' custodian run -s . aliyun.yml
