@@ -1,13 +1,16 @@
-# Dockerfiles are generated from tools/dev/dockerpkg.py
+FROM registry.fit2cloud.com/fit2cloud2/fabric8-java-alpine-openjdk8-jre:py3 as build-env
 
-FROM ubuntu:20.04 as build-env
+USER root
+
+# replace apk source
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 # pre-requisite distro deps, and build env setup
-RUN adduser --disabled-login --gecos "" custodian
-RUN apt-get --yes update
-RUN apt-get --yes install build-essential curl python3-venv python3-dev --no-install-recommends
-RUN python3 -m venv /usr/local
-RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3
+RUN apk add --update \
+ curl \
+ && apk add gcc g++ make libffi-dev openssl-dev libtool --no-cache \
+ && python3 -m venv /usr/local \
+ && curl -sSL https://nginx-qa.fit2cloud.com/tools/get-poetry.py | python3
 
 WORKDIR /src
 
@@ -34,25 +37,16 @@ RUN . /usr/local/bin/activate && \
 
 RUN mkdir /output
 
-FROM ubuntu:20.04
-
-LABEL name="cli" \
-      repository="http://github.com/cloud-custodian/cloud-custodian"
+FROM registry.fit2cloud.com/fit2cloud2/fabric8-java-alpine-openjdk8-jre:py3
 
 COPY --from=build-env /src /src
 COPY --from=build-env /usr/local /usr/local
 COPY --from=build-env /output /output
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get --yes update \
-        && apt-get --yes install python3 python3-venv --no-install-recommends \
-        && rm -Rf /var/cache/apt \
-        && rm -Rf /var/lib/apt/lists/* \
-        && rm -Rf /var/log/*
+RUN rm -Rf /var/cache/apk
 
-RUN adduser --disabled-login --gecos "" custodian
-USER custodian
+USER root
 WORKDIR /home/custodian
 ENV LC_ALL="C.UTF-8" LANG="C.UTF-8"
 VOLUME ["/home/custodian"]
-ENTRYPOINT ["/usr/local/bin/custodian"]
-CMD ["--help"]
+
