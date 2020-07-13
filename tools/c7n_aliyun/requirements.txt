@@ -1,4 +1,8 @@
 pycryptodome==3.9.8
-aliyun-python-sdk-core==2.13.20
+aliyun-python-sdk-core==2.13.21
 aliyun-python-sdk-ecs==4.19.8
 aliyun-python-sdk-cms==7.0.13
+oss2==2.12.1
+crcmod==1.7
+aliyun-python-sdk-slb==3.2.17
+aliyun-python-sdk-rds==2.4.8

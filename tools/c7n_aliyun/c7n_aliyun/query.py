@@ -41,8 +41,18 @@ class ResourceQuery:
         if extra_args:
             params.update(extra_args)
 
-        request = resource_manager.get_requst()
-        return self._invoke_client_enum(client, request, params, path)
+        if m.service == 'oss':
+            result = client.list_buckets()
+            buckets = []
+            for b in result.buckets:
+                buckets.append(b.__dict__)
+            return buckets
+        else:
+            request = resource_manager.get_requst()
+            result = client.do_action_with_exception(request)
+            false = "false"
+            true = "true"
+            return jmespath.search(path, eval(result))
 
     def _invoke_client_enum(self, client, request, params, path):
         result = client.do_action_with_exception(request)

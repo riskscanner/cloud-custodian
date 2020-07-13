@@ -16,6 +16,7 @@
 import logging
 import os
 from aliyunsdkcore import client
+import oss2
 
 log = logging.getLogger('c7n_aliyun.client')
 
@@ -44,7 +45,32 @@ class Session:
 
 
     def client(self,  service):
-        clt = client.AcsClient(self.accessKeyId, self.accessSecret, self.regionId)
-        # clt.do_action_with_exception()
+        if service == 'oss':
+            auth = oss2.Auth(self.accessKeyId, self.accessSecret)
+            clt = oss2.Service(auth, REGION_ENDPOINT[self.regionId])
+        else:
+            clt = client.AcsClient(self.accessKeyId, self.accessSecret, self.regionId)
         return clt
 
+
+REGION_ENDPOINT = {
+        'cn-hangzhou': 'oss-cn-hangzhou.aliyuncs.com',
+        'cn-shanghai': 'oss-cn-shanghai.aliyuncs.com',
+        'cn-qingdao': 'oss-cn-qingdao.aliyuncs.com',
+        'cn-beijing': 'oss-cn-beijing.aliyuncs.com',
+        'cn-zhangjiakou': 'oss-cn-zhangjiakou.aliyuncs.com',
+        'cn-huhehaote': 'oss-cn-huhehaote.aliyuncs.com',
+        'cn-shenzhen': 'oss-cn-shenzhen.aliyuncs.com',
+        'cn-hongkong': 'oss-cn-hongkong.aliyuncs.com',
+        'us-west-1': 'oss-us-west-1.aliyuncs.com',
+        'us-east-1': 'oss-us-east-1.aliyuncs.com',
+        'ap-southeast-1': 'oss-ap-southeast-1.aliyuncs.com',
+        'ap-southeast-2': 'oss-ap-southeast-2.aliyuncs.com',
+        'ap-southeast-3': 'oss-ap-southeast-3.aliyuncs.com',
+        'ap-southeast-5': 'oss-ap-southeast-5.aliyuncs.com',
+        'ap-northeast-1': 'oss-ap-northeast-1.aliyuncs.com',
+        'ap-south-1': 'oss-ap-south-1.aliyuncs.com',
+        'eu-central-1': 'oss-eu-central-1.aliyuncs.com',
+        'eu-west-1': 'oss-eu-west-1.aliyuncs.com',
+        'me-east-1': 'oss-me-east-1.aliyuncs.com'
+    }
