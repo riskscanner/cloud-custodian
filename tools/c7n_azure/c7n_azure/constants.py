@@ -81,12 +81,17 @@ ENV_FUNCTION_MANAGEMENT_GROUP_NAME = 'AZURE_FUNCTION_MANAGEMENT_GROUP_NAME'
 ENV_CUSTODIAN_DISABLE_SSL_CERT_VERIFICATION = 'CUSTODIAN_DISABLE_SSL_CERT_VERIFICATION'
 
 """
-Authentication Resource
+Authentication Resource Endpoints
 """
 RESOURCE_ACTIVE_DIRECTORY = 'https://management.core.windows.net/'
 RESOURCE_STORAGE = 'https://storage.azure.com/'
 RESOURCE_VAULT = 'https://vault.azure.net'
 RESOURCE_GLOBAL_MGMT = 'https://management.azure.com/'
+STORAGE_AUTH_ENDPOINT = 'https://storage.azure.com/'
+VAULT_AUTH_ENDPOINT = 'vault'
+DEFAULT_RESOURCE_AUTH_ENDPOINT = 'resource_manager'
+DEFAULT_AUTH_ENDPOINT = 'active_directory_resource_id'
+GRAPH_AUTH_ENDPOINT = 'active_directory_graph_resource_id'
 
 """
 Threading Variable

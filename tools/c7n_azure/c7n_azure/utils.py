@@ -22,18 +22,18 @@ import time
 import uuid
 from concurrent.futures import as_completed
 
+import six
 from azure.graphrbac.models import DirectoryObject, GetObjectsParameters
 from azure.keyvault import KeyVaultAuthentication, AccessToken
 from azure.keyvault import KeyVaultClient, KeyVaultId
 from azure.mgmt.managementgroups import ManagementGroupsAPI
 from azure.mgmt.web.models import NameValuePair
 from c7n_azure import constants
-from c7n_azure.constants import RESOURCE_VAULT
 from msrestazure.azure_active_directory import MSIAuthentication
 from msrestazure.azure_exceptions import CloudError
 from msrestazure.tools import parse_resource_id
+from msrestazure.azure_cloud import AZURE_PUBLIC_CLOUD
 from netaddr import IPNetwork, IPRange, IPSet
-from json import JSONEncoder
 
 from c7n.utils import chunks, local_session
 
@@ -47,7 +47,7 @@ resource_group_regex = re.compile(r'/subscriptions/[^/]+/resourceGroups/[^/]+(/)
                                   re.IGNORECASE)
 
 
-class ResourceIdParser:
+class ResourceIdParser(object):
 
     @staticmethod
     def get_namespace(resource_id):
@@ -94,11 +94,11 @@ def is_resource_group(resource):
     return resource['type'] == constants.RESOURCE_GROUPS_TYPE
 
 
-class StringUtils:
+class StringUtils(object):
 
     @staticmethod
     def equal(a, b, case_insensitive=True):
-        if isinstance(a, str) and isinstance(b, str):
+        if isinstance(a, six.string_types) and isinstance(b, six.string_types):
             if case_insensitive:
                 return a.strip().lower() == b.strip().lower()
             else:
@@ -113,7 +113,7 @@ class StringUtils:
 
     @staticmethod
     def naming_hash(val, length=8):
-        if isinstance(val, str):
+        if isinstance(val, six.string_types):
             val = val.encode('utf8')
         return hashlib.sha256(val).hexdigest().lower()[:length]
 
@@ -210,7 +210,7 @@ class ThreadHelper:
         return results, list(set(exceptions))
 
 
-class Math:
+class Math(object):
 
     @staticmethod
     def mean(numbers):
@@ -233,7 +233,7 @@ class Math:
         return float(min(clean_numbers))
 
 
-class GraphHelper:
+class GraphHelper(object):
     log = logging.getLogger('custodian.azure.utils.GraphHelper')
 
     @staticmethod
@@ -291,7 +291,7 @@ class GraphHelper:
         return ''
 
 
-class PortsRangeHelper:
+class PortsRangeHelper(object):
 
     PortsRange = collections.namedtuple('PortsRange', 'start end')
 
@@ -333,7 +333,7 @@ class PortsRangeHelper:
         """ Converts array of port ranges to the set of integers
             Example: [(10-12), (20,20)] -> {10, 11, 12, 20}
         """
-        return {i for r in ranges for i in range(r.start, r.end + 1)}
+        return set([i for r in ranges for i in range(r.start, r.end + 1)])
 
     @staticmethod
     def validate_ports_string(ports):
@@ -420,7 +420,7 @@ class PortsRangeHelper:
         return ports
 
 
-class IpRangeHelper:
+class IpRangeHelper(object):
 
     @staticmethod
     def parse_ip_ranges(data, key):
@@ -447,7 +447,7 @@ class IpRangeHelper:
         return result
 
 
-class AppInsightsHelper:
+class AppInsightsHelper(object):
     log = logging.getLogger('custodian.azure.utils.AppInsightsHelper')
 
     @staticmethod
@@ -477,41 +477,21 @@ class AppInsightsHelper:
             return ''
 
 
-class ManagedGroupHelper:
-    class serialize(JSONEncoder):
-        def default(self, o):
-            return o.__dict__
-
-    @staticmethod
-    def filter_subscriptions(key, dictionary):
-        for k, v in dictionary.items():
-            if k == key:
-                if v == '/subscriptions':
-                    yield dictionary
-            elif isinstance(v, dict):
-                for result in ManagedGroupHelper.filter_subscriptions(key, v):
-                    yield result
-            elif isinstance(v, list):
-                for d in v:
-                    for result in ManagedGroupHelper.filter_subscriptions(key, d):
-                        yield result
+class ManagedGroupHelper(object):
 
     @staticmethod
     def get_subscriptions_list(managed_resource_group, credentials):
         client = ManagementGroupsAPI(credentials)
-        groups = client.management_groups.get(
-            group_id=managed_resource_group, recurse=True,
-            expand="children").serialize()["properties"]
-        subscriptions = ManagedGroupHelper.filter_subscriptions('type', groups)
-        subscriptions = [subscription['name'] for subscription in subscriptions]
-        return subscriptions
+        entities = client.entities.list(filter='name eq \'%s\'' % managed_resource_group)
+
+        return [e.name for e in entities if e.type == '/subscriptions']
 
 
 def generate_key_vault_url(name):
     return constants.TEMPLATE_KEYVAULT_URL.format(name)
 
 
-class RetentionPeriod:
+class RetentionPeriod(object):
 
     PATTERN = re.compile("^P([1-9][0-9]*)([DWMY])$")
 
@@ -556,18 +536,19 @@ class RetentionPeriod:
 
 
 @lru_cache()
-def get_keyvault_secret(user_identity_id, keyvault_secret_id):
+def get_keyvault_secret(user_identity_id, keyvault_secret_id, cloud_endpoints=AZURE_PUBLIC_CLOUD):
     secret_id = KeyVaultId.parse_secret_id(keyvault_secret_id)
     access_token = None
 
+    resource = get_keyvault_auth_endpoint(cloud_endpoints)
     # Use UAI if client_id is provided
     if user_identity_id:
         msi = MSIAuthentication(
             client_id=user_identity_id,
-            resource=RESOURCE_VAULT)
+            resource=resource)
     else:
         msi = MSIAuthentication(
-            resource=RESOURCE_VAULT)
+            resource=resource)
 
     access_token = AccessToken(token=msi.token['access_token'])
     credentials = KeyVaultAuthentication(lambda _1, _2, _3: access_token)
@@ -611,3 +592,7 @@ def resolve_service_tag_alias(rule):
         resource_name = p[1] if 1 < len(p) else None
         resource_region = p[2] if 2 < len(p) else None
         return IPSet(get_service_tag_ip_space(resource_name, resource_region))
+
+
+def get_keyvault_auth_endpoint(cloud_endpoints):
+    return 'https://{0}'.format(cloud_endpoints.suffixes.keyvault_dns[1:])

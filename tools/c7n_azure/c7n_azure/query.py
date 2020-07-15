@@ -18,6 +18,7 @@ try:
 except ImportError:
     from collections import Iterable
 
+import six
 from c7n_azure import constants
 from c7n_azure.actions.logic_app import LogicAppAction
 from azure.mgmt.resourcegraph.models import QueryRequest
@@ -35,7 +36,7 @@ from c7n.utils import local_session
 log = logging.getLogger('custodian.azure.query')
 
 
-class ResourceQuery:
+class ResourceQuery(object):
 
     def __init__(self, session_factory):
         self.session_factory = session_factory
@@ -76,7 +77,7 @@ class ResourceQuery:
 
 
 @sources.register('describe-azure')
-class DescribeSource:
+class DescribeSource(object):
     resource_query_factory = ResourceQuery
 
     def __init__(self, manager):
@@ -97,7 +98,7 @@ class DescribeSource:
 
 
 @sources.register('resource-graph')
-class ResourceGraphSource:
+class ResourceGraphSource(object):
 
     def __init__(self, manager):
         self.manager = manager
@@ -184,7 +185,8 @@ class TypeMeta(type):
             cls.client)
 
 
-class TypeInfo(metaclass=TypeMeta):
+@six.add_metaclass(TypeMeta)
+class TypeInfo(object):
     doc_groups = None
 
     """api client construction information"""
@@ -201,7 +203,8 @@ class TypeInfo(metaclass=TypeMeta):
         return {}
 
 
-class ChildTypeInfo(TypeInfo, metaclass=TypeMeta):
+@six.add_metaclass(TypeMeta)
+class ChildTypeInfo(TypeInfo):
     """api client construction information for child resources"""
     parent_manager_name = ''
     annotate_parent = True
@@ -227,7 +230,8 @@ class QueryMeta(type):
         return super(QueryMeta, cls).__new__(cls, name, parents, attrs)
 
 
-class QueryResourceManager(ResourceManager, metaclass=QueryMeta):
+@six.add_metaclass(QueryMeta)
+class QueryResourceManager(ResourceManager):
     class resource_type(TypeInfo):
         pass
 
@@ -257,9 +261,7 @@ class QueryResourceManager(ResourceManager, metaclass=QueryMeta):
         return self.get_session().client(service)
 
     def get_cache_key(self, query):
-        return {'source_type': self.source_type,
-                'query': query,
-                'resource': str(self.__class__.__name__)}
+        return {'source_type': self.source_type, 'query': query}
 
     @classmethod
     def get_model(cls):
@@ -325,7 +327,8 @@ class QueryResourceManager(ResourceManager, metaclass=QueryMeta):
         self.source.validate()
 
 
-class ChildResourceManager(QueryResourceManager, metaclass=QueryMeta):
+@six.add_metaclass(QueryMeta)
+class ChildResourceManager(QueryResourceManager):
     child_source = 'describe-child-azure'
     parent_manager = None
 
@@ -345,7 +348,7 @@ class ChildResourceManager(QueryResourceManager, metaclass=QueryMeta):
     def get_session(self):
         if self._session is None:
             session = super(ChildResourceManager, self).get_session()
-            if self.resource_type.resource != constants.RESOURCE_ACTIVE_DIRECTORY:
+            if 'management' not in self.resource_type.resource:
                 session = session.get_session_for_resource(self.resource_type.resource)
             self._session = session
 

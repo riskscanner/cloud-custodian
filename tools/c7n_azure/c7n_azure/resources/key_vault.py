@@ -14,6 +14,7 @@
 
 from azure.graphrbac import GraphRbacManagementClient
 from c7n_azure.actions.base import AzureBaseAction
+from c7n_azure.constants import GRAPH_AUTH_ENDPOINT
 from c7n_azure.filters import FirewallRulesFilter, FirewallBypassFilter
 from c7n_azure.provider import resources
 from c7n_azure.session import Session
@@ -35,13 +36,9 @@ log = logging.getLogger('custodian.azure.keyvault')
 class KeyVault(ArmResourceManager):
 
     """Key Vault Resource
-
     :example:
-
     This policy will find all KeyVaults with 10 or less API Hits over the last 72 hours
-
     .. code-block:: yaml
-
         policies:
           - name: inactive-keyvaults
             resource: azure.keyvault
@@ -52,14 +49,10 @@ class KeyVault(ArmResourceManager):
                 aggregation: total
                 threshold: 10
                 timeframe: 72
-
     :example:
-
     This policy will find all KeyVaults where Service Principals that
     have access permissions that exceed `read-only`.
-
     .. code-block:: yaml
-
         policies:
             - name: policy
               description:
@@ -79,13 +72,9 @@ class KeyVault(ArmResourceManager):
                         - get
                       certificates:
                         - get
-
     :example:
-
     This policy will find all KeyVaults and add get and list permissions for keys.
-
     .. code-block:: yaml
-
         policies:
             - name: policy
               description:
@@ -101,7 +90,6 @@ class KeyVault(ArmResourceManager):
                         keys:
                           - get
                           - list
-
     """
 
     class resource_type(ArmResourceManager.resource_type):
@@ -146,13 +134,9 @@ class KeyVaultFirewallRulesFilter(FirewallRulesFilter):
 class KeyVaultFirewallBypassFilter(FirewallBypassFilter):
     """
     Filters resources by the firewall bypass rules.
-
     :example:
-
     This policy will find all KeyVaults with enabled Azure Services bypass rules
-
     .. code-block:: yaml
-
         policies:
           - name: keyvault-bypass
             resource: azure.keyvault
@@ -240,8 +224,8 @@ class WhiteListFilter(Filter):
                     # If user_permissions is not empty, but allowed permissions is empty -- Failed.
                     return False
                 # User lowercase to compare sets
-                lower_user_perm = {x.lower() for x in user_permissions[v]}
-                lower_perm = {x.lower() for x in permissions[v]}
+                lower_user_perm = set([x.lower() for x in user_permissions[v]])
+                lower_perm = set([x.lower() for x in permissions[v]])
                 if lower_user_perm.difference(lower_perm):
                     # If user has more permissions than allowed -- Failed
                     return False
@@ -253,7 +237,7 @@ class WhiteListFilter(Filter):
             return access_policies
 
         if self.graph_client is None:
-            s = Session(resource='https://graph.windows.net')
+            s = Session(auth_endpoint=GRAPH_AUTH_ENDPOINT)
             self.graph_client = GraphRbacManagementClient(s.get_credentials(), s.get_tenant_id())
 
         # Retrieve graph objects for all object_id
@@ -277,9 +261,7 @@ class WhiteListFilter(Filter):
 class KeyVaultUpdateAccessPolicyAction(AzureBaseAction):
     """
         Adds Get and List key access policy to all keyvaults
-
             .. code-block:: yaml
-
               policies:
                 - name: azure-keyvault-update-access-policies
                   resource: azure.keyvault
@@ -295,7 +277,6 @@ class KeyVaultUpdateAccessPolicyAction(AzureBaseAction):
                           keys:
                             - Get
                             - List
-
     """
 
     schema = type_schema('update-access-policy',

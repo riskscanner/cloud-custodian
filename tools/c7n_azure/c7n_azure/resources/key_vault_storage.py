@@ -31,23 +31,18 @@ log = logging.getLogger('custodian.azure.keyvault.storage')
 @resources.register('keyvault-storage')
 class KeyVaultStorage(ChildResourceManager):
     """Key Vault Managed Storage Account Resource
-
     :example:
-
     List all Key Vault managed Storage Accounts
-
     .. code-block:: yaml
-
         policies:
           - name: keyvault-storage
             resource: azure.keyvault-storage
-
     """
 
     class resource_type(ChildTypeInfo):
         doc_groups = ['Security']
 
-        resource = constants.RESOURCE_VAULT
+        resource = constants.VAULT_AUTH_ENDPOINT
         service = 'azure.keyvault'
         client = 'KeyVaultClient'
         enum_spec = (None, 'get_storage_accounts', None)
@@ -78,22 +73,16 @@ class KeyVaultStorage(ChildResourceManager):
 @KeyVaultStorage.filter_registry.register('auto-regenerate-key')
 class KeyVaultStorageAutoRegenerateKeyFilter(ValueFilter):
     """Filter Key Vault Managed Storage Account Resource on Auto Regenerate property.
-
     This is ``Value`` based filter, you can provide boolean ``value`` property.
-
     :example:
-
     List all Key Vault managed Storage Accounts with disabled automatic keys regeneration
-
     .. code-block:: yaml
-
         policies:
           - name: keyvault-storage-auto-regenerate
             resource: azure.keyvault-storage
             filters:
               - type: auto-regenerate-key
                 value: False
-
     """
     schema = type_schema(
         'auto-regenerate-key',
@@ -115,16 +104,10 @@ class KeyVaultStorageAutoRegenerateKeyFilter(ValueFilter):
 @KeyVaultStorage.filter_registry.register('regeneration-period')
 class KeyVaultStorageRegenerationPeriodFilter(ValueFilter):
     """Filter Key Vault Managed Storage Account Resource on Regeneration Period property.
-
     This is ``Value`` based filter, you can provide any ``value`` and ``op`` properties.
-
     :example:
-
     List all Key Vault managed Storage Accounts with regeneration period not equal to P90D
-
     .. code-block:: yaml
-
-
         policies:
           - name: keyvault-storage-regeneration-period
             resource: azure.keyvault-storage
@@ -132,7 +115,6 @@ class KeyVaultStorageRegenerationPeriodFilter(ValueFilter):
               - type: regeneration-period
                 op: ne
                 value: P90D
-
     """
     schema = type_schema(
         'regeneration-period',
@@ -151,24 +133,17 @@ class KeyVaultStorageRegenerationPeriodFilter(ValueFilter):
 @KeyVaultStorage.filter_registry.register('active-key-name')
 class KeyVaultStorageActiveKeyNameFilter(ValueFilter):
     """Filter Key Vault Managed Storage Account Resource on Active Key Name property.
-
     This is ``Value`` based filter, you can provide string ``value`` property.
-
     ``value_type`` is always ``normalize``.
-
     :example:
-
     List all Key Vault managed Storage Accounts with Active Key Name key1
-
     .. code-block:: yaml
-
         policies:
           - name: keyvault-storage-active-key-name
             resource: azure.keyvault-storage
             filters:
               - type: active-key-name
                 value: key1
-
     """
     schema = type_schema(
         'active-key-name',
@@ -193,13 +168,9 @@ class KeyVaultStorageActiveKeyNameFilter(ValueFilter):
 class KeyVaultStorageRegenerateKeyAction(AzureBaseAction):
     """
     Regenerate Managed Storage Access Key
-
     :example:
-
     Regenerate all Access Keys older than 30 days.
-
     .. code-block:: yaml
-
         policies:
           - name: azure-managed-storage-regenerate-key
             resource: azure.keyvault-storage
@@ -211,7 +182,6 @@ class KeyVaultStorageRegenerateKeyAction(AzureBaseAction):
                 value: 30
             actions:
              - type: regenerate-key
-
     """
 
     schema = type_schema('regenerate-key')
@@ -230,13 +200,9 @@ class KeyVaultStorageRegenerateKeyAction(AzureBaseAction):
 class KeyVaultStorageUpdateAction(AzureBaseAction):
     """
     Update Key Vault Managed Storage Account properties.
-
     :example:
-
     Ensure all keys have auto regenerate enabled with 30 days rotation policy.
-
     .. code-block:: yaml
-
         policies:
           - name: azure-managed-storage-update
             resource: azure.keyvault-storage
@@ -251,7 +217,6 @@ class KeyVaultStorageUpdateAction(AzureBaseAction):
              - type: update
                auto-regenerate-key: true
                regeneration-period: P30D
-
     """
 
     schema = type_schema(

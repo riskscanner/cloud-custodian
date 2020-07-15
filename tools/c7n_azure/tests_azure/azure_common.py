@@ -51,6 +51,7 @@ DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000003'
 DEFAULT_INSTRUMENTATION_KEY = '00000000-0000-0000-0000-000000000004'
 DEFAULT_STORAGE_KEY = 'DEC0DEDITtVwMoyAuTz1LioKkC+gB/EpRlQKNIaszQEhVidjWyP1kLW1z+jo'\
                       '/MGFHKc+t+M20PxoraNCslng9w=='
+DEFAULT_AZURE_CLOUD = 'AzureCloud'
 
 GRAPH_RESPONSE = {
     "value": [
@@ -410,6 +411,13 @@ class BaseTest(TestUtils, AzureVCRBaseTest):
             self._now_patch.start()
             self.addCleanup(self._now_patch.stop)
 
+        if not self._requires_polling:
+            # Patch Poller with constructor that always disables polling
+            # This breaks blocking on long running operations (resource creation).
+            self._lro_patch = patch.object(msrest.polling.LROPoller, '__init__', BaseTest.lro_init)
+            self._lro_patch.start()
+            self.addCleanup(self._lro_patch.stop)
+
         if self.is_playback():
             if self._requires_polling:
                 # If using polling we need to monkey patch the timeout during playback
@@ -417,14 +425,6 @@ class BaseTest(TestUtils, AzureVCRBaseTest):
                 Session._old_client = Session.client
                 Session.client = BaseTest.session_client_wrapper
                 self.addCleanup(BaseTest.session_client_cleanup)
-            else:
-                # Patch Poller with constructor that always disables polling
-                # This breaks blocking on long running operations (resource creation).
-                self._lro_patch = patch.object(msrest.polling.LROPoller,
-                                               '__init__',
-                                               BaseTest.lro_init)
-                self._lro_patch.start()
-                self.addCleanup(self._lro_patch.stop)
 
             if constants.ENV_ACCESS_TOKEN in os.environ:
                 self._tenant_patch = patch('c7n_azure.session.Session.get_tenant_id',

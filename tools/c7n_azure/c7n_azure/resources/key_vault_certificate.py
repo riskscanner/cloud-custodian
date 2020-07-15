@@ -25,13 +25,9 @@ log = logging.getLogger('custodian.azure.keyvault.certificates')
 @resources.register('keyvault-certificate')
 class KeyVaultCertificate(ChildResourceManager):
     """Key Vault Certificate Resource
-
     :example:
-
     This policy will find all certificates that will expire in next 30 days
-
     .. code-block:: yaml
-
         policies:
           - name: keyvault-certificates
             description:
@@ -43,13 +39,12 @@ class KeyVaultCertificate(ChildResourceManager):
                 value_type: expiration
                 op: lt
                 value: 30
-
     """
 
     class resource_type(ChildTypeInfo):
         doc_groups = ['Security']
 
-        resource = constants.RESOURCE_VAULT
+        resource = constants.VAULT_AUTH_ENDPOINT
         service = 'azure.keyvault'
         client = 'KeyVaultClient'
         enum_spec = (None, 'get_certificates', None)

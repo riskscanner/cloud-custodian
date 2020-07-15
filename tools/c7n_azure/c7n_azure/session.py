@@ -22,18 +22,17 @@ import sys
 import types
 from collections import namedtuple
 
+import jwt
+import six
 from azure.common.credentials import (BasicTokenAuthentication,
                                       ServicePrincipalCredentials)
 from azure.keyvault import KeyVaultAuthentication, AccessToken
-import jwt
-from msrest.exceptions import AuthenticationError
-from msrestazure.azure_active_directory import MSIAuthentication
-from requests import HTTPError
-
 from c7n_azure import constants
 from c7n_azure.utils import (ResourceIdParser, StringUtils, custodian_azure_send_override,
                              ManagedGroupHelper, get_keyvault_secret)
-
+from msrest.exceptions import AuthenticationError
+from msrestazure.azure_active_directory import MSIAuthentication
+from requests import HTTPError
 
 try:
     from azure.cli.core._profile import Profile
@@ -51,13 +50,14 @@ except ImportError:
 log = logging.getLogger('custodian.azure.session')
 
 
-class Session:
+class Session(object):
 
     def __init__(self, subscription_id=None, authorization_file=None,
-                 resource=constants.RESOURCE_ACTIVE_DIRECTORY):
+                 base_url=constants.RESOURCE_ACTIVE_DIRECTORY, resource=None):
         """
         :param subscription_id: If provided overrides environment variables.
         :param authorization_file: Path to file populated from 'get_functions_auth_string'
+        :param base_url: REST Service base URL. Changes per Azure Cloud
         :param resource: Resource endpoint for OAuth token.
         """
 
@@ -69,6 +69,7 @@ class Session:
         self.resource_namespace = resource
         self.authorization_file = authorization_file
         self._auth_params = {}
+        self.base_url = base_url
 
     @property
     def auth_params(self):
@@ -97,8 +98,12 @@ class Session:
             CLIProvider
         ]
 
+        auth_namespace = self.base_url
+        if self.resource_namespace:
+            auth_namespace = self.resource_namespace
+
         for provider in token_providers:
-            instance = provider(self._auth_params, self.resource_namespace)
+            instance = provider(self._auth_params, auth_namespace)
             if instance.is_available():
                 result = instance.authenticate()
                 self.subscription_id = result.subscription_id
@@ -135,7 +140,6 @@ class Session:
                 'client_secret': os.environ.get(constants.ENV_CLIENT_SECRET),
                 'access_token': os.environ.get(constants.ENV_ACCESS_TOKEN),
                 'tenant_id': os.environ.get(constants.ENV_TENANT_ID),
-                'region': os.environ.get(constants.ENV_REGION),
                 'use_msi': bool(os.environ.get(constants.ENV_USE_MSI)),
                 'subscription_id':
                     self.subscription_id_override or os.environ.get(constants.ENV_SUB_ID),
@@ -159,7 +163,7 @@ class Session:
 
         # Override credential type for KV auth
         # https://github.com/Azure/azure-sdk-for-python/issues/5096
-        if self.resource_namespace == constants.RESOURCE_VAULT:
+        if self.resource_namespace and 'vault' in self.resource_namespace:
             access_token = AccessToken(token=self.get_bearer_token())
             self.credentials = KeyVaultAuthentication(lambda _1, _2, _3: access_token)
 
@@ -167,6 +171,7 @@ class Session:
         return Session(
             subscription_id=self.subscription_id_override,
             authorization_file=self.authorization_file,
+            base_url=self.base_url,
             resource=resource)
 
     @lru_cache()
@@ -176,10 +181,16 @@ class Session:
         svc_module = importlib.import_module(service_name)
         klass = getattr(svc_module, client_name)
 
-        klass_parameters = inspect.signature(klass).parameters
+        if sys.version_info[0] < 3:
+            import funcsigs
+            klass_parameters = funcsigs.signature(klass).parameters
+        else:
+            klass_parameters = inspect.signature(klass).parameters
 
         if 'subscription_id' in klass_parameters:
-            client = klass(credentials=self.credentials, subscription_id=self.subscription_id)
+            client = klass(credentials=self.credentials,
+            subscription_id=self.subscription_id,
+            base_url=self.base_url)
         else:
             client = klass(credentials=self.credentials)
 
@@ -260,14 +271,16 @@ class Session:
                 client_id=data['credentials']['client_id'],
                 secret=data['credentials']['secret'],
                 tenant=self.tenant_id,
-                resource=self.resource_namespace
+                resource=self.base_url
             ), data.get('subscription', None))
 
     def get_functions_auth_string(self, target_subscription_id):
-        """Build auth json string for deploying Azure Functions.
-
-        Look for dedicated Functions environment variables or fall
-        back to normal Service Principal variables.
+        """
+        Build auth json string for deploying
+        Azure Functions.  Look for dedicated
+        Functions environment variables or
+        fall back to normal Service Principal
+        variables.
         """
 
         self._initialize_session()
@@ -275,8 +288,7 @@ class Session:
         function_auth_variables = [
             constants.ENV_FUNCTION_TENANT_ID,
             constants.ENV_FUNCTION_CLIENT_ID,
-            constants.ENV_FUNCTION_CLIENT_SECRET,
-            constants.ENV_REGION
+            constants.ENV_FUNCTION_CLIENT_SECRET
         ]
 
         required_params = ['client_id', 'client_secret', 'tenant_id']
@@ -290,7 +302,6 @@ class Session:
             function_auth_params['client_id'] = os.environ[constants.ENV_FUNCTION_CLIENT_ID]
             function_auth_params['client_secret'] = os.environ[constants.ENV_FUNCTION_CLIENT_SECRET]
             function_auth_params['tenant_id'] = os.environ[constants.ENV_FUNCTION_TENANT_ID]
-            function_auth_params['region'] = os.environ[constants.ENV_REGION]
 
         # Verify SP authentication parameters
         if any(k not in function_auth_params.keys() for k in required_params):
@@ -301,7 +312,8 @@ class Session:
         return json.dumps(function_auth_params, indent=2)
 
 
-class TokenProvider(metaclass=abc.ABCMeta):
+@six.add_metaclass(abc.ABCMeta)
+class TokenProvider:
     AuthenticationResult = namedtuple(
         'AuthenticationResult', 'credential, subscription_id, tenant_id')
 
