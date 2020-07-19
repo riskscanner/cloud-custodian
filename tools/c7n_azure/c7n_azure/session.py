@@ -32,6 +32,7 @@ from c7n_azure.utils import (ResourceIdParser, StringUtils, custodian_azure_send
                              ManagedGroupHelper, get_keyvault_secret)
 from msrest.exceptions import AuthenticationError
 from msrestazure.azure_active_directory import MSIAuthentication
+from msrestazure.azure_cloud import AZURE_CHINA_CLOUD, AZURE_PUBLIC_CLOUD
 from requests import HTTPError
 
 try:
@@ -421,10 +422,15 @@ class ServicePrincipalProvider(TokenProvider):
     def authenticate(self):
         # type: () -> TokenProvider.AuthenticationResult
         try:
+            if self.resource_namespace.endswith("cn"):
+                cloud_env = AZURE_CHINA_CLOUD
+            else:
+                cloud_env = AZURE_PUBLIC_CLOUD
             credential = ServicePrincipalCredentials(client_id=self.client_id,
                                                 secret=self.client_secret,
                                                 tenant=self.tenant_id,
-                                                resource=self.resource_namespace)
+                                                resource=self.resource_namespace,
+                                                cloud_environment=cloud_env)
         except AuthenticationError as e:
             e.message = 'Failed to authenticate with service principal.\n'\
                         'Message: {0}'.format(
