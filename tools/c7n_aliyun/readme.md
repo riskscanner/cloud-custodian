@@ -1,4 +1,4 @@
-# Custodian GCP Support
+# Custodian Aliyun Support
 
 Status - Alpha
 
@@ -16,16 +16,15 @@ Status - Alpha
 ## via pip
 
 ```
-pip install c7n_gcp
+pip install -e tools/c7n_aliyun
 ```
 
-By default custodian will use credentials associated to the gcloud cli, which will generate
-warnings per google.auth (https://github.com/googleapis/google-auth-library-python/issues/292)
-
-The recommended authentication form for production usage is to create a service account and
-credentials, which will be picked up via by the custodian cli via setting the
-*GOOGLE_APPLICATION_CREDENTIALS* environment variable.
-
+```
+ALIYUN_ACCESSKEYID='xxxx' 
+ALIYUN_ACCESSSECRET='xxxxxxxxxx' 
+ALIYUN_DEFAULT_REGION='cn-shenzhen' 
+custodian run -s . policy.yml
+```
 
 # Serverless
 
