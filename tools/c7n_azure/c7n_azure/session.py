@@ -32,7 +32,8 @@ from c7n_azure.utils import (ResourceIdParser, StringUtils, custodian_azure_send
                              ManagedGroupHelper, get_keyvault_secret)
 from msrest.exceptions import AuthenticationError
 from msrestazure.azure_active_directory import MSIAuthentication
-from msrestazure.azure_cloud import AZURE_CHINA_CLOUD, AZURE_PUBLIC_CLOUD
+from msrestazure.azure_cloud import (AZURE_CHINA_CLOUD, AZURE_GERMAN_CLOUD, AZURE_PUBLIC_CLOUD,
+                                     AZURE_US_GOV_CLOUD)
 from requests import HTTPError
 
 try:
@@ -424,6 +425,8 @@ class ServicePrincipalProvider(TokenProvider):
         try:
             if self.resource_namespace.endswith("cn"):
                 cloud_env = AZURE_CHINA_CLOUD
+            elif self.resource_namespace.endswith("de"):
+                cloud_env = AZURE_GERMAN_CLOUD
             else:
                 cloud_env = AZURE_PUBLIC_CLOUD
             credential = ServicePrincipalCredentials(client_id=self.client_id,
