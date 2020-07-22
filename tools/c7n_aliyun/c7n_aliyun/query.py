@@ -331,7 +331,7 @@ def extract_error(e):
     return ERROR_REASON.search(edata)
 
 
-class GcpLocation:
+class AliyunLocation:
     """
     The `_locations` dict is formed by the string keys representing locations taken from
     `KMS <https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations/list>`_ and
@@ -375,5 +375,5 @@ class GcpLocation:
 
         :param service: a string representing the name of a service locations are queried for
         """
-        return [location for location in GcpLocation._locations
-                if service in GcpLocation._locations[location]]
+        return [location for location in AliyunLocation._locations
+                if service in AliyunLocation._locations[location]]

@@ -53,6 +53,8 @@ class Session:
         return clt
 
 
+
+
 REGION_ENDPOINT = {
         'cn-hangzhou': 'oss-cn-hangzhou.aliyuncs.com',
         'cn-shanghai': 'oss-cn-shanghai.aliyuncs.com',

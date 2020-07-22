@@ -19,19 +19,53 @@ from datetime import datetime
 from c7n.utils import type_schema
 
 from c7n_aliyun.provider import resources
+from c7n_aliyun.filters.filter import AliyunEipFilter
+from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 from aliyunsdkecs.request.v20140526.DescribeEipAddressesRequest import DescribeEipAddressesRequest
-
+from aliyunsdkecs.request.v20140526.ReleaseEipAddressRequest import ReleaseEipAddressRequest
 
 @resources.register('eip')
-class Vpc(QueryResourceManager):
+class Eip(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'eip'
-        enum_spec = (None, 'Eip.Eip', None)
+        enum_spec = (None, 'EipAddresses.EipAddress', None)
         id = 'AllocationId'
 
     def get_requst(self):
         request = DescribeEipAddressesRequest()
         return request
 
+@Eip.filter_registry.register('unused')
+class AliyunEipFilter(AliyunEipFilter):
+    # 查询指定地域已创建的EIP
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-eip
+               resource: aliyun.eip
+               filters:
+                 - type: unused
+    """
+    # Associating：绑定中。
+    # Unassociating：解绑中。
+    # InUse：已分配。
+    # Available：可用。
+    schema = type_schema('Available')
+
+@Eip.action_registry.register('release')
+class EipRelease(MethodAction):
+    # 释放指定的EIP
+    schema = type_schema('release')
+    method_spec = {'op': 'release'}
+
+    def get_requst(self, eip):
+        request = ReleaseEipAddressRequest()
+        request.set_AllocationId(eip['AllocationId'])
+        request.set_accept_format('json')
+        return request        

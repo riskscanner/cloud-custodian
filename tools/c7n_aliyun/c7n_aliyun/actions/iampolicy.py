@@ -39,15 +39,15 @@ class SetIamPolicy(MethodAction):
         - serviceAccount.
 
         Note the `resource` field in the example that could be changed to another resource that has
-        both `setIamPolicy` and `getIamPolicy` methods (such as gcp.spanner-database-instance).
+        both `setIamPolicy` and `getIamPolicy` methods (such as aliyun.spanner-database-instance).
 
         Example:
 
         .. code-block:: yaml
 
             policies:
-              - name: gcp-spanner-instance-set-iam-policy
-                resource: gcp.spanner-instance
+              - name: aliyun-spanner-instance-set-iam-policy
+                resource: aliyun.spanner-instance
                 actions:
                   - type: set-iam-policy
                     add-bindings:

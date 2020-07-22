@@ -20,7 +20,7 @@ from c7n.exceptions import PolicyExecutionError, PolicyValidationError
 from c7n.utils import local_session, type_schema
 from .core import MethodAction
 
-from c7n_aliyun.provider import resources as gcp_resources
+from c7n_aliyun.provider import resources as aliyun_resources
 
 
 class PostFinding(MethodAction):
@@ -32,8 +32,8 @@ class PostFinding(MethodAction):
     .. code-block:: yaml
 
        policies:
-         - name: gcp-instances-with-label
-           resource: gcp.instance
+         - name: aliyun-instances-with-label
+           resource: aliyun.instance
            filters:
              - "tag:name": "bad-instance"
            actions:
@@ -240,4 +240,4 @@ ResourceNameAdapters = {
     'storage': name_storage,
 }
 
-gcp_resources.subscribe(PostFinding.register_resource)
+aliyun_resources.subscribe(PostFinding.register_resource)

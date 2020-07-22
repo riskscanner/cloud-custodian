@@ -15,7 +15,7 @@
 from c7n.actions import BaseNotify
 from c7n import utils
 from c7n.resolver import ValuesFrom
-from c7n_aliyun.provider import resources as gcp_resources
+from c7n_aliyun.provider import resources as aliyun_resources
 
 
 class Notify(BaseNotify):
@@ -26,7 +26,7 @@ class Notify(BaseNotify):
 
           policies:
             - name: bad-instance-get
-              resource: gcp.instance
+              resource: aliyun.instance
               filters:
                - Name: bad-instance
               actions:
@@ -110,4 +110,4 @@ class Notify(BaseNotify):
         resource_class.action_registry.register('notify', Notify)
 
 
-gcp_resources.subscribe(Notify.register_resource)
+aliyun_resources.subscribe(Notify.register_resource)
