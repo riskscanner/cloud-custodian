@@ -18,7 +18,7 @@ import logging
 import c7n_aliyun.provider # noqa
 
 # squelch inconsiderate logging
-logging.getLogger('googleapiclient.discovery').setLevel(logging.WARNING)
+logging.getLogger('aliyun.discovery').setLevel(logging.WARNING)
 
 
 def initialize_aliyun():

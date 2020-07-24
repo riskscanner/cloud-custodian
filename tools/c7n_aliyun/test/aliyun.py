@@ -21,7 +21,7 @@ from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import Describe
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 # 本地测试用例，不要将key提交到github
-clt = client.AcsClient('xxx', 'xxx', 'cn-beijing')
+clt = client.AcsClient('LTAIICnea1ME8Wn7', 'zSrO64zGO0JJI2yOgmuHgxuYNdJGSQ', 'cn-beijing')
 auth = oss2.Auth('xxx', 'xxx')
 
 # sample api to list aliyun open api.
