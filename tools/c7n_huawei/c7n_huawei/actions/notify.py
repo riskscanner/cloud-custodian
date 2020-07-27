@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from c7n_aliyun.provider import resources as aliyun_resources
-
 from c7n import utils
 from c7n.actions import BaseNotify
 from c7n.resolver import ValuesFrom
+from c7n_huawei.provider import resources as huawei_resources
 
 
 class Notify(BaseNotify):
@@ -27,7 +26,7 @@ class Notify(BaseNotify):
 
           policies:
             - name: bad-instance-get
-              resource: aliyun.instance
+              resource: huawei.instance
               filters:
                - Name: bad-instance
               actions:
@@ -93,9 +92,9 @@ class Notify(BaseNotify):
             message['resources'] = batch
             self.publish_message(message, client)
 
-    # Methods to handle GCP Pub Sub topic publishing
+    # Methods to handle HUAWEI Pub Sub topic publishing
     def publish_message(self, message, client):
-        """Publish message to a GCP pub/sub topic
+        """Publish message to a HUAWEI pub/sub topic
          """
         return client.execute_command('publish', {
             'topic': self.data['transport']['topic'],
@@ -111,4 +110,4 @@ class Notify(BaseNotify):
         resource_class.action_registry.register('notify', Notify)
 
 
-aliyun_resources.subscribe(Notify.register_resource)
+huawei_resources.subscribe(Notify.register_resource)

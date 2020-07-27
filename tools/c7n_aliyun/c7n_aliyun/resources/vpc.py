@@ -12,22 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-
-from datetime import datetime
-
-from c7n.utils import type_schema
-
+from aliyunsdkecs.request.v20140526.DeleteSecurityGroupRequest import DeleteSecurityGroupRequest
+from aliyunsdkecs.request.v20140526.DeleteVpcRequest import DeleteVpcRequest
+from aliyunsdkecs.request.v20140526.DescribeSecurityGroupAttributeRequest import DescribeSecurityGroupAttributeRequest
+from aliyunsdkecs.request.v20140526.DescribeSecurityGroupsRequest import DescribeSecurityGroupsRequest
+from aliyunsdkecs.request.v20140526.DescribeVpcsRequest import DescribeVpcsRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import SGPermission
+from c7n_aliyun.filters.filter import SGPermissionSchema
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
-from c7n_aliyun.filters.filter  import SGPermission
-from c7n_aliyun.filters.filter  import SGPermissionSchema
-from aliyunsdkecs.request.v20140526.DescribeVpcsRequest import DescribeVpcsRequest
-from aliyunsdkecs.request.v20140526.DeleteVpcRequest import DeleteVpcRequest
-from aliyunsdkecs.request.v20140526.DescribeSecurityGroupsRequest import DescribeSecurityGroupsRequest
-from aliyunsdkecs.request.v20140526.DeleteSecurityGroupRequest import DeleteSecurityGroupRequest
-from aliyunsdkecs.request.v20140526.DescribeSecurityGroupAttributeRequest import DescribeSecurityGroupAttributeRequest
+
+from c7n.utils import type_schema
 
 
 @resources.register('vpc')

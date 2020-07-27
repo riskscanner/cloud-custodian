@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from c7n_aliyun.actions import MethodAction
-
 from c7n.utils import local_session, type_schema
+from c7n_huawei.actions import MethodAction
 
 
 class SetIamPolicy(MethodAction):
@@ -40,15 +39,15 @@ class SetIamPolicy(MethodAction):
         - serviceAccount.
 
         Note the `resource` field in the example that could be changed to another resource that has
-        both `setIamPolicy` and `getIamPolicy` methods (such as aliyun.spanner-database-instance).
+        both `setIamPolicy` and `getIamPolicy` methods (such as huawei.spanner-database-instance).
 
         Example:
 
         .. code-block:: yaml
 
             policies:
-              - name: aliyun-spanner-instance-set-iam-policy
-                resource: aliyun.spanner-instance
+              - name: huawei-spanner-instance-set-iam-policy
+                resource: huawei.spanner-instance
                 actions:
                   - type: set-iam-policy
                     add-bindings:

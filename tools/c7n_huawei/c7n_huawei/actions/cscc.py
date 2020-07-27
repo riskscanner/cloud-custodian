@@ -16,10 +16,9 @@ import hashlib
 import json
 from urllib.parse import urlparse
 
-from c7n_aliyun.provider import resources as aliyun_resources
-
 from c7n.exceptions import PolicyExecutionError, PolicyValidationError
 from c7n.utils import local_session, type_schema
+from c7n_huawei.provider import resources as huawei_resources
 from .core import MethodAction
 
 
@@ -32,8 +31,8 @@ class PostFinding(MethodAction):
     .. code-block:: yaml
 
        policies:
-         - name: aliyun-instances-with-label
-           resource: aliyun.instance
+         - name: huawei-instances-with-label
+           resource: huawei.instance
            filters:
              - "tag:name": "bad-instance"
            actions:
@@ -240,4 +239,4 @@ ResourceNameAdapters = {
     'storage': name_storage,
 }
 
-aliyun_resources.subscribe(PostFinding.register_resource)
+huawei_resources.subscribe(PostFinding.register_resource)

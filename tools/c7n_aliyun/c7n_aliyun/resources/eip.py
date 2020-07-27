@@ -12,18 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-
-from datetime import datetime
+from aliyunsdkecs.request.v20140526.DescribeEipAddressesRequest import DescribeEipAddressesRequest
+from aliyunsdkecs.request.v20140526.ReleaseEipAddressRequest import ReleaseEipAddressRequest
+from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import AliyunEipFilter
+from c7n_aliyun.provider import resources
+from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 from c7n.utils import type_schema
 
-from c7n_aliyun.provider import resources
-from c7n_aliyun.filters.filter import AliyunEipFilter
-from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.query import QueryResourceManager, TypeInfo
-from aliyunsdkecs.request.v20140526.DescribeEipAddressesRequest import DescribeEipAddressesRequest
-from aliyunsdkecs.request.v20140526.ReleaseEipAddressRequest import ReleaseEipAddressRequest
 
 @resources.register('eip')
 class Eip(QueryResourceManager):

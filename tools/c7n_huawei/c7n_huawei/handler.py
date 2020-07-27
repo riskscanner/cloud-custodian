@@ -17,15 +17,14 @@ import logging
 import os
 import uuid
 
-# Load resource plugins
-from c7n_aliyun.entry import initialize_aliyun
-
 from c7n.config import Config
 from c7n.loader import PolicyLoader
+# Load resource plugins
+from c7n_huawei.entry import initialize_huawei
 
-initialize_aliyun()
+initialize_huawei()
 
-log = logging.getLogger('custodian.aliyun.functions')
+log = logging.getLogger('custodian.huawei.functions')
 
 logging.getLogger().setLevel(logging.INFO)
 

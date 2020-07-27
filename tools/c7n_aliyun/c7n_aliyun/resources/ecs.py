@@ -12,27 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
+import operator
 
-from datetime import datetime
-
+from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
+from aliyunsdkecs.request.v20140526.DeleteInstanceRequest import DeleteInstanceRequest
 from aliyunsdkecs.request.v20140526.DescribeInstancesRequest import DescribeInstancesRequest
+from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceRequest
+from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
+from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import AliyunAgeFilter
+from c7n_aliyun.filters.filter import MetricsFilter
+from c7n_aliyun.provider import resources
+from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 from c7n.utils import type_schema
 
-from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.provider import resources
-from c7n_aliyun.query import QueryResourceManager, TypeInfo
-from c7n.filters.offhours import OffHour, OnHour
-from c7n_aliyun.filters.filter import AliyunAgeFilter
-from c7n_aliyun.filters.filter import MetricsFilter
-import operator
-from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
-from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceRequest
-from aliyunsdkecs.request.v20140526.DeleteInstanceRequest import DeleteInstanceRequest
-from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
-
-from c7n import utils
 
 @resources.register('ecs')
 class Ecs(QueryResourceManager):

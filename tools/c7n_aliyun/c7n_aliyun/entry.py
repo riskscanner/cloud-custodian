@@ -15,7 +15,6 @@
 import logging
 
 # register provider
-import c7n_aliyun.provider # noqa
 
 # squelch inconsiderate logging
 logging.getLogger('aliyun.discovery').setLevel(logging.WARNING)
@@ -24,8 +23,6 @@ logging.getLogger('aliyun.discovery').setLevel(logging.WARNING)
 def initialize_aliyun():
     """Load aliyun provider"""
     # register execution modes
-    import c7n_aliyun.policy # noqa
 
     # load shared registered resources
-    import c7n_aliyun.actions
-    import c7n_aliyun.output # noqa
+

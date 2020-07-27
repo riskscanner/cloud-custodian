@@ -17,19 +17,18 @@ import logging
 import operator
 import os
 
-from c7n_aliyun.resources.resource_map import ResourceMap
-
 from c7n.provider import Provider, clouds
 from c7n.registry import PluginRegistry
+from c7n_huawei.resources.resource_map import ResourceMap
 from .client import Session
 
-log = logging.getLogger('custodian.c7n_aliyun')
+log = logging.getLogger('custodian.c7n_huawei')
 
-@clouds.register('aliyun')
-class AliyunCloud(Provider):
+@clouds.register('huawei')
+class HuaweiCloud(Provider):
 
-    display_name = 'Aliyun'
-    resource_prefix = 'aliyun'
+    display_name = 'Huawei'
+    resource_prefix = 'huawei'
     resources = PluginRegistry('%s.resources' % resource_prefix)
     resource_map = ResourceMap
 
@@ -67,15 +66,15 @@ def _default_region(options):
         return
 
     try:
-        options.regions = [os.getenv('ALIYUN_DEFAULT_REGION')]
+        options.regions = [os.getenv('HUAWEI_DEFAULT_REGION')]
     except Exception:
         log.warning('Could not determine default region')
         options.regions = [None]
 
     if options.regions[0] is None:
-        log.error('No default region set. Specify a default via ALIYUN_DEFAULT_REGION')
+        log.error('No default region set. Specify a default via HUAWEI_DEFAULT_REGION')
         sys.exit(1)
 
-    log.debug("using default region:%s from ALIYUN_DEFAULT_REGION" % options.regions[0])
+    log.debug("using default region:%s from HUAWEI_DEFAULT_REGION" % options.regions[0])
 
-resources = AliyunCloud.resources
+resources = HuaweiCloud.resources

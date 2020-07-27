@@ -48,7 +48,7 @@ class LabelActionFilter(Filter):
 
        policies:
         - name: vm-stop-marked
-          resource: aliyun.instance
+          resource: gcp.instance
           filters:
             - type: marked-for-op
               # The default label used is custodian_status

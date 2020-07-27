@@ -12,15 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import re
-from datetime import datetime
-from aliyunsdkecs.request.v20140526.DescribeDisksRequest import DescribeDisksRequest
 from aliyunsdkecs.request.v20140526.DeleteDiskRequest import DeleteDiskRequest
-from c7n.utils import type_schema
 from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
+from c7n.utils import type_schema
 
 
 @resources.register('oss')

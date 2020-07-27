@@ -14,14 +14,14 @@
 
 from datetime import datetime, timedelta
 
-from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.filters.labels import LabelActionFilter
 from dateutil import tz as tzutil
 
 from c7n.filters import FilterValidationError
 from c7n.filters.offhours import Time
 from c7n.lookup import Lookup
 from c7n.utils import type_schema
+from c7n_huawei.actions import MethodAction
+from c7n_huawei.filters.labels import LabelActionFilter
 
 
 class BaseLabelAction(MethodAction):
@@ -59,7 +59,6 @@ class BaseLabelAction(MethodAction):
 
     @classmethod
     def register_resources(cls, registry, resource_class):
-        print(resource_class.resource_type)
         if resource_class.resource_type.labels:
             resource_class.action_registry.register('set-labels', SetLabelsAction)
             resource_class.action_registry.register('mark-for-op', LabelDelayedAction)
@@ -67,8 +66,50 @@ class BaseLabelAction(MethodAction):
             resource_class.filter_registry.register('marked-for-op', LabelActionFilter)
 
 
+# gcp_resources.subscribe(BaseLabelAction.register_resources)
+
 
 class SetLabelsAction(BaseLabelAction):
+    """Set labels to GCP resources
+
+    :example:
+
+    This policy will label all existing resource groups with a value such as environment
+
+    .. code-block:: yaml
+
+      policies:
+        - name: gcp-add-multiple-labels
+          resource: gcp.instance
+          description: |
+            Label all existing instances with multiple labels
+          actions:
+           - type: set-labels
+             labels:
+               environment: test
+               env_type: customer
+
+        - name: gcp-add-label-from-resource-attr
+          resource: gcp.instance
+          description: |
+            Label all existing instances with label taken from resource attribute
+          actions:
+           - type: set-labels
+             labels:
+               environment:
+                type: resource
+                key: name
+                default-value: name_not_found
+
+        - name: gcp-remove-label
+          resource: gcp.instance
+          description: |
+            Remove label from all instances
+          actions:
+           - type: set-labels
+             remove: [env]
+
+    """
 
     schema = type_schema(
         'set-labels',
@@ -90,6 +131,30 @@ DEFAULT_TAG = "custodian_status"
 
 
 class LabelDelayedAction(BaseLabelAction):
+    """Label resources for future action.
+
+    The optional 'tz' parameter can be used to adjust the clock to align
+    with a given timezone. The default value is 'utc'.
+
+    If neither 'days' nor 'hours' is specified, Cloud Custodian will default
+    to marking the resource for action 4 days in the future.
+
+    :example:
+
+    .. code-block :: yaml
+
+       policies:
+        - name: vm-mark-for-stop
+          resource: gcp.instance
+          filters:
+            - type: value
+              key: name
+              value: instance-to-stop-in-four-days
+          actions:
+            - type: mark-for-op
+              op: stop
+              days: 2
+    """
 
     schema = type_schema(
         'mark-for-op',

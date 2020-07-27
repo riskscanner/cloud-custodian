@@ -20,9 +20,35 @@ from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDB
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import DescribeLoadBalancersRequest
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
-# 本地测试用例，不要将key提交到github
-clt = client.AcsClient('LTAIICnea1ME8Wn7', 'zSrO64zGO0JJI2yOgmuHgxuYNdJGSQ', 'cn-beijing')
-auth = oss2.Auth('xxx', 'xxx')
+# 本地测试用例
+def _loadFile_():
+    json = dict()
+    f = open("/opt/fit2cloud/aliyun.txt")
+    lines = f.readlines()
+    for line in lines:
+        if "aliyun.ak" in line:
+            ak = line[line.rfind('=') + 1:line.rfind('|')]
+            json['ak'] = ak
+        if "aliyun.sk" in line:
+            sk = line[line.rfind('=') + 1:line.rfind('|')]
+            json['sk'] = sk
+        if "aliyun.region" in line:
+            region = line[line.rfind('=') + 1:line.rfind('|')]
+            json['region'] = region
+        if "aliyun.ossAk" in line:
+            ossAk = line[line.rfind('=') + 1:line.rfind('|')]
+            json['ossAk'] = ossAk
+        if "aliyun.ossSk" in line:
+            ossSk = line[line.rfind('=') + 1:line.rfind('|')]
+            json['ossSk'] = ossSk
+    f.close()
+    print('认证信息:   ' + str(json))
+    return json
+
+params = _loadFile_()
+
+clt = client.AcsClient(params['ak'], params['sk'], params['region'])
+auth = oss2.Auth(params['ossAk'], params['ossSk'])
 
 # sample api to list aliyun open api.
 def hello_aliyun_regions():
@@ -162,5 +188,5 @@ if __name__ == '__main__':
     # delete_ecs("i-wz9h7lsnk5beaipnvn97")
     # stop_instance("i-wz9h7lsnk5beaipnvn97")
     # list_instances()
-    get_eip()
+    # get_eip()
     # list_sgs()

@@ -24,7 +24,7 @@ from c7n.manager import ResourceManager
 from c7n.query import sources, MaxResourceLimit
 from c7n.utils import local_session, chunks
 
-log = logging.getLogger('c7n_aliyun.query')
+log = logging.getLogger('c7n_huawei.query')
 
 
 class ResourceQuery:
@@ -48,9 +48,11 @@ class ResourceQuery:
             return buckets
         else:
             request = resource_manager.get_requst()
-            result = client.do_action_with_exception(request)
+            result = request
             false = "false"
             true = "true"
+            if path is None:
+                return result
             return jmespath.search(path, eval(result))
 
     def _invoke_client_enum(self, client, request, params, path):
@@ -192,7 +194,6 @@ class QueryResourceManager(ResourceManager, metaclass=QueryMeta):
         key = self.get_cache_key(q)
         resources = self._fetch_resources(q)
         self._cache.save(key, resources)
-
         resource_count = len(resources)
         # print(resources)
         resources = self.filter_resources(resources)
@@ -330,7 +331,7 @@ def extract_error(e):
     return ERROR_REASON.search(edata)
 
 
-class AliyunLocation:
+class GcpLocation:
     """
     The `_locations` dict is formed by the string keys representing locations taken from
     `KMS <https://cloud.google.com/kms/docs/reference/rest/v1/projects.locations/list>`_ and
@@ -374,5 +375,5 @@ class AliyunLocation:
 
         :param service: a string representing the name of a service locations are queried for
         """
-        return [location for location in AliyunLocation._locations
-                if service in AliyunLocation._locations[location]]
+        return [location for location in GcpLocation._locations
+                if service in GcpLocation._locations[location]]

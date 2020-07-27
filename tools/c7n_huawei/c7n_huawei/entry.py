@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Capital One Services, LLC
+# Copyright 2018 Capital One Services, LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,10 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-from .core import Action, MethodAction
-from .cscc import PostFinding
-from .iampolicy import SetIamPolicy
-from .labels import SetLabelsAction, LabelDelayedAction
-from .notify import Notify
+import logging
+
+# register provider
+
+# squelch inconsiderate logging
+logging.getLogger('huawei.discovery').setLevel(logging.WARNING)
+
+
+def initialize_huawei():
+    """Load huawei provider"""
+
+    # load shared registered resources
+

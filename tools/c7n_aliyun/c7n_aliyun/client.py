@@ -15,8 +15,9 @@
 
 import logging
 import os
-from aliyunsdkcore import client
+
 import oss2
+from aliyunsdkcore import client
 
 log = logging.getLogger('c7n_aliyun.client')
 
