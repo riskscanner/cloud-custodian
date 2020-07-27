@@ -48,7 +48,7 @@ class LabelActionFilter(Filter):
 
        policies:
         - name: vm-stop-marked
-          resource: gcp.instance
+          resource: huawei.ecs
           filters:
             - type: marked-for-op
               # The default label used is custodian_status

@@ -66,50 +66,9 @@ class BaseLabelAction(MethodAction):
             resource_class.filter_registry.register('marked-for-op', LabelActionFilter)
 
 
-# gcp_resources.subscribe(BaseLabelAction.register_resources)
 
 
 class SetLabelsAction(BaseLabelAction):
-    """Set labels to GCP resources
-
-    :example:
-
-    This policy will label all existing resource groups with a value such as environment
-
-    .. code-block:: yaml
-
-      policies:
-        - name: gcp-add-multiple-labels
-          resource: gcp.instance
-          description: |
-            Label all existing instances with multiple labels
-          actions:
-           - type: set-labels
-             labels:
-               environment: test
-               env_type: customer
-
-        - name: gcp-add-label-from-resource-attr
-          resource: gcp.instance
-          description: |
-            Label all existing instances with label taken from resource attribute
-          actions:
-           - type: set-labels
-             labels:
-               environment:
-                type: resource
-                key: name
-                default-value: name_not_found
-
-        - name: gcp-remove-label
-          resource: gcp.instance
-          description: |
-            Remove label from all instances
-          actions:
-           - type: set-labels
-             remove: [env]
-
-    """
 
     schema = type_schema(
         'set-labels',
@@ -145,7 +104,7 @@ class LabelDelayedAction(BaseLabelAction):
 
        policies:
         - name: vm-mark-for-stop
-          resource: gcp.instance
+          resource: huawei.ecs
           filters:
             - type: value
               key: name

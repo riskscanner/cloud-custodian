@@ -1,33 +1,70 @@
-
-import copy
 import datetime
 from datetime import timedelta
-import fnmatch
-import ipaddress
-import logging
-import operator
-import re
-import os
-import json
-from dateutil.tz import tzutc
-from dateutil.parser import parse
-from distutils import version
-import jmespath
 
-from c7n.element import Element
-from c7n.exceptions import PolicyValidationError
-from c7n.executor import ThreadPoolExecutor
-from c7n.registry import PluginRegistry
-from c7n.resolver import ValuesFrom
-from c7n.utils import set_annotation, type_schema, parse_cidr
-from c7n.manager import iter_filters
+from dateutil.parser import parse
+from dateutil.tz import tzutc
+
 from c7n.filters.core import Filter
 from c7n.filters.core import OPERATORS
-from c7n.filters.core import ValueFilter
-from c7n.exceptions import PolicyValidationError, ClientError
-from c7n.utils import local_session, chunks
-from concurrent.futures import as_completed
 
 
+class HuaweiAgeFilter(Filter):
+    """Automatically filter resources older than a given date.
 
+    **Deprecated** use a value filter with `value_type: age` which can be
+    done on any attribute.
+    """
+    threshold_date = None
 
+    schema = None
+
+    def validate(self):
+        return self
+
+    def get_resource_date(self, i):
+        v = i[self.date_attribute]
+        if not isinstance(v, datetime.datetime):
+            v = parse(v)
+        if not v.tzinfo:
+            v = v.replace(tzinfo=tzutc())
+        return v
+
+    def __call__(self, i):
+        v = self.get_resource_date(i)
+        if v is None:
+            return False
+        op = OPERATORS[self.data.get('op', 'greater-than')]
+        if not self.threshold_date:
+            days = self.data.get('days', 0)
+            hours = self.data.get('hours', 0)
+            minutes = self.data.get('minutes', 0)
+            # Work around placebo issues with tz
+            utc_date = datetime.datetime.strptime(v, "%Y-%m-%dT%H:%MZ")
+            v = utc_date + datetime.timedelta(hours=8)
+            n = datetime.datetime.now()
+            self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
+
+        return op(self.threshold_date, v)
+
+SGPermissionSchema = {
+    'match-operator': {'type': 'string', 'enum': ['or', 'and']},
+    'Ports': {'type': 'array', 'items': {'type': 'integer'}},
+    'OnlyPorts': {'type': 'array', 'items': {'type': 'integer'}},
+    'Policy': {},
+    'IpProtocol': {
+        'oneOf': [
+            {'enum': ["-1", -1, 'TCP', 'UDP', 'ICMP', 'ICMPV6']},
+            {'$ref': '#/definitions/filters/value'}
+        ]
+    },
+    'FromPort': {'oneOf': [
+        {'$ref': '#/definitions/filters/value'},
+        {'type': 'integer'}]},
+    'ToPort': {'oneOf': [
+        {'$ref': '#/definitions/filters/value'},
+        {'type': 'integer'}]},
+    'IpRanges': {},
+    'Cidr': {},
+    'CidrV6': {},
+    'SGReferences': {}
+}

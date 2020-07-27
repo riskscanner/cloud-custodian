@@ -93,10 +93,7 @@ class Notify(BaseNotify):
             message['resources'] = batch
             self.publish_message(message, client)
 
-    # Methods to handle GCP Pub Sub topic publishing
     def publish_message(self, message, client):
-        """Publish message to a GCP pub/sub topic
-         """
         return client.execute_command('publish', {
             'topic': self.data['transport']['topic'],
             'body': {
