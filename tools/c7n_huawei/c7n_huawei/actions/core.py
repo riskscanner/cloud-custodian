@@ -78,16 +78,9 @@ class MethodAction(Action):
         result_key = self.method_spec.get('result_key')
         annotation_key = self.method_spec.get('annotation_key')
         for resource in resources:
-            requst = self.get_requst(resource)
-            result = self.invoke_api(client, requst)
+            result = self.get_requst(resource)
             if result_key and annotation_key:
                 resource[annotation_key] = result.get(result_key)
-
-    def invoke_api(self, client, requst):
-        try:
-            return client.do_action(requst)
-        except:
-            raise
 
     def get_permissions(self):
         if self.permissions:

@@ -29,7 +29,7 @@ class Session:
     # projectId = os.getenv('HUAWEI_PROJECTID')  # 项目ID
     # userDomainId = os.getenv('HUAWEI_USERDOMAINID')  # 账户ID
     # auth_url = "https://iam.example.com/v3"  # endpoint url
-    # cloud = "myhuaweicloud.com"
+    # cloud = os.getenv('HUAWEI_CLOUD')
     # ak = os.getenv('HUAWEI_AK')
     # sk = os.getenv('HUAWEI_SK')
     # region = os.getenv('HUAWEI_DEFAULT_REGION')
@@ -56,7 +56,7 @@ class Session:
 
     def client(self, service):
         conn = connection.Connection(
-            cloud = "myhuaweicloud.com",
+            cloud = os.getenv('HUAWEI_CLOUD'),
             ak = os.getenv('HUAWEI_AK'),
             sk = os.getenv('HUAWEI_SK'),
             region = os.getenv('HUAWEI_DEFAULT_REGION'),

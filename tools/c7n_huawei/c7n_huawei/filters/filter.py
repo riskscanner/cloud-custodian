@@ -39,7 +39,7 @@ class HuaweiAgeFilter(Filter):
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
             # Work around placebo issues with tz
-            utc_date = datetime.datetime.strptime(v, "%Y-%m-%dT%H:%MZ")
+            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
             v = utc_date + datetime.timedelta(hours=8)
             n = datetime.datetime.now()
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)

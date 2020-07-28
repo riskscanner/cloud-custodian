@@ -22,6 +22,10 @@ logging.getLogger('huawei.discovery').setLevel(logging.WARNING)
 
 def initialize_huawei():
     """Load huawei provider"""
+    import c7n_huawei.policy  # noqa
 
     # load shared registered resources
+    import c7n_huawei.actions
+    import c7n_huawei.output  # noqa
+
 

@@ -24,7 +24,7 @@ from c7n_huawei.actions import MethodAction
 from c7n.utils import type_schema
 
 conn = connection.Connection(
-            cloud="myhuaweicloud.com",
+            cloud=os.getenv('HUAWEI_CLOUD'),
             ak=os.getenv('HUAWEI_AK'),
             sk=os.getenv('HUAWEI_SK'),
             region=os.getenv('HUAWEI_DEFAULT_REGION'),
@@ -56,7 +56,6 @@ class Ecs(QueryResourceManager):
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(HuaweiAgeFilter):
     """Filters instances based on their age (in days)
-
         policies:
           - name: huawei-ecs-30-days-plus
             resource: huawei.ecs
@@ -77,17 +76,26 @@ class EcsAgeFilter(HuaweiAgeFilter):
         minutes={'type': 'number'})
 
     def get_resource_date(self, i):
-        return i['CreationTime']
+        # '2020-07-27T05:55:32.000000'
+        return i['launched_at']
 
 @Ecs.action_registry.register('start')
 class Start(MethodAction):
+    """
+        policies:
+          - name: huawei-ecs-start
+            resource: huawei.ecs
+            actions:
+              - start
+    """
 
     schema = type_schema('start')
     method_spec = {'op': 'start'}
-    attr_filter = ('Status', ('Stopped',))
+    attr_filter = ('status', ('SHUTOFF',))
 
     def get_requst(self, instance):
-        server = conn.compute.start_server(instance['InstanceId'])
+        conn.compute.start_server(instance['id'])
+        server = conn.compute.get_server(instance['id'])
         json = dict()  # 创建 {}
         for name in dir(server):
             if not name.startswith('_'):
@@ -98,13 +106,20 @@ class Start(MethodAction):
 
 @Ecs.action_registry.register('stop')
 class Stop(MethodAction):
-
+    """
+        policies:
+          - name: huawei-ecs-stop
+            resource: huawei.ecs
+            actions:
+              - stop
+    """
     schema = type_schema('stop')
     method_spec = {'op': 'stop'}
-    attr_filter = ('Status', ('Running',))
+    attr_filter = ('status', ('ACTIVE',))
 
     def get_requst(self, instance):
-        server = conn.compute.stop_server(instance['InstanceId'])
+        conn.compute.stop_server(instance['id'])
+        server = conn.compute.get_server(instance['id'])
         json = dict()  # 创建 {}
         for name in dir(server):
             if not name.startswith('_'):
@@ -116,12 +131,19 @@ class Stop(MethodAction):
 
 @Ecs.action_registry.register('delete')
 class Delete(MethodAction):
-
+    """
+        policies:
+          - name: huawei-ecs-delete
+            resource: huawei.ecs
+            actions:
+              - delete
+    """
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
     def get_requst(self, instance):
-        server = conn.compute.delete_server(instance['InstanceId'])
+        conn.compute.delete_server(instance['id'])
+        server = conn.compute.get_server(instance['id'])
         json = dict()  # 创建 {}
         for name in dir(server):
             if not name.startswith('_'):

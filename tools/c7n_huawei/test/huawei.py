@@ -1,4 +1,5 @@
 import logging
+import time
 
 from openstack import connection
 
@@ -72,6 +73,36 @@ def show_server(server_id):
     json = _print_(json, server)
     print(json)
 
+# stop server
+def stop_server(server_id):
+    json = dict()  # 创建 {}
+    conn.compute.stop_server(server_id)
+    time.sleep(5)
+    server = conn.compute.find_server(server_id)
+    json = _print_(json, server)
+    print(json)
+
+# start server
+def start_server(server_id):
+    json = dict()  # 创建 {}
+    conn.compute.start_server(server_id)
+    time.sleep(5)
+    server = conn.compute.find_server(server_id)
+    json = _print_(json, server)
+    print(json)
+
+def security_groups():
+    query = {
+        "limit": 10000
+    }
+    sgs = conn.network.security_groups(**query)
+    arr = list()  # 创建 []
+    for sg in sgs:
+        json = dict()  # 创建 {}
+        json = _print_(json, sg)
+        arr.append(json)
+    print(arr)
+
 def _print_(json, item):
     for name in dir(item):
         if not name.startswith('_'):
@@ -84,6 +115,9 @@ def _print_(json, item):
 if __name__ == '__main__':
     logging.info("Hello Huawei OpenApi!")
     # availability_zones()
-    list_servers()
-    # find_server('97007316-1ac2-40b1-a8a8-8cd60225301d')
-    # show_server('97007316-1ac2-40b1-a8a8-8cd60225301d')
+    # list_servers()
+    # find_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
+    # show_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
+    # stop_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
+    # start_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
+    security_groups()
