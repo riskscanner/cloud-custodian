@@ -37,19 +37,20 @@ class Ecs(QueryResourceManager):
     class resource_type(TypeInfo):
         service = 'compute.ecs'
         enum_spec = (None, None, None)
-        id = 'InstanceId'
-        dimension = 'InstanceId'
+        id = 'id'
+        dimension = 'id'
 
     def get_requst(self):
         servers = conn.compute.servers(limit=10000)
         arr = list() # 创建 []
-        for server in servers:
-            json = dict() # 创建 {}
-            for name in dir(server):
-                if not name.startswith('_'):
-                    value = getattr(server, name)
-                    if not callable(value):
-                        json[name] = value
+        if servers is not None:
+            for server in servers:
+                json = dict() # 创建 {}
+                for name in dir(server):
+                    if not name.startswith('_'):
+                        value = getattr(server, name)
+                        if not callable(value):
+                            json[name] = value
             arr.append(json)
         return arr
 
@@ -97,11 +98,12 @@ class Start(MethodAction):
         conn.compute.start_server(instance['id'])
         server = conn.compute.get_server(instance['id'])
         json = dict()  # 创建 {}
-        for name in dir(server):
-            if not name.startswith('_'):
-                value = getattr(server, name)
-                if not callable(value):
-                    json[name] = value
+        if server is not None:
+            for name in dir(server):
+                if not name.startswith('_'):
+                    value = getattr(server, name)
+                    if not callable(value):
+                        json[name] = value
         return json
 
 @Ecs.action_registry.register('stop')
@@ -121,11 +123,12 @@ class Stop(MethodAction):
         conn.compute.stop_server(instance['id'])
         server = conn.compute.get_server(instance['id'])
         json = dict()  # 创建 {}
-        for name in dir(server):
-            if not name.startswith('_'):
-                value = getattr(server, name)
-                if not callable(value):
-                    json[name] = value
+        if server is not None:
+            for name in dir(server):
+                if not name.startswith('_'):
+                    value = getattr(server, name)
+                    if not callable(value):
+                        json[name] = value
         return json
 
 
@@ -145,9 +148,10 @@ class Delete(MethodAction):
         conn.compute.delete_server(instance['id'])
         server = conn.compute.get_server(instance['id'])
         json = dict()  # 创建 {}
-        for name in dir(server):
-            if not name.startswith('_'):
-                value = getattr(server, name)
-                if not callable(value):
-                    json[name] = value
+        if server is not None:
+            for name in dir(server):
+                if not name.startswith('_'):
+                    value = getattr(server, name)
+                    if not callable(value):
+                        json[name] = value
         return json

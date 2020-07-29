@@ -35,21 +35,26 @@ class Session:
     # region = os.getenv('HUAWEI_DEFAULT_REGION')
     # project_id = os.getenv('HUAWEI_PROJECT')
 
-    def __init__(self, ak=None, sk=None, regionId=None):
+    def __init__(self, ak=None, sk=None, regionId=None, projectId=None, cloud=None):
         if not ak:
             ak = os.getenv('HUAWEI_AK')
         if not sk:
             sk = os.getenv('HUAWEI_SK')
         if not regionId:
             regionId = os.getenv('HUAWEI_DEFAULT_REGION')
-
+        if not projectId:
+            projectId = os.getenv('HUAWEI_PROJECT')
+        if not cloud:
+            cloud = os.getenv('HUAWEI_CLOUD')
         self.ak = ak
         self.sk = sk
-        self.regionId = regionId
+        self.region = regionId
+        self.project_id = projectId
+        self.cloud = cloud
 
     def get_default_region(self):
-        if self.regionId:
-            return self.regionId
+        if self.region:
+            return self.region
         for k in ('HUAWEI_DEFAULT_REGION'):
             if k in os.environ:
                 return os.environ[k]
@@ -64,6 +69,10 @@ class Session:
         )
         if 'compute' in service:
             clt = conn.compute
+        elif 'vpcv1' in service:
+            clt = conn.vpcv1
+        elif 'network' in service:
+            clt = conn.network
         else:
             clt = conn.compute
         return clt

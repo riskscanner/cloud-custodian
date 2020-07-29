@@ -34,7 +34,7 @@ class Rds(QueryResourceManager):
 
 
 @Rds.action_registry.register('delete')
-class SlbDelete(MethodAction):
+class RdsDelete(MethodAction):
 
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}

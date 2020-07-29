@@ -5,6 +5,6 @@ ResourceMap = {
     "huawei.oss": "c7n_huawei.resources.oss.Oss",
     "huawei.slb": "c7n_huawei.resources.slb.Slb",
     "huawei.rds": "c7n_huawei.resources.rds.Rds",
-    "huawei.security-group": "c7n_huawei.resources.vpc.SecurityGroup",
+    "huawei.security-group": "c7n_huawei.resources.securitygroup.SecurityGroup",
 
 }

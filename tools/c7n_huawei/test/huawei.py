@@ -91,6 +91,44 @@ def start_server(server_id):
     json = _print_(json, server)
     print(json)
 
+def ips():
+    query = {
+        "limit": 10000
+    }
+    fips = conn.network.ips(**query)
+    arr = list()  # 创建 []
+    for fip in fips:
+        json = dict()  # 创建 {}
+        json = _print_(json, fip)
+        arr.append(json)
+    print(arr)
+
+
+def find_available_ip():
+    fips = conn.network.find_available_ip()
+    arr = list()  # 创建 []
+    if fips is not None:
+        for fip in fips:
+            json = dict()  # 创建 {}
+            json = _print_(json, fip)
+            arr.append(json)
+    print(arr)
+
+def vpcs():
+    query = {
+        "limit": 10000
+    }
+    vpcs = conn.vpcv1.vpcs(**query)
+    arr = list()  # 创建 []
+    for vpc in vpcs:
+        json = dict()  # 创建 {}
+        json = _print_(json, vpc)
+        arr.append(json)
+    print(arr)
+
+def delete_vpc():
+    conn.vpcv1.delete_vpc('1069dd2e-db67-4d0a-bd2f-0205af7e6d63')
+
 def security_groups():
     query = {
         "limit": 10000
@@ -98,6 +136,25 @@ def security_groups():
     sgs = conn.network.security_groups(**query)
     arr = list()  # 创建 []
     for sg in sgs:
+        json = dict()  # 创建 {}
+        json = _print_(json, sg)
+        arr.append(json)
+    print(arr)
+
+def find_security_group(id):
+    sg = conn.network.find_security_group(id)
+    json = dict()  # 创建 {}
+    json = _print_(json, sg)
+    print(json)
+
+def rds_instances():
+    query = {
+        'offset': 0,
+        'limit': 100
+    }
+    rds = conn.rdsv3.instances(**query)
+    arr = list()  # 创建 []
+    for sg in rds:
         json = dict()  # 创建 {}
         json = _print_(json, sg)
         arr.append(json)
@@ -120,4 +177,9 @@ if __name__ == '__main__':
     # show_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
     # stop_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
     # start_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
-    security_groups()
+    # security_groups()
+    # ips()
+    # find_available_ip()
+    # vpcs()
+    # find_security_group('xxxx')
+    rds_instances()
