@@ -18,49 +18,43 @@ from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'vpcv1.vpc'
+service = 'network.elb'
 
-@resources.register('vpc')
-class Vpc(QueryResourceManager):
+@resources.register('elb')
+class Elb(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'vpcv1.vpc'
+        service = 'network.elb'
         enum_spec = (None, None, None)
         id = 'id'
 
     def get_requst(self):
-        query = {
-            "limit": 10000
-        }
-        vpcs = Session.client(self, service).vpcs(**query)
-        arr = list() # 创建 []
-        if vpcs is not None:
-            for vpc in vpcs:
-                json = dict() # 创建 {}
-                for name in dir(vpc):
-                    if not name.startswith('_'):
-                        value = getattr(vpc, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
-        return arr
+        lbs = Session.client(self, service).loadbalancers()
+        json = dict()  # 创建 {}
+        if lbs is not None:
+            for name in dir(lbs):
+                if not name.startswith('_'):
+                    value = getattr(lbs, name)
+                    if not callable(value):
+                        json[name] = value
+        return json
 
-@Vpc.action_registry.register('delete')
-class Delete(MethodAction):
 
+@Elb.action_registry.register('delete')
+class ElbDelete(MethodAction):
     """
-        policies:
-          - name: huawei-vpc-delete
-            resource: huawei.vpc
-            actions:
-              - delete
-    """
+         policies:
+           - name: huawei-elb-delete
+             resource: huawei.elb
+             actions:
+               - delete
+     """
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, vpc):
-        Session.client(self, service).delete_vpc(vpc['id'])
-        obj = Session.client(self, service).find_vpc(vpc['id'])
+    def get_requst(self, elb):
+        Session.client(self, service).delete_loadbalancer(elb['id'])
+        obj = Session.client(self, service).get_loadbalancer(elb['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

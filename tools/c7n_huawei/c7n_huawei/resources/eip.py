@@ -15,16 +15,17 @@
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import HuaweiEipFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'vpcv1.vpc'
+service = 'network.eip'
 
-@resources.register('vpc')
-class Vpc(QueryResourceManager):
+@resources.register('eip')
+class Eip(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'vpcv1.vpc'
+        service = 'network.eip'
         enum_spec = (None, None, None)
         id = 'id'
 
@@ -32,35 +33,44 @@ class Vpc(QueryResourceManager):
         query = {
             "limit": 10000
         }
-        vpcs = Session.client(self, service).vpcs(**query)
-        arr = list() # 创建 []
-        if vpcs is not None:
-            for vpc in vpcs:
-                json = dict() # 创建 {}
-                for name in dir(vpc):
-                    if not name.startswith('_'):
-                        value = getattr(vpc, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
-        return arr
+        ips = Session.client(self, service).ips(**query)
+        json = dict()  # 创建 {}
+        if ips is not None:
+            for name in dir(ips):
+                if not name.startswith('_'):
+                    value = getattr(ips, name)
+                    if not callable(value):
+                        json[name] = value
+        return json
 
-@Vpc.action_registry.register('delete')
-class Delete(MethodAction):
+@Eip.filter_registry.register('unused')
+class HuaweiEipFilter(HuaweiEipFilter):
+    # 查询指定地域已创建的EIP
+    """Filters:Example:
+       .. code-block:: yaml
+
+           policies:
+             - name: huawei-eip
+               resource: huawei.eip
+               filters:
+                 - type: unused
 
     """
-        policies:
-          - name: huawei-vpc-delete
-            resource: huawei.vpc
-            actions:
-              - delete
-    """
+    # Associating：绑定中。
+    # Unassociating：解绑中。
+    # InUse：已分配。
+    # Available：可用。
+    schema = type_schema('Available')
+
+@Eip.action_registry.register('delete')
+class EipRelease(MethodAction):
+    # 释放指定的EIP
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, vpc):
-        Session.client(self, service).delete_vpc(vpc['id'])
-        obj = Session.client(self, service).find_vpc(vpc['id'])
+    def get_requst(self, eip):
+        Session.client(self, service).delete_ip(eip['id'])
+        obj = Session.client(self, service).find_ip(eip['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

@@ -2,7 +2,7 @@ import logging
 import time
 
 from openstack import connection
-
+from obs import ObsClient
 # configuration the log output formatter, if you want to save the output to file,
 # append ",filename='ecs_invoke.log'" after datefmt.
 
@@ -28,6 +28,9 @@ def _loadFile_():
         if "huawei.project_id" in line:
             project_id = line[line.rfind('=') + 1:line.rfind('|')]
             json['project_id'] = project_id
+        if "huawei.auth_url" in line:
+            auth_url = line[line.rfind('=') + 1:line.rfind('|')]
+            json['auth_url'] = auth_url
     f.close()
     print('认证信息:   ' + str(json))
     return json
@@ -41,6 +44,17 @@ conn = connection.Connection(
     ak = params['ak'],
     sk = params['sk']
 )
+
+# 创建ObsClient实例
+obsClient = ObsClient(
+    access_key_id=params['ak'],
+    secret_access_key=params['sk'],
+    server=params['auth_url']
+)
+
+# 关闭obsClient
+def closeObsClient():
+    obsClient.close()
 
 def availability_zones():
     azs = conn.compute.availability_zones()
@@ -160,6 +174,25 @@ def rds_instances():
         arr.append(json)
     print(arr)
 
+# volumes
+def volumes():
+    volumes = conn.block_store.volumes(details=False)
+    arr = list()  # 创建 []
+    for volume in volumes:
+        json = dict()  # 创建 {}
+        json = _print_(json, volume)
+        arr.append(json)
+    print(arr)
+
+def get_all_lb():
+    lbs = conn.network.loadbalancers()
+    arr = list()  # 创建 []
+    for lb in lbs:
+        json = dict()  # 创建 {}
+        json = _print_(json, lb)
+        arr.append(json)
+    print(arr)
+
 def _print_(json, item):
     for name in dir(item):
         if not name.startswith('_'):
@@ -168,6 +201,37 @@ def _print_(json, item):
                 json[name] = value
     return json
 
+
+def listBuckets():
+    try:
+        json = list()
+        # 列举桶
+        resp = obsClient.listBuckets(isQueryLocation=True)
+        print(resp)
+        if resp.status < 300:
+            # 操作成功
+            print('requestId:', resp.requestId)
+            # 处理操作成功后业务逻辑
+            for bucket in resp.body.buckets:
+                # 列举对象
+                json.append(bucket)
+                res = obsClient.listObjects(bucket.name)
+                for content in res.body.contents:
+                    json.append(content)
+            print(json)
+        else:
+            # 操作失败，获取详细异常信息
+            print(resp.errorMessage)
+    except Exception as e:
+        import traceback
+        # 发生异常，打印异常堆栈
+        logging.error(e)
+        print(traceback.format_exc())
+    finally:
+        # 关闭ObsClient，如果是全局ObsClient实例，可以不在每个方法调用完成后关闭
+        # ObsClient在调用ObsClient.close方法关闭后不能再次使用
+        closeObsClient()
+    print(json)
 
 if __name__ == '__main__':
     logging.info("Hello Huawei OpenApi!")
@@ -182,4 +246,7 @@ if __name__ == '__main__':
     # find_available_ip()
     # vpcs()
     # find_security_group('xxxx')
-    rds_instances()
+    # rds_instances()
+    # volumes()
+    # get_all_lb()
+    listBuckets()

@@ -11,25 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import operator
 
-from openstack import connection
-
+from c7n.utils import type_schema
+from c7n_huawei.actions import MethodAction
+from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import HuaweiAgeFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
-from c7n_huawei.filters.filter import HuaweiAgeFilter
-from c7n_huawei.actions import MethodAction
 
-from c7n.utils import type_schema
-
-conn = connection.Connection(
-            cloud=os.getenv('HUAWEI_CLOUD'),
-            ak=os.getenv('HUAWEI_AK'),
-            sk=os.getenv('HUAWEI_SK'),
-            region=os.getenv('HUAWEI_DEFAULT_REGION'),
-            project_id=os.getenv('HUAWEI_PROJECT')
-        )
+service = 'compute.ecs'
 
 @resources.register('ecs')
 class Ecs(QueryResourceManager):
@@ -41,7 +32,7 @@ class Ecs(QueryResourceManager):
         dimension = 'id'
 
     def get_requst(self):
-        servers = conn.compute.servers(limit=10000)
+        servers = Session.client(self, service).servers(limit=10000)
         arr = list() # 创建 []
         if servers is not None:
             for server in servers:
@@ -95,8 +86,8 @@ class Start(MethodAction):
     attr_filter = ('status', ('SHUTOFF',))
 
     def get_requst(self, instance):
-        conn.compute.start_server(instance['id'])
-        server = conn.compute.get_server(instance['id'])
+        Session.client(self, service).start_server(instance['id'])
+        server = Session.client(self, service).get_server(instance['id'])
         json = dict()  # 创建 {}
         if server is not None:
             for name in dir(server):
@@ -120,8 +111,8 @@ class Stop(MethodAction):
     attr_filter = ('status', ('ACTIVE',))
 
     def get_requst(self, instance):
-        conn.compute.stop_server(instance['id'])
-        server = conn.compute.get_server(instance['id'])
+        Session.client().stop_server(instance['id'])
+        server = Session.client().get_server(instance['id'])
         json = dict()  # 创建 {}
         if server is not None:
             for name in dir(server):
@@ -143,10 +134,11 @@ class Delete(MethodAction):
     """
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
+    attr_filter = ('status', ('SHUTOFF',))
 
     def get_requst(self, instance):
-        conn.compute.delete_server(instance['id'])
-        server = conn.compute.get_server(instance['id'])
+        Session.client(self, service).delete_server(instance['id'])
+        server = Session.client(self, service).get_server(instance['id'])
         json = dict()  # 创建 {}
         if server is not None:
             for name in dir(server):

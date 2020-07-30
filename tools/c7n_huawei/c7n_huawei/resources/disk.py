@@ -18,49 +18,44 @@ from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'vpcv1.vpc'
+service = 'block_store.disk'
 
-@resources.register('vpc')
-class Vpc(QueryResourceManager):
+@resources.register('disk')
+class Disk(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'vpcv1.vpc'
+        service = 'block_store.disk'
         enum_spec = (None, None, None)
         id = 'id'
 
     def get_requst(self):
-        query = {
-            "limit": 10000
-        }
-        vpcs = Session.client(self, service).vpcs(**query)
-        arr = list() # 创建 []
-        if vpcs is not None:
-            for vpc in vpcs:
-                json = dict() # 创建 {}
-                for name in dir(vpc):
-                    if not name.startswith('_'):
-                        value = getattr(vpc, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
-        return arr
+        volumes = Session.client(self, service).volumes(details=False)
+        json = dict()  # 创建 {}
+        if volumes is not None:
+            for name in dir(volumes):
+                if not name.startswith('_'):
+                    value = getattr(volumes, name)
+                    if not callable(value):
+                        json[name] = value
+        return json
 
-@Vpc.action_registry.register('delete')
-class Delete(MethodAction):
 
+@Disk.action_registry.register('delete')
+class DiskDelete(MethodAction):
     """
-        policies:
-          - name: huawei-vpc-delete
-            resource: huawei.vpc
-            actions:
-              - delete
-    """
+         policies:
+           - name: huawei-disk-delete
+             resource: huawei.disk
+             actions:
+               - delete
+     """
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
+    attr_filter = ('status', ('available','error',))
 
-    def get_requst(self, vpc):
-        Session.client(self, service).delete_vpc(vpc['id'])
-        obj = Session.client(self, service).find_vpc(vpc['id'])
+    def get_requst(self, disk):
+        Session.client(self, service).delete_volume(disk['id'])
+        obj = Session.client(self, service).get_volume(disk['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

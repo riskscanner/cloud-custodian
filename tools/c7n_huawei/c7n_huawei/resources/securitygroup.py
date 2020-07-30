@@ -11,24 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
-
-from openstack import connection
 
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
+from c7n_huawei.client import Session
 from c7n_huawei.filters.filter import SGPermission
 from c7n_huawei.filters.filter import SGPermissionSchema
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-conn = connection.Connection(
-            cloud=os.getenv('HUAWEI_CLOUD'),
-            ak=os.getenv('HUAWEI_AK'),
-            sk=os.getenv('HUAWEI_SK'),
-            region=os.getenv('HUAWEI_DEFAULT_REGION'),
-            project_id=os.getenv('HUAWEI_PROJECT')
-        )
+service = 'network.security-group'
 
 @resources.register('security-group')
 class SecurityGroup(QueryResourceManager):
@@ -42,7 +34,7 @@ class SecurityGroup(QueryResourceManager):
         query = {
             "limit": 10000
         }
-        sgs = conn.network.security_groups(**query)
+        sgs = Session.client(self, service).security_groups(**query)
         arr = list() # 创建 []
         if sgs is not None:
             for sg in sgs:
@@ -69,8 +61,8 @@ class Delete(MethodAction):
     method_spec = {'op': 'delete'}
 
     def get_requst(self, security_group):
-        conn.network.delete_security_group(security_group['id'])
-        obj = conn.network.find_security_group(security_group['id'])
+        Session.client(self, service).delete_security_group(security_group['id'])
+        obj = Session.client(self, service).find_security_group(security_group['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):
@@ -120,7 +112,7 @@ class IPPermission(SGPermission):
 
     def securityGroupAttributeRequst(self, sg):
         print(sg['id'])
-        obj = conn.network.find_security_group(sg['id'])
+        obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):
@@ -141,7 +133,7 @@ class IPPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def securityGroupAttributeRequst(self, sg):
-        obj = conn.network.find_security_group(sg['id'])
+        obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

@@ -9,8 +9,19 @@ from c7n.exceptions import PolicyValidationError
 from c7n.filters.core import Filter
 from c7n.filters.core import OPERATORS
 from c7n.filters.core import ValueFilter
-from c7n.utils import local_session
 
+
+class HuaweiEipFilter(Filter):
+    threshold_date = None
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
 
 class HuaweiAgeFilter(Filter):
     """Automatically filter resources older than a given date.

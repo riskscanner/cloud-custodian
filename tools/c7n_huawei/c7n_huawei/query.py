@@ -40,8 +40,8 @@ class ResourceQuery:
         if extra_args:
             params.update(extra_args)
 
-        if m.service == 'oss':
-            result = client.list_buckets()
+        if m.service == 'obs':
+            result = client.listBuckets()
             buckets = []
             for b in result.buckets:
                 buckets.append(b.__dict__)

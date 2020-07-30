@@ -17,6 +17,7 @@ import logging
 import os
 
 from openstack import connection
+from obs import ObsClient
 
 log = logging.getLogger('c7n_huawei.client')
 
@@ -35,7 +36,7 @@ class Session:
     # region = os.getenv('HUAWEI_DEFAULT_REGION')
     # project_id = os.getenv('HUAWEI_PROJECT')
 
-    def __init__(self, ak=None, sk=None, regionId=None, projectId=None, cloud=None):
+    def __init__(self, ak=None, sk=None, regionId=None, projectId=None, cloud=None, server=None):
         if not ak:
             ak = os.getenv('HUAWEI_AK')
         if not sk:
@@ -46,11 +47,14 @@ class Session:
             projectId = os.getenv('HUAWEI_PROJECT')
         if not cloud:
             cloud = os.getenv('HUAWEI_CLOUD')
+        if not server:
+            server = os.getenv('HUAWEI_ENDPOINT')
         self.ak = ak
         self.sk = sk
         self.region = regionId
         self.project_id = projectId
         self.cloud = cloud
+        self.server = server
 
     def get_default_region(self):
         if self.region:
@@ -58,23 +62,40 @@ class Session:
         for k in ('HUAWEI_DEFAULT_REGION'):
             if k in os.environ:
                 return os.environ[k]
+            else:
+                return 'cn-north-1'
 
     def client(self, service):
-        conn = connection.Connection(
-            cloud = os.getenv('HUAWEI_CLOUD'),
-            ak = os.getenv('HUAWEI_AK'),
-            sk = os.getenv('HUAWEI_SK'),
-            region = os.getenv('HUAWEI_DEFAULT_REGION'),
-            project_id = os.getenv('HUAWEI_PROJECT')
-        )
-        if 'compute' in service:
-            clt = conn.compute
-        elif 'vpcv1' in service:
-            clt = conn.vpcv1
-        elif 'network' in service:
-            clt = conn.network
+        if service == 'obs':
+            # 创建ObsClient实例
+            obsClient = ObsClient(
+                access_key_id=os.getenv('HUAWEI_AK'),
+                secret_access_key=os.getenv('HUAWEI_SK'),
+                server=os.getenv('HUAWEI_ENDPOINT')
+            )
+            clt = obsClient
         else:
-            clt = conn.compute
+            conn = connection.Connection(
+                cloud=os.getenv('HUAWEI_CLOUD'),
+                ak=os.getenv('HUAWEI_AK'),
+                sk=os.getenv('HUAWEI_SK'),
+                region=os.getenv('HUAWEI_DEFAULT_REGION'),
+                project_id=os.getenv('HUAWEI_PROJECT')
+            )
+            if 'compute' in service:
+                clt = conn.compute
+            elif 'vpcv1' in service:
+                clt = conn.vpcv1
+            elif 'network' in service:
+                clt = conn.network
+            elif 'block_store' in service:
+                clt = conn.block_store
+            elif 'rdsv3' in service:
+                clt = conn.rdsv3
+            elif 'obs' in service:
+                clt = conn.rdsv3
+            else:
+                clt = conn.compute
         return clt
 
 REGION_ENDPOINT = {
