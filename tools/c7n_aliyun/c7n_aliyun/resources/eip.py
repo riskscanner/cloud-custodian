@@ -57,6 +57,21 @@ class AliyunEipFilter(AliyunEipFilter):
 
 @Eip.action_registry.register('release')
 class EipRelease(MethodAction):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             #释放未连接的弹性IP
+             - name: aliyun-eip
+               resource: aliyun.eip
+               filters:
+                 - type: unused
+               actions:
+                 - release
+    """
     # 释放指定的EIP
     schema = type_schema('release')
     method_spec = {'op': 'release'}

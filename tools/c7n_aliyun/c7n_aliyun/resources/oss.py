@@ -18,6 +18,8 @@ from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.client import REGION_ENDPOINT
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
+from c7n.filters import Filter
+from c7n.utils import set_annotation
 
 from c7n.utils import type_schema
 
@@ -38,6 +40,48 @@ class Oss(QueryResourceManager):
     def get_requst(self):
         pass
 
+@Oss.filter_registry.register('global-grants')
+class GlobalGrantsFilter(Filter):
+    """Filters :example:
+    .. code-block:: yaml
+
+       policies:
+         - name: aliyun-global-grants
+           resource: aliyun.oss
+           filters:
+            - type: global-grants
+    """
+
+    schema = type_schema(
+        'global-grants',
+        allow_website={'type': 'boolean'},
+        operator={'type': 'string', 'enum': ['or', 'and']},
+        permissions={
+            'type': 'array', 'items': {
+                'type': 'string', 'enum': [
+                    'READ', 'WRITE', 'WRITE_ACP', 'READ_ACP', 'FULL_CONTROL']}})
+
+    def process(self, buckets, event=None):
+        with self.executor_factory(max_workers=5) as w:
+            results = w.map(self.process_bucket, buckets)
+            results = list(filter(None, list(results)))
+            return results
+
+    def process_bucket(self, b):
+        bucket = oss2.Bucket(auth, b['extranet_endpoint'], b['name'])
+        # 有效值：private、public-read、public-read-write
+        acl = bucket.get_bucket_acl().acl
+        if acl == 'private':
+            return
+
+        results = []
+        perms = self.data.get('permissions', [])
+        if not perms or (perms and acl in perms):
+            results.append(acl)
+
+        if results:
+            set_annotation(b, 'GlobalPermissions', results)
+            return b
 
 @Oss.action_registry.register('create_bucket')
 class OssCreateBucket(MethodAction):
