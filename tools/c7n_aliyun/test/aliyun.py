@@ -26,20 +26,21 @@ def _loadFile_():
     f = open("/opt/fit2cloud/aliyun.txt")
     lines = f.readlines()
     for line in lines:
+        line = line.strip()
         if "aliyun.ak" in line:
-            ak = line[line.rfind('=') + 1:line.rfind('|')]
+            ak = line[line.rfind('=') + 1:]
             json['ak'] = ak
         if "aliyun.sk" in line:
-            sk = line[line.rfind('=') + 1:line.rfind('|')]
+            sk = line[line.rfind('=') + 1:]
             json['sk'] = sk
         if "aliyun.region" in line:
-            region = line[line.rfind('=') + 1:line.rfind('|')]
-            json['region'] = region
+            region = line[line.rfind('=') + 1:]
+            json['region'] = 'cn-qingdao'
         if "aliyun.ossAk" in line:
-            ossAk = line[line.rfind('=') + 1:line.rfind('|')]
+            ossAk = line[line.rfind('=') + 1:]
             json['ossAk'] = ossAk
         if "aliyun.ossSk" in line:
-            ossSk = line[line.rfind('=') + 1:line.rfind('|')]
+            ossSk = line[line.rfind('=') + 1:]
             json['ossSk'] = ossSk
     f.close()
     print('认证信息:   ' + str(json))
@@ -165,7 +166,12 @@ def get_oss():
     #
     # print(jmespath.search('buckets',    json.dumps(buckets)))
 
-def get_elb():
+def get_object_acl():
+    bucket = oss2.Bucket(auth, 'oss-cn-qingdao.aliyuncs.com', 'xu-f2c-test2')
+
+    print(bucket.get_bucket_acl().acl)
+
+def get_slb():
     request = DescribeLoadBalancersRequest()
     reponse = _send_request(request)
     print(reponse)
@@ -187,6 +193,11 @@ if __name__ == '__main__':
     # list_instances()
     # delete_ecs("i-wz9h7lsnk5beaipnvn97")
     # stop_instance("i-wz9h7lsnk5beaipnvn97")
-    # list_instances()
     # get_eip()
     # list_sgs()
+    # get_oss()
+    # get_rds()
+    # get_object_acl()
+    # get_slb()
+    # list_disk()
+    list_vpcs()

@@ -27,6 +27,30 @@ class AliyunEipFilter(Filter):
             return False
         return i
 
+class AliyunDiskFilter(Filter):
+    threshold_date = None
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
+
+class AliyunSlbFilter(Filter):
+    threshold_date = None
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
+
 class AliyunAgeFilter(Filter):
     """Automatically filter resources older than a given date.
 
@@ -65,6 +89,17 @@ class AliyunAgeFilter(Filter):
 
         return op(self.threshold_date, v)
 
+class AliyunVpcFilter(Filter):
+    threshold_date = None
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
 
 class SGPermission(Filter):
     """Filter for verifying security group ingress and egress permissions

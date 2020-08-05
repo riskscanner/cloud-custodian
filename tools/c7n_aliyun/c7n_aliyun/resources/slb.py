@@ -15,6 +15,7 @@
 from aliyunsdkslb.request.v20140515.DeleteLoadBalancerRequest import DeleteLoadBalancerRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import DescribeLoadBalancersRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import AliyunSlbFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
@@ -31,6 +32,27 @@ class Slb(QueryResourceManager):
 
     def get_requst(self):
         return DescribeLoadBalancersRequest()
+
+@Slb.filter_registry.register('unused')
+class AliyunSlbFilter(AliyunSlbFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+            - name: aliyun-elb-mark-unused-for-deletion
+              resource: aliyun.slb
+              filters:
+                - unused
+              actions:
+                - delete
+    """
+    # inactive：实例已停止，此状态的实例监听不会再转发流量。
+    # active：实例运行中，实例创建后，默认状态为active。
+    # locked：实例已锁定，实例已经欠费或被阿里云锁定。
+    schema = type_schema('inactive')
 
 
 @Slb.action_registry.register('delete')

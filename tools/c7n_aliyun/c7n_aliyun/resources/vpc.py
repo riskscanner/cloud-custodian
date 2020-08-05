@@ -18,6 +18,7 @@ from aliyunsdkecs.request.v20140526.DescribeSecurityGroupAttributeRequest import
 from aliyunsdkecs.request.v20140526.DescribeSecurityGroupsRequest import DescribeSecurityGroupsRequest
 from aliyunsdkecs.request.v20140526.DescribeVpcsRequest import DescribeVpcsRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import AliyunVpcFilter
 from c7n_aliyun.filters.filter import SGPermission
 from c7n_aliyun.filters.filter import SGPermissionSchema
 from c7n_aliyun.provider import resources
@@ -38,6 +39,23 @@ class Vpc(QueryResourceManager):
         request = DescribeVpcsRequest()
         return request
 
+@Vpc.filter_registry.register('unused')
+class AliyunVpcFilter(AliyunVpcFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            - name: aliyun-avalible-vpc
+              resource: aliyun.vpc
+              filters:
+                - type: unused
+    """
+    # Associating：绑定中。
+    # Unassociating：解绑中。
+    # InUse：已分配。
+    # Available：可用。
+    schema = type_schema('Available')
 
 
 @Vpc.action_registry.register('delete')

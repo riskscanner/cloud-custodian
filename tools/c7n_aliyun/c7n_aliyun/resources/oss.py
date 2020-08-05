@@ -18,9 +18,9 @@ from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.client import REGION_ENDPOINT
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
+
 from c7n.filters import Filter
 from c7n.utils import set_annotation
-
 from c7n.utils import type_schema
 
 service = 'oss'
@@ -97,7 +97,6 @@ class OssCreateBucket(MethodAction):
             resp = bucket.create_bucket(oss2.BUCKET_ACL_PRIVATE, bucketConfig)
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:
@@ -122,7 +121,6 @@ class OssPutObject(MethodAction):
             resp = bucket.put_object(bucket['objectname'], bucket['obj'], headers)
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:
@@ -144,7 +142,6 @@ class OssGetObject(MethodAction):
             resp = bucket.get_object_to_file(bucket['objectname'], bucket['localFile'])
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:
@@ -166,7 +163,6 @@ class OssDeleteObject(MethodAction):
             resp = bucket.delete_object(bucket['objectname'])
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:

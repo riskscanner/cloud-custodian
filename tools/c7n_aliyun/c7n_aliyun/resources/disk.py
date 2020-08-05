@@ -15,6 +15,7 @@
 from aliyunsdkecs.request.v20140526.DeleteDiskRequest import DeleteDiskRequest
 from aliyunsdkecs.request.v20140526.DescribeDisksRequest import DescribeDisksRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import AliyunDiskFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
@@ -33,6 +34,25 @@ class Disk(QueryResourceManager):
         request = DescribeDisksRequest()
         return request
 
+@Disk.filter_registry.register('unused')
+class AliyunDiskFilter(AliyunDiskFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-orphaned-disk
+               resource: aliyun.disk
+               filters:
+                 - type: unused
+    """
+    # Associating：绑定中。
+    # Unassociating：解绑中。
+    # InUse：已分配。
+    # Available：可用。
+    schema = type_schema('Available')
 
 @Disk.action_registry.register('delete')
 class DiskDelete(MethodAction):

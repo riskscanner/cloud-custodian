@@ -194,9 +194,7 @@ class QueryResourceManager(ResourceManager, metaclass=QueryMeta):
         self._cache.save(key, resources)
 
         resource_count = len(resources)
-        # print(resources)
         resources = self.filter_resources(resources)
-        # print(resources)
         # Check if we're out of a policies execution limits.
 
         if self.data == self.ctx.policy.data:

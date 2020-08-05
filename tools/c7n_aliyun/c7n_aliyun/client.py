@@ -48,13 +48,17 @@ class Session:
     def client(self,  service):
         if service == 'oss':
             auth = oss2.Auth(self.accessKeyId, self.accessSecret)
-            clt = oss2.Service(auth, REGION_ENDPOINT[self.regionId])
+            region = self.get_oss_region(self.regionId)
+            clt = oss2.Service(auth, region)
         else:
             clt = client.AcsClient(self.accessKeyId, self.accessSecret, self.regionId)
         return clt
 
-
-
+    def get_oss_region(self, regionId):
+        region = REGION_ENDPOINT.get(self, regionId)
+        if "aliyuncs.com" not in region:
+            region = 'oss-' + region + '.aliyuncs.com'
+        return region
 
 REGION_ENDPOINT = {
         'cn-hangzhou': 'oss-cn-hangzhou.aliyuncs.com',
@@ -75,5 +79,8 @@ REGION_ENDPOINT = {
         'ap-south-1': 'oss-ap-south-1.aliyuncs.com',
         'eu-central-1': 'oss-eu-central-1.aliyuncs.com',
         'eu-west-1': 'oss-eu-west-1.aliyuncs.com',
-        'me-east-1': 'oss-me-east-1.aliyuncs.com'
+        'me-east-1': 'oss-me-east-1.aliyuncs.com',
+        'cn-wulanchabu': 'oss-cn-wulanchabu-internal.aliyuncs.com',
+        'cn-heyuan': 'oss-cn-heyuan-internal.aliyuncs.com',
+        'cn-chengdu': 'oss-cn-chengdu-internal.aliyuncs.com'
     }
