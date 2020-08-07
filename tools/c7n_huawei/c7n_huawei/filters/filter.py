@@ -1,4 +1,6 @@
 import datetime
+import json
+from concurrent.futures import as_completed
 from datetime import timedelta
 
 import jmespath
@@ -9,16 +11,39 @@ from c7n.exceptions import PolicyValidationError
 from c7n.filters.core import Filter
 from c7n.filters.core import OPERATORS
 from c7n.filters.core import ValueFilter
+from c7n.utils import local_session, chunks
+from c7n.utils import type_schema
 
 
 class HuaweiEipFilter(Filter):
-    threshold_date = None
     schema = None
 
     def validate(self):
         return self
 
     def __call__(self, i):
+        if i['status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
+
+class HuaweiDiskFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if not(i['status'] is None) and self.schema['properties']['type']['enum'][0] == "available":
+            return False
+        return i
+
+class HuaweiElbFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i, data):
         if i['Status'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
@@ -344,6 +369,175 @@ class SGPermission(Filter):
         if matched:
             resource['Matched%s' % self.ip_permissions_key] = matched
             return True
+
+class MetricsFilter(Filter):
+    """Supports   metrics filters on resources.
+    .. code-block:: yaml
+
+      - name: ecs-underutilized
+        resource: ecs
+        filters:
+          - type: metrics
+            name: CPUUtilization
+            days: 4
+            period: 86400
+            value: 30
+            op: less-than
+
+    Note periods when a resource is not sending metrics are not part
+    of calculated statistics as in the case of a stopped ecs instance,
+    nor for resources to new to have existed the entire
+    period. ie. being stopped for an ecs instance wouldn't lower the
+    average cpu utilization.
+
+    The "missing-value" key allows a policy to specify a default
+    value when CloudWatch has no data to report:
+
+    .. code-block:: yaml
+
+      - name: elb-low-request-count
+        resource: elb
+        filters:
+          - type: metrics
+            name: RequestCount
+            statistics: Sum
+            days: 7
+            value: 7
+            missing-value: 0
+            op: less-than
+
+    This policy matches any ELB with fewer than 7 requests for the past week.
+    ELBs with no requests during that time will have an empty set of metrics.
+    Rather than skipping those resources, "missing-value: 0" causes the
+    policy to treat their request counts as 0.
+
+    Note the default statistic for metrics is Average.
+    """
+
+    schema = type_schema(
+        'metrics',
+        **{'namespace': {'type': 'string'},
+           'name': {'type': 'string'},
+           'dimensions': {
+               'type': 'object',
+               'patternProperties': {
+                   '^.*$': {'type': 'string'}}},
+           # Type choices
+           'statistics': {'type': 'string', 'enum': [
+               'Average', 'Sum', 'Maximum', 'Minimum', 'SampleCount']},
+           'days': {'type': 'number'},
+           'op': {'type': 'string', 'enum': list(OPERATORS.keys())},
+           'value': {'type': 'number'},
+           'period': {'type': 'number'},
+           'attr-multiplier': {'type': 'number'},
+           'percent-attr': {'type': 'string'},
+           'missing-value': {'type': 'number'},
+           'required': ('value', 'name')})
+    schema_alias = True
+
+    MAX_QUERY_POINTS = 50850
+    MAX_RESULT_POINTS = 1440
+
+    # Default per service, for overloaded services like ecs
+    # we do type specific default namespace annotation
+    # specifically AWS/EBS and AWS/ecsSpot
+
+    # ditto for spot fleet
+    DEFAULT_NAMESPACE = {
+        'ecs': 'acs_ecs_dashboard',
+    }
+
+    def process(self, resources, event=None):
+        days = self.data.get('days', 1)
+        duration = timedelta(days)
+        self.metric = self.data['name']
+        self.end = datetime.datetime.utcnow()
+        self.start = self.end - duration
+        self.period = int(self.data.get('period', duration.total_seconds()))
+        self.statistics = self.data.get('statistics', 'Average')
+        self.model = self.manager.get_model()
+        self.op = OPERATORS[self.data.get('op', 'less-than')]
+        self.value = self.data['value']
+        self.namespace = self.DEFAULT_NAMESPACE[self.model.service]
+        self.log.debug("Querying metrics for %d", len(resources))
+        matched = []
+        with self.executor_factory(max_workers=3) as w:
+            futures = []
+            for resource_set in chunks(resources, 50):
+                futures.append(
+                    w.submit(self.process_resource_set, resource_set))
+
+            for f in as_completed(futures):
+                if f.exception():
+                    self.log.warning(
+                        "CW Retrieval error: %s" % f.exception())
+                    continue
+                matched.extend(f.result())
+        return matched
+
+    def get_dimensions(self, resource):
+        return [{self.model.dimension: resource[self.model.dimension]}]
+
+    def get_user_dimensions(self):
+        dims = []
+        if 'dimensions' not in self.data:
+            return dims
+        for k, v in self.data['dimensions'].items():
+            dims.append({'Name': k, 'Value': v})
+        return dims
+
+    def process_resource_set(self, resource_set):
+        client = local_session(
+            self.manager.session_factory).client(self.manager.get_model().service)
+
+        matched = []
+        for r in resource_set:
+            # if we overload dimensions with multiple resources we get
+            # the statistics/average over those resources.
+            dimensions = self.get_dimensions(r)
+            # Merge in any filter specified metrics, get_dimensions is
+            # commonly overridden so we can't do it there.
+            # dimensions.extend(self.get_user_dimensions())
+
+            request = self.get_requst()
+            request.set_accept_format('json')
+            request.set_StartTime(self.start)
+            request.set_Dimensions(dimensions)
+            request.set_Period(self.period)
+            request.set_Namespace(self.namespace)
+            request.set_MetricName(self.metric)
+            collected_metrics = r.setdefault('c7n_aliyun.metrics', {})
+            # Note this annotation cache is policy scoped, not across
+            # policies, still the lack of full qualification on the key
+            # means multiple filters within a policy using the same metric
+            # across different periods or dimensions would be problematic.
+            key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
+
+            if key not in collected_metrics:
+                collected_metrics[key] = json.loads(json.loads(client.do_action(request))['Datapoints'])
+
+            # In certain cases CloudWatch reports no data for a metric.
+            # If the policy specifies a fill value for missing data, add
+            # that here before testing for matches. Otherwise, skip
+            # matching entirely.
+            # for m in collected_metrics[key]:
+
+            if len(collected_metrics[key]) == 0:
+                if 'missing-value' not in self.data:
+                    continue
+                collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_aliyun:detail': 'Fill value for missing data'})
+            if self.data.get('percent-attr'):
+                rvalue = r[self.data.get('percent-attr')]
+                if self.data.get('attr-multiplier'):
+                    rvalue = rvalue * self.data['attr-multiplier']
+                percent = (collected_metrics[key][0][self.statistics] /
+                           rvalue * 100)
+                if self.op(percent, self.value):
+                    matched.append(r)
+            elif self.op(collected_metrics[key][0][self.statistics], self.value):
+                matched.append(r)
+
+        return matched
 
 SGPermissionSchema = {
     'match-operator': {'type': 'string', 'enum': ['or', 'and']},

@@ -34,14 +34,18 @@ class Eip(QueryResourceManager):
             "limit": 10000
         }
         ips = Session.client(self, service).ips(**query)
-        json = dict()  # 创建 {}
+        arr = list()  # 创建 []
         if ips is not None:
-            for name in dir(ips):
-                if not name.startswith('_'):
-                    value = getattr(ips, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
+            for ip in ips:
+                json = dict()  # 创建 {}
+                for name in dir(ip):
+                    if not name.startswith('_'):
+                        value = getattr(ip, name)
+                        if not callable(value):
+                            json[name] = value
+                arr.append(json)
+        return arr
+
 
 @Eip.filter_registry.register('unused')
 class HuaweiEipFilter(HuaweiEipFilter):
@@ -56,11 +60,9 @@ class HuaweiEipFilter(HuaweiEipFilter):
                  - type: unused
 
     """
-    # Associating：绑定中。
-    # Unassociating：解绑中。
-    # InUse：已分配。
-    # Available：可用。
-    schema = type_schema('Available')
+    # ACTIVE：已绑定
+    # DOWN：未绑定
+    schema = type_schema('DOWN')
 
 @Eip.action_registry.register('delete')
 class EipRelease(MethodAction):
@@ -69,8 +71,7 @@ class EipRelease(MethodAction):
     method_spec = {'op': 'delete'}
 
     def get_requst(self, eip):
-        Session.client(self, service).delete_ip(eip['id'])
-        obj = Session.client(self, service).find_ip(eip['id'])
+        obj = Session.client(self, service).delete_ip(eip['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

@@ -13,23 +13,26 @@ def _loadFile_():
     f = open("/opt/fit2cloud/huawei.txt")
     lines = f.readlines()
     for line in lines:
+        line = line.strip()
         if "huawei.ak" in line:
-            ak = line[line.rfind('=') + 1:line.rfind('|')]
+            ak = line[line.rfind('=') + 1:]
             json['ak'] = ak
         if "huawei.sk" in line:
-            sk = line[line.rfind('=') + 1:line.rfind('|')]
+            sk = line[line.rfind('=') + 1:]
             json['sk'] = sk
         if "huawei.cloud" in line:
-            cloud = line[line.rfind('=') + 1:line.rfind('|')]
+            cloud = line[line.rfind('=') + 1:]
             json['cloud'] = cloud
         if "huawei.region" in line:
-            region = line[line.rfind('=') + 1:line.rfind('|')]
-            json['region'] = region
+            region = line[line.rfind('=') + 1:]
+            # json['region'] = region
+            json['region'] = "cn-north-4"
         if "huawei.project_id" in line:
-            project_id = line[line.rfind('=') + 1:line.rfind('|')]
-            json['project_id'] = project_id
+            project_id = line[line.rfind('=') + 1:]
+            # json['project_id'] = project_id
+            json['project_id'] = "07e44aac9c000f8f2faac0158d8e5bc0"
         if "huawei.auth_url" in line:
-            auth_url = line[line.rfind('=') + 1:line.rfind('|')]
+            auth_url = line[line.rfind('=') + 1:]
             json['auth_url'] = auth_url
     f.close()
     print('认证信息:   ' + str(json))
@@ -245,8 +248,8 @@ if __name__ == '__main__':
     # ips()
     # find_available_ip()
     # vpcs()
-    # find_security_group('xxxx')
+    # # find_security_group('xxxx')
     # rds_instances()
-    # volumes()
+    volumes()
     # get_all_lb()
-    listBuckets()
+    # listBuckets()

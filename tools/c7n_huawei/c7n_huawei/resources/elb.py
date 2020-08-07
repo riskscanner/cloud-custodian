@@ -17,6 +17,7 @@ from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
+from c7n_huawei.filters.filter import HuaweiElbFilter
 
 service = 'network.elb'
 
@@ -30,15 +31,37 @@ class Elb(QueryResourceManager):
 
     def get_requst(self):
         lbs = Session.client(self, service).loadbalancers()
-        json = dict()  # 创建 {}
+        arr = list()  # 创建 []
         if lbs is not None:
-            for name in dir(lbs):
-                if not name.startswith('_'):
-                    value = getattr(lbs, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
+            for slb in lbs:
+                json = dict()  # 创建 {}
+                for name in dir(slb):
+                    if not name.startswith('_'):
+                        value = getattr(slb, name)
+                        if not callable(value):
+                            json[name] = value
+                arr.append(json)
+        return arr
 
+
+@Elb.filter_registry.register('unused')
+class HuaweiElbFilter(HuaweiElbFilter):
+    # 查询指定地域已创建的EIP
+    """Filters:Example:
+       .. code-block:: yaml
+
+           policies:
+             - name: huawei-elb
+               resource: huawei.elb
+               filters:
+                 - type: unused
+
+    """
+    # Associating：绑定中。
+    # Unassociating：解绑中。
+    # InUse：已分配。
+    # Available：可用。
+    schema = type_schema('Available')
 
 @Elb.action_registry.register('delete')
 class ElbDelete(MethodAction):
@@ -53,8 +76,7 @@ class ElbDelete(MethodAction):
     method_spec = {'op': 'delete'}
 
     def get_requst(self, elb):
-        Session.client(self, service).delete_loadbalancer(elb['id'])
-        obj = Session.client(self, service).get_loadbalancer(elb['id'])
+        obj = Session.client(self, service).delete_loadbalancer(elb['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

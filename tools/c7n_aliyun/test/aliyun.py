@@ -122,7 +122,9 @@ def _send_request(request):
 def list_vpcs():
     request = DescribeVpcsRequest()
     response = _send_request(request)
+    print("!@$!@#$@#$%#$")
     print(response)
+    print("!@$!@#$@#$%#$")
 
 def list_sgs_attr():
     request = DescribeSecurityGroupAttributeRequest()

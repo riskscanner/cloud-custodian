@@ -17,6 +17,7 @@ from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
+from c7n_huawei.filters.filter import HuaweiDiskFilter
 
 service = 'block_store.disk'
 
@@ -30,15 +31,33 @@ class Disk(QueryResourceManager):
 
     def get_requst(self):
         volumes = Session.client(self, service).volumes(details=False)
-        json = dict()  # 创建 {}
+        arr = list()  # 创建 []
         if volumes is not None:
-            for name in dir(volumes):
-                if not name.startswith('_'):
-                    value = getattr(volumes, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
+            for volume in volumes:
+                json = dict()  # 创建 {}
+                for name in dir(volume):
+                    if not name.startswith('_'):
+                        value = getattr(volume, name)
+                        if not callable(value):
+                            json[name] = value
+                arr.append(json)
+        return arr
 
+
+@Disk.filter_registry.register('unused')
+class HuaweiDiskFilter(HuaweiDiskFilter):
+    """Filters:Example:
+       .. code-block:: yaml
+
+           policies:
+             - name: huawei-disk
+               resource: huawei.disk
+               filters:
+                 - type: unused
+
+    """
+    # “available”，“error”，“restoring”，“creating”，“deleting”，“error_restoring”
+    schema = type_schema('available')
 
 @Disk.action_registry.register('delete')
 class DiskDelete(MethodAction):
@@ -51,11 +70,10 @@ class DiskDelete(MethodAction):
      """
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
-    attr_filter = ('status', ('available','error',))
+    attr_filter = ('status', ('available','error', None, ))
 
     def get_requst(self, disk):
-        Session.client(self, service).delete_volume(disk['id'])
-        obj = Session.client(self, service).get_volume(disk['id'])
+        obj = Session.client(self, service).delete_volume(disk['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

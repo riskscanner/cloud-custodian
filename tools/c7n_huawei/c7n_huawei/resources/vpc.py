@@ -59,8 +59,7 @@ class Delete(MethodAction):
     method_spec = {'op': 'delete'}
 
     def get_requst(self, vpc):
-        Session.client(self, service).delete_vpc(vpc['id'])
-        obj = Session.client(self, service).find_vpc(vpc['id'])
+        obj = Session.client(self, service).delete_vpc(vpc['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

@@ -61,8 +61,7 @@ class Delete(MethodAction):
     method_spec = {'op': 'delete'}
 
     def get_requst(self, security_group):
-        Session.client(self, service).delete_security_group(security_group['id'])
-        obj = Session.client(self, service).find_security_group(security_group['id'])
+        obj = Session.client(self, service).delete_security_group(security_group['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):
@@ -111,7 +110,6 @@ class IPPermission(SGPermission):
 
 
     def securityGroupAttributeRequst(self, sg):
-        print(sg['id'])
         obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
         if obj is not None:

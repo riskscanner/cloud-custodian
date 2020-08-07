@@ -60,8 +60,7 @@ class RdsDelete(MethodAction):
     method_spec = {'op': 'delete'}
 
     def get_requst(self, rds):
-        Session.client(self, service).delete_security_group(rds['id'])
-        obj = Session.client(self, service).find_security_group(rds['id'])
+        obj = Session.client(self, service).delete_security_group(rds['id'])
         json = dict()  # 创建 {}
         if obj is not None:
             for name in dir(obj):

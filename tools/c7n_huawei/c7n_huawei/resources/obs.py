@@ -1,6 +1,7 @@
 # Copyright 2017-2018 Capital One Services, LLC
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the "Li
+# cense");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -12,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from c7n.filters import Filter
+from c7n.utils import set_annotation
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
@@ -55,6 +58,49 @@ class Obs(QueryResourceManager):
             # 关闭ObsClient，如果是全局ObsClient实例，可以不在每个方法调用完成后关闭
             # ObsClient在调用ObsClient.close方法关闭后不能再次使用
             Session.client(self, service).close()
+
+@Obs.filter_registry.register('global-grants')
+class GlobalGrantsFilter(Filter):
+    """Filters :example:
+    .. code-block:: yaml
+
+       policies:
+         - name: aliyun-global-grants
+           resource: aliyun.oss
+           filters:
+            - type: global-grants
+    """
+
+    schema = type_schema(
+        'global-grants',
+        allow_website={'type': 'boolean'},
+        operator={'type': 'string', 'enum': ['or', 'and']},
+        permissions={
+            'type': 'array', 'items': {
+                'type': 'string', 'enum': [
+                    'READ', 'WRITE', 'WRITE_ACP', 'READ_ACP', 'FULL_CONTROL']}})
+
+    def process(self, buckets, event=None):
+        with self.executor_factory(max_workers=5) as w:
+            results = w.map(self.process_bucket, buckets)
+            results = list(filter(None, list(results)))
+            return results
+
+    def process_bucket(self, b):
+        resp = Session.client(self, service).listBuckets(isQueryLocation=True)
+        # 有效值：private、public-read、public-read-write
+        acl = resp.get_bucket_acl().acl
+        if acl == 'private':
+            return
+
+        results = []
+        perms = self.data.get('permissions', [])
+        if not perms or (perms and acl in perms):
+            results.append(acl)
+
+        if results:
+            set_annotation(b, 'GlobalPermissions', results)
+            return b
 
 @Obs.action_registry.register('createBucket')
 class ObsCreateBucket(MethodAction):

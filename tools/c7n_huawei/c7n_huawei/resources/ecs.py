@@ -17,6 +17,7 @@ from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
 from c7n_huawei.filters.filter import HuaweiAgeFilter
+from c7n_huawei.filters.filter import MetricsFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
@@ -33,17 +34,23 @@ class Ecs(QueryResourceManager):
 
     def get_requst(self):
         servers = Session.client(self, service).servers(limit=10000)
-        arr = list() # 创建 []
+        arr = list()  # 创建 []
         if servers is not None:
             for server in servers:
-                json = dict() # 创建 {}
+                json = dict()  # 创建 {}
                 for name in dir(server):
                     if not name.startswith('_'):
                         value = getattr(server, name)
                         if not callable(value):
                             json[name] = value
-            arr.append(json)
+                arr.append(json)
         return arr
+
+@Ecs.filter_registry.register('metrics')
+class EcsMetricsFilter(MetricsFilter):
+
+    def get_requst(self):
+        return None
 
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(HuaweiAgeFilter):
@@ -137,8 +144,7 @@ class Delete(MethodAction):
     attr_filter = ('status', ('SHUTOFF',))
 
     def get_requst(self, instance):
-        Session.client(self, service).delete_server(instance['id'])
-        server = Session.client(self, service).get_server(instance['id'])
+        server = Session.client(self, service).delete_server(instance['id'])
         json = dict()  # 创建 {}
         if server is not None:
             for name in dir(server):

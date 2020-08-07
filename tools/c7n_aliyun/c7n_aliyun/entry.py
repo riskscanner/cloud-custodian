@@ -24,6 +24,10 @@ def initialize_aliyun():
     """Load aliyun provider"""
     # register execution modes
 
+    import c7n_aliyun.policy  # noqa
+
     # load shared registered resources
+    import c7n_aliyun.actions
+    import c7n_aliyun.output  # noqa
 
 
