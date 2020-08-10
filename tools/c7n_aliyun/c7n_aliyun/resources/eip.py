@@ -57,7 +57,7 @@ class AliyunEipFilter(AliyunEipFilter):
 
 @Eip.action_registry.register('release')
 class EipRelease(MethodAction):
-    """Filters
+    """Filters:
 
        :Example:
 

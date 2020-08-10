@@ -48,6 +48,17 @@ class HuaweiElbFilter(Filter):
             return False
         return i
 
+class HuaweiVpcFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
+
 class HuaweiAgeFilter(Filter):
     """Automatically filter resources older than a given date.
 

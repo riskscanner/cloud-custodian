@@ -15,6 +15,7 @@
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import HuaweiVpcFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
@@ -44,6 +45,22 @@ class Vpc(QueryResourceManager):
                             json[name] = value
                 arr.append(json)
         return arr
+
+@Vpc.filter_registry.register('unused')
+class HuaweiVpcFilter(HuaweiVpcFilter):
+    """Filters:Example:
+       .. code-block:: yaml
+
+           policies:
+             - name: huawei-vpc
+               resource: huawei.vpc
+               filters:
+                 - type: unused
+
+    """
+    # CREATING：创建中
+    # OK：创建成功
+    schema = type_schema('OK')
 
 @Vpc.action_registry.register('delete')
 class Delete(MethodAction):
