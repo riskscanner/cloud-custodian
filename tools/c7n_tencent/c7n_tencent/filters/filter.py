@@ -15,7 +15,7 @@ from c7n.utils import local_session, chunks
 from c7n.utils import type_schema
 
 
-class HuaweiEipFilter(Filter):
+class TencentEipFilter(Filter):
     schema = None
 
     def validate(self):
@@ -26,7 +26,7 @@ class HuaweiEipFilter(Filter):
             return False
         return i
 
-class HuaweiDiskFilter(Filter):
+class TencentDiskFilter(Filter):
     schema = None
 
     def validate(self):
@@ -37,7 +37,7 @@ class HuaweiDiskFilter(Filter):
             return False
         return i
 
-class HuaweiElbFilter(Filter):
+class TencentElbFilter(Filter):
     schema = None
 
     def validate(self):
@@ -48,7 +48,7 @@ class HuaweiElbFilter(Filter):
             return False
         return i
 
-class HuaweiVpcFilter(Filter):
+class TencentVpcFilter(Filter):
     schema = None
 
     def validate(self):
@@ -59,7 +59,7 @@ class HuaweiVpcFilter(Filter):
             return False
         return i
 
-class HuaweiAgeFilter(Filter):
+class TencentAgeFilter(Filter):
     """Automatically filter resources older than a given date.
 
     **Deprecated** use a value filter with `value_type: age` which can be
@@ -90,7 +90,7 @@ class HuaweiAgeFilter(Filter):
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
             # Work around placebo issues with tz
-            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
+            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
             v = utc_date + datetime.timedelta(hours=8)
             n = datetime.datetime.now()
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
@@ -385,8 +385,8 @@ class MetricsFilter(Filter):
     """Supports   metrics filters on resources.
     .. code-block:: yaml
 
-      - name: ecs-underutilized
-        resource: ecs
+      - name: tencent-cvm-underutilized
+        resource: tencent.cvm
         filters:
           - type: metrics
             name: CPUUtilization
@@ -395,34 +395,6 @@ class MetricsFilter(Filter):
             value: 30
             op: less-than
 
-    Note periods when a resource is not sending metrics are not part
-    of calculated statistics as in the case of a stopped ecs instance,
-    nor for resources to new to have existed the entire
-    period. ie. being stopped for an ecs instance wouldn't lower the
-    average cpu utilization.
-
-    The "missing-value" key allows a policy to specify a default
-    value when CloudWatch has no data to report:
-
-    .. code-block:: yaml
-
-      - name: elb-low-request-count
-        resource: elb
-        filters:
-          - type: metrics
-            name: RequestCount
-            statistics: Sum
-            days: 7
-            value: 7
-            missing-value: 0
-            op: less-than
-
-    This policy matches any ELB with fewer than 7 requests for the past week.
-    ELBs with no requests during that time will have an empty set of metrics.
-    Rather than skipping those resources, "missing-value: 0" causes the
-    policy to treat their request counts as 0.
-
-    Note the default statistic for metrics is Average.
     """
 
     schema = type_schema(
@@ -455,7 +427,7 @@ class MetricsFilter(Filter):
 
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
-        'ecs': 'acs_ecs_dashboard',
+        'cvm': 'acs_cvm_dashboard',
     }
 
     def process(self, resources, event=None):
@@ -517,7 +489,7 @@ class MetricsFilter(Filter):
             request.set_Period(self.period)
             request.set_Namespace(self.namespace)
             request.set_MetricName(self.metric)
-            collected_metrics = r.setdefault('c7n_huawei.metrics', {})
+            collected_metrics = r.setdefault('c7n_tencent.metrics', {})
             # Note this annotation cache is policy scoped, not across
             # policies, still the lack of full qualification on the key
             # means multiple filters within a policy using the same metric
@@ -536,7 +508,7 @@ class MetricsFilter(Filter):
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' not in self.data:
                     continue
-                collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_huawei:detail': 'Fill value for missing data'})
+                collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_tencent:detail': 'Fill value for missing data'})
             if self.data.get('percent-attr'):
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):

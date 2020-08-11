@@ -122,9 +122,6 @@ def _send_request(request):
 def list_vpcs():
     request = DescribeVpcsRequest()
     response = _send_request(request)
-    print("!@$!@#$@#$%#$")
-    print(response)
-    print("!@$!@#$@#$%#$")
 
 def list_sgs_attr():
     request = DescribeSecurityGroupAttributeRequest()
@@ -192,7 +189,7 @@ def get_eip():
 
 if __name__ == '__main__':
     logging.info("Hello Aliyun OpenApi!")
-    # list_instances()
+    list_instances()
     # delete_ecs("i-wz9h7lsnk5beaipnvn97")
     # stop_instance("i-wz9h7lsnk5beaipnvn97")
     # get_eip()

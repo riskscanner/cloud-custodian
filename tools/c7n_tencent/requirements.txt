@@ -1,0 +1,3 @@
+pycryptodome==3.9.8
+crcmod==1.7
+tencentcloud-sdk-python==3.0.234

@@ -65,8 +65,8 @@ class GlobalGrantsFilter(Filter):
     .. code-block:: yaml
 
        policies:
-         - name: aliyun-global-grants
-           resource: aliyun.oss
+         - name: huawei-global-grants
+           resource: huawei.oss
            filters:
             - type: global-grants
     """
