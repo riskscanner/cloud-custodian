@@ -3,9 +3,10 @@ ResourceMap = {
     "tencent.eip": "c7n_tencent.resources.eip.Eip",
     "tencent.disk": "c7n_tencent.resources.disk.Disk",
     "tencent.vpc": "c7n_tencent.resources.vpc.Vpc",
-    "tencent.obs": "c7n_tencent.resources.obs.Obs",
-    "tencent.elb": "c7n_tencent.resources.elb.Elb",
-    "tencent.rds": "c7n_tencent.resources.rds.Rds",
+    "tencent.cos": "c7n_tencent.resources.cos.Cos",
+    "tencent.clb": "c7n_tencent.resources.clb.Clb",
+    "tencent.cdb": "c7n_tencent.resources.cdb.Cdb",
+    "tencent.dcdb": "c7n_tencent.resources.dcdb.Dcdb",
     "tencent.security-group": "c7n_tencent.resources.securitygroup.SecurityGroup",
 
 }

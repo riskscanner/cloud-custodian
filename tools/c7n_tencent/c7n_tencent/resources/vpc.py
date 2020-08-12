@@ -13,29 +13,29 @@
 # limitations under the License.
 import logging
 
-from tencentcloud.cbs.v20170312 import models
+from tencentcloud.vpc.v20170312 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentDiskFilter
+from c7n_tencent.filters.filter import TencentVpcFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
-service = 'cbs_client.disk'
+service = 'vpc_client.vpc'
 
-@resources.register('disk')
-class Disk(QueryResourceManager):
+@resources.register('vpc')
+class Vpc(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        enum_spec = (None, 'DiskSet', None)
-        id = 'DiskId'
+        enum_spec = (None, 'VpcSet', None)
+        id = 'VpcId'
 
     def get_requst(self):
         try:
-            req = models.DescribeDisksRequest()
-            resp = Session.client(self, service).DescribeDisks(req)
+            req = models.DescribeVpcsRequest()
+            resp = Session.client(self, service).DescribeVpcs(req)
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))
 
@@ -50,8 +50,8 @@ class Disk(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Disk.filter_registry.register('unused')
-class TencentDiskFilter(TencentDiskFilter):
+@Vpc.filter_registry.register('unused')
+class TencentVpcFilter(TencentVpcFilter):
     """Filters
 
        :Example:
@@ -59,23 +59,22 @@ class TencentDiskFilter(TencentDiskFilter):
        .. code-block:: yaml
 
            policies:
-             - name: tencent-orphaned-disk
-               resource: tencent.disk
+             - name: tencent-orphaned-vpc
+               resource: tencent.vpc
                filters:
                  - type: unused
     """
     schema = type_schema('AVAILABLE')
 
-@Disk.action_registry.register('delete')
-class DiskDelete(MethodAction):
+@Vpc.action_registry.register('delete')
+class VpcDelete(MethodAction):
 
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
-    attr_filter = ('Status', ('AVAILABLE', ))
 
-    def get_requst(self, disk):
-        req = models.TerminateDisksRequest()
-        params = {"DiskId": disk['DiskId']}
+    def get_requst(self, vpc):
+        req = models.DeleteVpcRequest()
+        params = { "VpcId" : vpc['VpcId']}
         req.from_json_string(params)
-        resp = Session.client(self, service).TerminateDisks(req)
+        resp = Session.client(self, service).DeleteVpc(req)
         return resp.to_json_string().replace('null', 'None')

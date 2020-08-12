@@ -13,29 +13,32 @@
 # limitations under the License.
 import logging
 
-from tencentcloud.cbs.v20170312 import models
+from tencentcloud.clb.v20180317 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentDiskFilter
+from c7n_tencent.filters.filter import TencentClbFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
-service = 'cbs_client.disk'
+service = 'clb_client.clb'
 
-@resources.register('disk')
-class Disk(QueryResourceManager):
+@resources.register('clb')
+class Clb(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        enum_spec = (None, 'DiskSet', None)
-        id = 'DiskId'
+        enum_spec = (None, 'LoadBalancerSet', None)
+        id = 'LoadBalancerId'
 
     def get_requst(self):
         try:
-            req = models.DescribeDisksRequest()
-            resp = Session.client(self, service).DescribeDisks(req)
+            # 实例化一个cvm实例信息查询请求对象,每个接口都会对应一个request对象。
+            req = models.DescribeLoadBalancersRequest()
+            # 通过client对象调用DescribeInstances方法发起请求。注意请求方法名与请求对象是对应的。
+            # 返回的resp是一个DescribeInstancesResponse类的实例，与请求对象对应。
+            resp = Session.client(self, service).DescribeLoadBalancers(req)
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))
 
@@ -50,32 +53,37 @@ class Disk(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Disk.filter_registry.register('unused')
-class TencentDiskFilter(TencentDiskFilter):
-    """Filters
 
-       :Example:
-
+@Clb.filter_registry.register('unused')
+class TencentClbFilter(TencentClbFilter):
+    # 查询指定地域已创建的EIP
+    """Filters:Example:
        .. code-block:: yaml
 
            policies:
-             - name: tencent-orphaned-disk
-               resource: tencent.disk
+             - name: tencent-clb
+               resource: tencent.clb
                filters:
                  - type: unused
+
     """
-    schema = type_schema('AVAILABLE')
+    schema = type_schema('Available')
 
-@Disk.action_registry.register('delete')
-class DiskDelete(MethodAction):
-
+@Clb.action_registry.register('delete')
+class ClbDelete(MethodAction):
+    """
+         policies:
+           - name: tencent-clb-delete
+             resource: tencent.clb
+             actions:
+               - delete
+     """
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
-    attr_filter = ('Status', ('AVAILABLE', ))
 
-    def get_requst(self, disk):
-        req = models.TerminateDisksRequest()
-        params = {"DiskId": disk['DiskId']}
+    def get_requst(self, clb):
+        req = models.DeleteLoadBalancerRequest()
+        params = {"LoadBalancerId": clb['LoadBalancerId']}
         req.from_json_string(params)
-        resp = Session.client(self, service).TerminateDisks(req)
+        resp = Session.client(self, service).DeleteLoadBalancer(req)
         return resp.to_json_string().replace('null', 'None')

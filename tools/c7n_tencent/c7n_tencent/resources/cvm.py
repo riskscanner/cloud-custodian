@@ -106,10 +106,10 @@ class Start(MethodAction):
 
     def get_requst(self, instance):
         req = models.StartInstancesRequest()
-        params = '{"InstanceId":"' + instance['InstanceId'] + '"}'
+        params = {"InstanceId": instance['InstanceId']}
         req.from_json_string(params)
         resp = Session.client(self, service).StartInstances(req)
-        return resp
+        return resp.to_json_string().replace('null', 'None')
 
 @Cvm.action_registry.register('stop')
 class Stop(MethodAction):
@@ -126,10 +126,10 @@ class Stop(MethodAction):
 
     def get_requst(self, instance):
         req = models.StopInstancesRequest()
-        params = '{"InstanceId":"' + instance['InstanceId'] + '"}'
+        params = {"InstanceId": instance['InstanceId']}
         req.from_json_string(params)
         resp = Session.client(self, service).StopInstances(req)
-        return resp
+        return resp.to_json_string().replace('null', 'None')
 
 
 @Cvm.action_registry.register('delete')
@@ -147,7 +147,7 @@ class Delete(MethodAction):
 
     def get_requst(self, instance):
         req = models.TerminateInstancesRequest()
-        params = '{"InstanceId":"' + instance['InstanceId'] + '"}'
+        params = {"InstanceId": instance['InstanceId']}
         req.from_json_string(params)
         resp = Session.client(self, service).TerminateInstances(req)
-        return resp
+        return resp.to_json_string().replace('null', 'None')

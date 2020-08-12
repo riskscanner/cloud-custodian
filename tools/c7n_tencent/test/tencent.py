@@ -1,18 +1,16 @@
 import logging
-import os
+
+from qcloud_cos import CosConfig
+from qcloud_cos import CosS3Client
+from tencentcloud.cbs.v20170312 import cbs_client, models
+from tencentcloud.cdb.v20170320 import cdb_client, models
+from tencentcloud.clb.v20180317 import clb_client, models
 # -*- coding: utf-8 -*-
 from tencentcloud.common import credential
-from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 # 导入对应产品模块的 client models。
 from tencentcloud.cvm.v20170312 import cvm_client, models
-from tencentcloud.cbs.v20170312 import cbs_client, models
-
-# 导入可选配置项
-from tencentcloud.common.profile.client_profile import ClientProfile
-from tencentcloud.common.profile.http_profile import HttpProfile
-
-# configuration the log output formatter, if you want to save the output to file,
-# append ",filename='ecs_invoke.log'" after datefmt.
+from tencentcloud.dcdb.v20180411 import dcdb_client, models
+from tencentcloud.vpc.v20170312 import vpc_client, models
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 # 本地测试用例
@@ -22,12 +20,15 @@ def _loadFile_():
     lines = f.readlines()
     for line in lines:
         line = line.strip()
-        if "tencent.secretId" in line:
+        if "tencent.secret2Id" in line:
             secretId = line[line.rfind('=') + 1:]
             json['secretId'] = secretId
-        if "tencent.secretKey" in line:
+        if "tencent.secret2Key" in line:
             secretKey = line[line.rfind('=') + 1:]
             json['secretKey'] = secretKey
+        if "tencent.endpoint" in line:
+            endpoint = line[line.rfind('=') + 1:]
+            json['endpoint'] = endpoint
     f.close()
     print('认证信息:   ' + str(json))
     return json
@@ -41,6 +42,19 @@ cred = credential.Credential(params['secretId'], params['secretKey'])
 client = cvm_client.CvmClient(cred, "ap-shanghai")
 
 CbsClient = cbs_client.CbsClient(cred, "ap-shanghai")
+
+vpcClient = vpc_client.VpcClient(cred, "ap-shanghai")
+
+clbClient = clb_client.ClbClient(cred, "ap-shanghai")
+
+cdbClient = cdb_client.CdbClient(cred, "ap-shanghai")
+
+dcdbClient = dcdb_client.DcdbClient(cred, "ap-shanghai")
+
+# 1. 设置用户配置, 包括 secretId，secretKey 以及 Region
+config = CosConfig(Region="ap-shanghai", SecretId=params['secretId'], SecretKey=params['secretKey'], Endpoint=params['endpoint'])
+# 2. 获取客户端对象
+cosClient = CosS3Client(config)
 
 def DescribeZonesRequest():
     # 实例化一个请求对象
@@ -99,9 +113,68 @@ def DescribeDisks():
     resp = CbsClient.DescribeDisks(req)
     print(resp.to_json_string())
 
+def DescribeVpcsResponse():
+    req = models.DescribeVpcsRequest()
+    params = '{}'
+    req.from_json_string(params)
+
+    resp = vpcClient.DescribeVpcs(req)
+    print(resp.to_json_string())
+
+def DescribeAddresses():
+    req = models.DescribeAddressesRequest()
+    params = '{}'
+    req.from_json_string(params)
+
+    resp = vpcClient.DescribeAddresses(req)
+    print(resp.to_json_string())
+
+def DescribeSecurityGroups():
+    req = models.DescribeSecurityGroupsRequest()
+    params = '{}'
+    req.from_json_string(params)
+
+    resp = vpcClient.DescribeSecurityGroups(req)
+    print(resp.to_json_string())
+
+def DescribeLoadBalancers():
+    req = models.DescribeLoadBalancersRequest()
+    params = '{}'
+    req.from_json_string(params)
+
+    resp = clbClient.DescribeLoadBalancers(req)
+    print(resp.to_json_string())
+
+def DescribeDBInstances():
+    req = models.DescribeDBInstancesRequest()
+    params = '{}'
+    req.from_json_string(params)
+
+    resp = cdbClient.DescribeDBInstances(req)
+    print(resp.to_json_string())
+
+def DescribeDCDBInstances():
+    req = models.DescribeDCDBInstancesRequest()
+    params = '{}'
+    req.from_json_string(params)
+
+    resp = dcdbClient.DescribeDCDBInstances(req)
+    print(resp.to_json_string())
+
+def list_buckets():
+    resp = cosClient.list_buckets()
+    print(resp)
+
 if __name__ == '__main__':
     logging.info("Hello Tencent OpenApi!")
     # DescribeZonesRequest()
     # DescribeInstances()
     # DescribeImages()
-    DescribeDisks()
+    # DescribeDisks()
+    # DescribeVpcsResponse()
+    # DescribeAddresses()
+    # DescribeSecurityGroups()
+    # DescribeLoadBalancers()
+    # DescribeDBInstances()
+    # DescribeDCDBInstances()
+    list_buckets()

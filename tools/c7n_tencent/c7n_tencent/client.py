@@ -21,6 +21,11 @@ from tencentcloud.common import credential
 # 导入对应产品模块的 client models。
 from tencentcloud.cvm.v20170312 import cvm_client
 from tencentcloud.cbs.v20170312 import cbs_client
+from tencentcloud.vpc.v20170312 import vpc_client
+from tencentcloud.clb.v20180317 import clb_client
+from tencentcloud.cdb.v20170320 import cdb_client
+from qcloud_cos import CosConfig
+from qcloud_cos import CosS3Client
 
 log = logging.getLogger('c7n_tencent.client')
 
@@ -56,5 +61,17 @@ class Session:
             client = cvm_client.CvmClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         elif 'cbs_client' in service:
             client = cbs_client.CbsClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        elif 'vpc_client' in service:
+            client = vpc_client.VpcClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        elif 'clb_client' in service:
+            client = clb_client.ClbClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        elif 'cdb_client' in service:
+            client = cdb_client.CdbClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        elif 'coss3_client' in service:
+            # 1. 设置用户配置, 包括 secretId，secretKey 以及 Region
+            config = CosConfig(Region=os.getenv('TENCENT_DEFAULT_REGION'), SecretId=os.getenv('TENCENT_SECRETID'),
+                               SecretKey=os.getenv('TENCENT_SECRETKEY'),Endpoint=os.getenv('TENCENT_ENDPOINT'))
+            # 2. 获取客户端对象
+            client = CosS3Client(config)
         return client
 

@@ -13,29 +13,29 @@
 # limitations under the License.
 import logging
 
-from tencentcloud.cbs.v20170312 import models
+from tencentcloud.cdb.v20170320 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentDiskFilter
+from c7n_tencent.filters.filter import TencentCdbFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
-service = 'cbs_client.disk'
+service = 'cdb_client.cdb'
 
-@resources.register('disk')
-class Disk(QueryResourceManager):
+@resources.register('cdb')
+class Cdb(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        enum_spec = (None, 'DiskSet', None)
-        id = 'DiskId'
+        enum_spec = (None, 'Items', None)
+        id = 'ItemId'
 
     def get_requst(self):
         try:
-            req = models.DescribeDisksRequest()
-            resp = Session.client(self, service).DescribeDisks(req)
+            req = models.DescribeDBInstancesRequest()
+            resp = Session.client(self, service).DescribeDBInstances(req)
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))
 
@@ -50,8 +50,8 @@ class Disk(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Disk.filter_registry.register('unused')
-class TencentDiskFilter(TencentDiskFilter):
+@Cdb.filter_registry.register('unused')
+class TencentCdbFilter(TencentCdbFilter):
     """Filters
 
        :Example:
@@ -59,23 +59,30 @@ class TencentDiskFilter(TencentDiskFilter):
        .. code-block:: yaml
 
            policies:
-             - name: tencent-orphaned-disk
-               resource: tencent.disk
+             - name: tencent-orphaned-cdb
+               resource: tencent.cdb
                filters:
                  - type: unused
     """
-    schema = type_schema('AVAILABLE')
+    schema = type_schema('UNBIND')
 
-@Disk.action_registry.register('delete')
-class DiskDelete(MethodAction):
+@Cdb.action_registry.register('restart')
+class CdbReStart(MethodAction):
+    """
+        policies:
+          - name: tencent-cdb-restart
+            resource: tencent.cvm
+            actions:
+              - restart
+    """
 
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-    attr_filter = ('Status', ('AVAILABLE', ))
+    schema = type_schema('restart')
+    method_spec = {'op': 'restart'}
+    attr_filter = ('status', ('SHUTOFF',))
 
-    def get_requst(self, disk):
-        req = models.TerminateDisksRequest()
-        params = {"DiskId": disk['DiskId']}
+    def get_requst(self, cdb):
+        req = models.RestartDBInstancesRequest()
+        params = {"ItemId": cdb['ItemId']}
         req.from_json_string(params)
-        resp = Session.client(self, service).TerminateDisks(req)
+        resp = Session.client(self, service).RestartDBInstances(req)
         return resp.to_json_string().replace('null', 'None')

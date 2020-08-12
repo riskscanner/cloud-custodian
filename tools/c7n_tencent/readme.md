@@ -19,19 +19,17 @@ Status - Alpha
 pip install -e tools/c7n_tencent
 ```
 ```
-# 弹性云服务ECS
-TENCENT_AK=xxxxx
-TENCENT_SK=xxxxx
-TENCENT_DEFAULT_REGION=cn-southwest-2
-TENCENT_PROJECT=xxxxx
-TENCENT_CLOUD=xxxx
+# 弹性云服务CVM
+TENCENT_SECRETID=xxxx 
+TENCENT_SECRETKEY=xxxx
+TENCENT_DEFAULT_REGION=xxxx
 custodian run -s . policy.yml
 ```
 ```
-# 对象存储服务OBS
-TENCENT_AK=xxxxx
-TENCENT_SK=xxxxx
-TENCENT_DEFAULT_REGION=cn-southwest-2
+# 对象存储服务COS
+TENCENT_SECRETID=xxxx 
+TENCENT_SECRETKEY=xxxx
+TENCENT_DEFAULT_REGION=xxxx
 TENCENT_ENDPOINT=xxxx
 custodian run -s . policy.yml
 ```
