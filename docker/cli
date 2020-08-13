@@ -27,13 +27,13 @@ RUN rm -R tools/c7n_gcp/tests
 ADD tools/c7n_azure /src/tools/c7n_azure
 RUN rm -R tools/c7n_azure/tests_azure
 ADD tools/c7n_kube /src/tools/c7n_kube
-RUN rm -R tools/c7n_kube/test
+RUN rm -R tools/c7n_kube/tests
 ADD tools/c7n_aliyun /src/tools/c7n_aliyun
-RUN rm -R tools/c7n_kube/test
+RUN rm -R tools/c7n_aliyun/test
 ADD tools/c7n_aliyun /src/tools/c7n_huawei
-RUN rm -R tools/c7n_kube/test
+RUN rm -R tools/c7n_huawei/test
 ADD tools/c7n_aliyun /src/tools/c7n_tencent
-RUN rm -R tools/c7n_kube/test
+RUN rm -R tools/c7n_tencent/test
 
 # Install requested providers
 ARG providers="azure gcp kube aliyun huawei tencent"
