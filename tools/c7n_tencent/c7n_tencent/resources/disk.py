@@ -29,6 +29,7 @@ service = 'cbs_client.disk'
 class Disk(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'cbs_client.disk'
         enum_spec = (None, 'DiskSet', None)
         id = 'DiskId'
 
@@ -64,7 +65,16 @@ class TencentDiskFilter(TencentDiskFilter):
                filters:
                  - type: unused
     """
-    schema = type_schema('AVAILABLE')
+    # 云盘状态。取值范围：
+    # UNATTACHED：未挂载
+    # ATTACHING：挂载中
+    # ATTACHED：已挂载
+    # DETACHING：解挂中
+    # EXPANDING：扩容中
+    # ROLLBACKING：回滚中
+    # TORECYCLE：待回收
+    # DUMPING：拷贝硬盘中。
+    schema = type_schema('UNATTACHED')
 
 @Disk.action_registry.register('delete')
 class DiskDelete(MethodAction):

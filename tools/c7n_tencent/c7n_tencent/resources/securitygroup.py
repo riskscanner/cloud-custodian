@@ -30,6 +30,7 @@ service = 'vpc_client.security-group'
 class SecurityGroup(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'vpc_client.security-group'
         enum_spec = (None, 'SecurityGroupSet', None)
         id = 'SecurityGroupId'
 
@@ -37,6 +38,12 @@ class SecurityGroup(QueryResourceManager):
         try:
             req = models.DescribeSecurityGroupsRequest()
             resp = Session.client(self, service).DescribeSecurityGroups(req)
+            for res in resp.SecurityGroupSet:
+                req2 = models.DescribeSecurityGroupPoliciesRequest()
+                params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
+                req2.from_json_string(params)
+                resp2 = Session.client(self, service).DescribeSecurityGroupPolicies(req2)
+                res.IpPermissions = resp2.SecurityGroupPolicySet
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))
 
@@ -67,7 +74,7 @@ class Delete(MethodAction):
 
     def get_requst(self, security_group):
         req = models.DeleteSecurityGroupRequest()
-        params = {"SecurityGroupId": security_group['SecurityGroupId']}
+        params = '{"SecurityGroupId" :"' + security_group["SecurityGroupId"] + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).DeleteSecurityGroup(req)
         return resp.to_json_string().replace('null', 'None')
@@ -98,7 +105,8 @@ class IPPermission(SGPermission):
                         Ports: [20,21,22,25,80,443,465,1433,1434,3306,3389,4333,5432,5500]
                         CidrV6: "::/0"
     """
-    ip_permissions_key = "security_group_rules"
+    ip_permissions_key = "SecurityGroupSet"
+    ip_permissions_type = "ingress"
     schema = {
         'type': 'object',
         'additionalProperties': False,
@@ -107,19 +115,25 @@ class IPPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, "remote_ip_prefix", "remote_ip_prefix")
-
+        self.process_cidrs(perm, 'CidrBlock', 'Ipv6CidrBlock')
 
     def securityGroupAttributeRequst(self, sg):
         req = models.DescribeSecurityGroupsRequest()
-        params = {"SecurityGroupId": sg['SecurityGroupId']}
+        params = '{"SecurityGroupId" :"' + sg["SecurityGroupId"] + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).DescribeSecurityGroups(req)
+        for res in resp.SecurityGroupSet:
+            req2 = models.DescribeSecurityGroupPoliciesRequest()
+            params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
+            req2.from_json_string(params)
+            resp2 = Session.client(self, service).DescribeSecurityGroupPolicies(req2)
+            res.IpPermissions = resp2.SecurityGroupPolicySet
         return resp.to_json_string().replace('null', 'None')
 
 @SecurityGroup.filter_registry.register('egress')
 class IPPermission(SGPermission):
     ip_permissions_key = "Permissions.Permission"
+    ip_permissions_type = "egress"
     schema = {
         'type': 'object',
         'additionalProperties': False,
@@ -129,10 +143,16 @@ class IPPermission(SGPermission):
 
     def securityGroupAttributeRequst(self, sg):
         req = models.DescribeSecurityGroupsRequest()
-        params = {"SecurityGroupId": sg['SecurityGroupId']}
+        params = '{"SecurityGroupId" :"' + sg["SecurityGroupId"] + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).DescribeSecurityGroups(req)
+        for res in resp.SecurityGroupSet:
+            req2 = models.DescribeSecurityGroupPoliciesRequest()
+            params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
+            req2.from_json_string(params)
+            resp2 = Session.client(self, service).DescribeSecurityGroupPolicies(req2)
+            res.IpPermissions = resp2.SecurityGroupPolicySet
         return resp.to_json_string().replace('null', 'None')
 
 def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
+        self.process_cidrs(perm, "CidrBlock", "Ipv6CidrBlock")

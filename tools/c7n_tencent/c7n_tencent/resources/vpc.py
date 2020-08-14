@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 
-from tencentcloud.vpc.v20170312 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
+from tencentcloud.vpc.v20170312 import models
 
 from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentVpcFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
@@ -29,6 +29,7 @@ service = 'vpc_client.vpc'
 class Vpc(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'vpc_client.vpc'
         enum_spec = (None, 'VpcSet', None)
         id = 'VpcId'
 
@@ -50,22 +51,6 @@ class Vpc(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Vpc.filter_registry.register('unused')
-class TencentVpcFilter(TencentVpcFilter):
-    """Filters
-
-       :Example:
-
-       .. code-block:: yaml
-
-           policies:
-             - name: tencent-orphaned-vpc
-               resource: tencent.vpc
-               filters:
-                 - type: unused
-    """
-    schema = type_schema('AVAILABLE')
-
 @Vpc.action_registry.register('delete')
 class VpcDelete(MethodAction):
 
@@ -74,7 +59,7 @@ class VpcDelete(MethodAction):
 
     def get_requst(self, vpc):
         req = models.DeleteVpcRequest()
-        params = { "VpcId" : vpc['VpcId']}
-        req.from_json_string(params)
+        params = '{"VpcId" :"' + vpc["VpcId"] + '"}'
+        req.from_json_string(str(params))
         resp = Session.client(self, service).DeleteVpc(req)
         return resp.to_json_string().replace('null', 'None')

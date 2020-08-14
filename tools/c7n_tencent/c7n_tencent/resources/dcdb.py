@@ -29,6 +29,7 @@ service = 'dcdb_client.dcdb'
 class Dcdb(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'dcdb_client.dcdb'
         enum_spec = (None, 'Instances', None)
         id = 'InstancesId'
 
@@ -50,7 +51,7 @@ class Dcdb(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Dcdb.filter_registry.register('unused')
+@Dcdb.filter_registry.register('running')
 class TencentDcdbFilter(TencentCdbFilter):
     """Filters
 
@@ -59,10 +60,23 @@ class TencentDcdbFilter(TencentCdbFilter):
        .. code-block:: yaml
 
            policies:
-             - name: tencent-orphaned-dcdb
+             - name: tencent-running-dcdb
                resource: tencent.dcdb
                filters:
-                 - type: unused
+                 - type: running
     """
-    schema = type_schema('UNBIND')
+    # 实例状态。取值范围：
+    # 1：申请中
+    # 2：运行中
+    # 3：受限运行中(主备切换中)
+    # 4：已隔离
+    # 5：回收中
+    # 6：已回收
+    # 7：任务执行中(实例做备份、回档等操作)
+    # 8：已下线
+    # 9：实例扩容中
+    # 10：实例迁移中
+    # 11：只读
+    # 12：重启中
+    schema = type_schema(2)
 

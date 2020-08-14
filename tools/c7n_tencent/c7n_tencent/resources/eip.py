@@ -23,12 +23,13 @@ from c7n_tencent.filters.filter import TencentEipFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
-service = 'eip_client.eip'
+service = 'vpc_client.eip'
 
 @resources.register('eip')
 class Eip(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'vpc_client.eip'
         enum_spec = (None, 'AddressSet', None)
         id = 'AddressId'
 
@@ -64,6 +65,8 @@ class TencentEipFilter(TencentEipFilter):
                filters:
                  - type: unused
     """
+    # EIP状态，包含
+    # 'CREATING'(创建中), 'BINDING'(绑定中), 'BIND'(已绑定), 'UNBINDING'(解绑中), 'UNBIND'(已解绑), 'OFFLINING'(释放中), 'BIND_ENI'(绑定悬空弹性网卡)
     schema = type_schema('UNBIND')
 
 @Eip.action_registry.register('delete')

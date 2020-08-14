@@ -1,3 +1,4 @@
+import json
 import logging
 
 from qcloud_cos import CosConfig
@@ -8,9 +9,11 @@ from tencentcloud.clb.v20180317 import clb_client, models
 # -*- coding: utf-8 -*-
 from tencentcloud.common import credential
 # 导入对应产品模块的 client models。
+from tencentcloud.monitor.v20180724 import monitor_client, models
 from tencentcloud.cvm.v20170312 import cvm_client, models
 from tencentcloud.dcdb.v20180411 import dcdb_client, models
 from tencentcloud.vpc.v20170312 import vpc_client, models
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 # 本地测试用例
@@ -35,24 +38,29 @@ def _loadFile_():
 
 params = _loadFile_()
 
+regionUU = 'ap-shanghai'
+
 # 实例化一个认证对象，入参需要传入腾讯云账户 secretId，secretKey
 cred = credential.Credential(params['secretId'], params['secretKey'])
 
 # 实例化要请求产品 (以 cvm 为例) 的 client 对象
-client = cvm_client.CvmClient(cred, "ap-shanghai")
+client = cvm_client.CvmClient(cred, regionUU)
 
-CbsClient = cbs_client.CbsClient(cred, "ap-shanghai")
+CbsClient = cbs_client.CbsClient(cred, regionUU)
 
-vpcClient = vpc_client.VpcClient(cred, "ap-shanghai")
+vpcClient = vpc_client.VpcClient(cred, regionUU)
 
-clbClient = clb_client.ClbClient(cred, "ap-shanghai")
+clbClient = clb_client.ClbClient(cred, regionUU)
 
-cdbClient = cdb_client.CdbClient(cred, "ap-shanghai")
+cdbClient = cdb_client.CdbClient(cred, regionUU)
 
-dcdbClient = dcdb_client.DcdbClient(cred, "ap-shanghai")
+dcdbClient = dcdb_client.DcdbClient(cred, regionUU)
+
+monitorClient = monitor_client.MonitorClient(cred, regionUU)
 
 # 1. 设置用户配置, 包括 secretId，secretKey 以及 Region
-config = CosConfig(Region="ap-shanghai", SecretId=params['secretId'], SecretKey=params['secretKey'], Endpoint=params['endpoint'])
+endpoint = 'cos.' + regionUU + '.myqcloud.com'
+config = CosConfig(Region=regionUU, SecretId=params['secretId'], SecretKey=params['secretKey'], Endpoint=endpoint)
 # 2. 获取客户端对象
 cosClient = CosS3Client(config)
 
@@ -135,6 +143,16 @@ def DescribeSecurityGroups():
     req.from_json_string(params)
 
     resp = vpcClient.DescribeSecurityGroups(req)
+    print(type(resp.SecurityGroupSet))
+    for res in resp.SecurityGroupSet:
+        print(type(res))
+        print(res)
+        req2 = models.DescribeSecurityGroupPoliciesRequest()
+        params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
+        req2.from_json_string(params)
+        resp2 = vpcClient.DescribeSecurityGroupPolicies(req2)
+        res.IpPermissions = resp2.SecurityGroupPolicySet
+
     print(resp.to_json_string())
 
 def DescribeLoadBalancers():
@@ -163,7 +181,30 @@ def DescribeDCDBInstances():
 
 def list_buckets():
     resp = cosClient.list_buckets()
-    print(resp)
+    for obj in resp['Buckets']['Bucket']:
+        print('obj', obj)
+        while True:
+            response = cosClient.list_objects(
+                Bucket=obj['Name']
+            )
+            print('response',response)
+            print('response```',response['Contents'])
+            response2 = cosClient.get_bucket_acl(
+                Bucket=obj['Name']
+            )
+            print('response2', response2)
+            if response['IsTruncated'] == 'false':
+                break
+            print('response', response)
+
+
+def DescribeBaseMetrics():
+    req = models.DescribeBaseMetricsRequest()
+    params = '{\"Namespace\":\"maguohao\",\"MetricName\":\"cvm\"}'
+    req.from_json_string(params)
+
+    resp = monitorClient.DescribeBaseMetrics(req)
+    print(resp.to_json_string())
 
 if __name__ == '__main__':
     logging.info("Hello Tencent OpenApi!")
@@ -178,3 +219,4 @@ if __name__ == '__main__':
     # DescribeDBInstances()
     # DescribeDCDBInstances()
     list_buckets()
+    # DescribeBaseMetrics()

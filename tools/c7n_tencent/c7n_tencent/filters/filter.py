@@ -22,7 +22,7 @@ class TencentEipFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['status'] != self.schema['properties']['type']['enum'][0]:
+        if i['AddressStatus'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -33,7 +33,8 @@ class TencentDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        if not(i['status'] is None) and self.schema['properties']['type']['enum'][0] == "available":
+        print(i)
+        if i['DiskState'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -44,7 +45,7 @@ class TencentCdbFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['status'] != self.schema['properties']['type']['enum'][0]:
+        if i['Status'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -56,17 +57,6 @@ class TencentClbFilter(Filter):
 
     def __call__(self, i, data):
         if i['Status'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
-
-class TencentVpcFilter(Filter):
-    schema = None
-
-    def validate(self):
-        return self
-
-    def __call__(self, i):
-        if i['status'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -101,7 +91,7 @@ class TencentAgeFilter(Filter):
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
             # Work around placebo issues with tz
-            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%MZ')
+            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
             v = utc_date + datetime.timedelta(hours=8)
             n = datetime.datetime.now()
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
@@ -269,43 +259,64 @@ class SGPermission(Filter):
 
     def process_ports(self, perm):
         found = None
-        if perm['port_range_max'] and perm['port_range_min']:
-            FromPort = int(perm['port_range_max'])
-            ToPort = int(perm['port_range_min'])
-            for port in self.ports:
-                if port >= FromPort and port <= ToPort:
-                    found = True
-                    break
-                found = False
-            only_found = False
-            for port in self.only_ports:
-                if port == FromPort and port == ToPort:
-                    only_found = True
-            if self.only_ports and not only_found:
-                found = found is None or found and True or False
-            if self.only_ports and only_found:
-                found = False
+        if self.ip_permissions_type == 'ingress':
+            poms = perm['IpPermissions']['Ingress']
+        else:
+            poms = perm['IpPermissions']['Egress']
+        for ingress in poms:
+            if ingress['Port']:
+                FromPort = ingress['Port']
+                for port in self.ports:
+                    if FromPort == "ALL":
+                        found = True
+                        break
+                    else:
+                        if ',' in FromPort:
+                            strs = FromPort.split(',')
+                            for str in strs:
+                                if port == int(str):
+                                    found = True
+                                    break
+                        else:
+                            if port == int(FromPort):
+                                found = True
+                                break
+                    found = False
+                only_found = False
+                for port in self.only_ports:
+                    if port == FromPort:
+                        only_found = True
+                if self.only_ports and not only_found:
+                    found = found is None or found and True or False
+                if self.only_ports and only_found:
+                    found = False
         return found
 
 
     def _process_cidr(self, cidr_key, cidr_type, SourceCidrIp, perm):
         found = None
-        SourceCidrIp = perm.get(SourceCidrIp, "")
         if not SourceCidrIp:
             return False
-        SourceCidrIp = {cidr_type: SourceCidrIp}
-        match_range = self.data[cidr_key]
-        if isinstance(match_range, dict):
-            match_range['key'] = cidr_type
+        if self.ip_permissions_type == 'ingress':
+            items = perm.get('IpPermissions').get('Ingress')
         else:
-            match_range = {cidr_type: match_range}
-        vf = ValueFilter(match_range, self.manager)
-        vf.annotate = False
-        found = vf(SourceCidrIp)
-        if found:
-            pass
-        else:
-            found = False
+            items = perm.get('IpPermissions').get('Egress')
+        for str in items:
+            SourceCidrIp = str.get(SourceCidrIp)
+            if SourceCidrIp:
+                sci = {cidr_type: SourceCidrIp}
+                match_range = self.data[cidr_key]
+                if isinstance(match_range, dict):
+                    match_range['key'] = cidr_type
+                else:
+                    match_range = {cidr_type: match_range}
+                vf = ValueFilter(match_range, self.manager)
+                vf.annotate = False
+                found = vf(sci)
+                if found:
+                    pass
+                else:
+                    found = False
         return found
 
     def process_cidrs(self, perm, ipv4Cidr, ipv6Cidr):
@@ -373,7 +384,7 @@ class SGPermission(Filter):
         result = self.securityGroupAttributeRequst(resource)
         matched = []
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
-        for perm in jmespath.search(self.ip_permissions_key, result):
+        for perm in jmespath.search(self.ip_permissions_key, json.loads(result)):
             perm_matches = {}
             for idx, f in enumerate(self.vfilters):
                 perm_matches[idx] = bool(f(perm))
@@ -452,7 +463,7 @@ class MetricsFilter(Filter):
         self.model = self.manager.get_model()
         self.op = OPERATORS[self.data.get('op', 'less-than')]
         self.value = self.data['value']
-        self.namespace = self.DEFAULT_NAMESPACE[self.model.service]
+        self.namespace = self.DEFAULT_NAMESPACE[self.model.service[self.model.service.rfind('.') + 1:]]
         self.log.debug("Querying metrics for %d", len(resources))
         matched = []
         with self.executor_factory(max_workers=3) as w:
@@ -464,7 +475,7 @@ class MetricsFilter(Filter):
             for f in as_completed(futures):
                 if f.exception():
                     self.log.warning(
-                        "CW Retrieval error: %s" % f.exception())
+                        "CW Retrieval error(json数据不合法,类似“group_buy_create_description_text”: “1. Select the blue “Buy” button to let other shoppers buy with you.” 这样的内容出现在json数据中): %s" % f.exception())
                     continue
                 matched.extend(f.result())
         return matched

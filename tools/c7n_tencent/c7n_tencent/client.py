@@ -24,6 +24,7 @@ from tencentcloud.cbs.v20170312 import cbs_client
 from tencentcloud.vpc.v20170312 import vpc_client
 from tencentcloud.clb.v20180317 import clb_client
 from tencentcloud.cdb.v20170320 import cdb_client
+from tencentcloud.monitor.v20180724 import monitor_client
 from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 
@@ -55,10 +56,11 @@ class Session:
     def client(self, service):
         # 实例化一个认证对象，入参需要传入腾讯云账户 secretId，secretKey
         cred = credential.Credential(os.getenv('TENCENT_SECRETID'), os.getenv('TENCENT_SECRETKEY'))
-
         if 'cvm_client' in service:
             # 实例化要请求产品 (以 cvm 为例) 的 client 对象
             client = cvm_client.CvmClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        if 'monitor_client' in service:
+            client = monitor_client.MonitorClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         elif 'cbs_client' in service:
             client = cbs_client.CbsClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         elif 'vpc_client' in service:
@@ -69,9 +71,12 @@ class Session:
             client = cdb_client.CdbClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         elif 'coss3_client' in service:
             # 1. 设置用户配置, 包括 secretId，secretKey 以及 Region
+            endpoint = 'cos.' + os.getenv('TENCENT_DEFAULT_REGION') + '.myqcloud.com'
             config = CosConfig(Region=os.getenv('TENCENT_DEFAULT_REGION'), SecretId=os.getenv('TENCENT_SECRETID'),
-                               SecretKey=os.getenv('TENCENT_SECRETKEY'),Endpoint=os.getenv('TENCENT_ENDPOINT'))
+                               SecretKey=os.getenv('TENCENT_SECRETKEY'),Endpoint=endpoint)
             # 2. 获取客户端对象
             client = CosS3Client(config)
+        else:
+            client = cvm_client.CvmClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         return client
 

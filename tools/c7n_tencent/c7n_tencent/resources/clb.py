@@ -29,6 +29,7 @@ service = 'clb_client.clb'
 class Clb(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'clb_client.clb'
         enum_spec = (None, 'LoadBalancerSet', None)
         id = 'LoadBalancerId'
 
@@ -54,20 +55,22 @@ class Clb(QueryResourceManager):
         return resp.to_json_string().replace('null', 'None')
 
 
-@Clb.filter_registry.register('unused')
+@Clb.filter_registry.register('running')
 class TencentClbFilter(TencentClbFilter):
     # 查询指定地域已创建的EIP
     """Filters:Example:
        .. code-block:: yaml
 
            policies:
-             - name: tencent-clb
+             - name: tencent-running-clb
                resource: tencent.clb
                filters:
-                 - type: unused
+                 - type: running
 
     """
-    schema = type_schema('Available')
+    # 负载均衡实例的状态，包括0：创建中，1：正常运行。
+    # 注意：此字段可能返回null，表示取不到有效值。
+    schema = type_schema(1)
 
 @Clb.action_registry.register('delete')
 class ClbDelete(MethodAction):

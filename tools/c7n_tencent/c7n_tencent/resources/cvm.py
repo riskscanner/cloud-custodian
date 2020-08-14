@@ -32,6 +32,7 @@ service = 'cvm_client.cvm'
 class Cvm(QueryResourceManager):
 
     class resource_type(TypeInfo):
+        service = 'cvm_client.cvm'
         enum_spec = (None, 'InstanceSet', None)
         id = 'InstanceId'
         dimension = 'InstanceId'
@@ -62,7 +63,13 @@ class Cvm(QueryResourceManager):
 class CvmMetricsFilter(MetricsFilter):
 
     def get_requst(self):
-        return None
+        from tencentcloud.monitor.v20180724 import models
+        service = 'monitor_client.cvm'
+        req = models.DescribeBaseMetricsRequest()
+        params = '{"Namespace" :"' + self.namespace  + ',' + '"MetricName":' + self.metric + '"}'
+        req.from_json_string(params)
+        resp = Session.client(self, service).DescribeBaseMetrics(req)
+        return resp.to_json_string().replace('null', 'None')
 
 @Cvm.filter_registry.register('instance-age')
 class CvmAgeFilter(TencentAgeFilter):
@@ -76,8 +83,8 @@ class CvmAgeFilter(TencentAgeFilter):
                 days: 30
     """
 
-    date_attribute = "LaunchTime"
-    ebs_key_func = operator.itemgetter('AttachTime')
+    date_attribute = "CreatedTime"
+    ebs_key_func = operator.itemgetter('CreatedTime')
 
     schema = type_schema(
         'instance-age',
@@ -106,7 +113,7 @@ class Start(MethodAction):
 
     def get_requst(self, instance):
         req = models.StartInstancesRequest()
-        params = {"InstanceId": instance['InstanceId']}
+        params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).StartInstances(req)
         return resp.to_json_string().replace('null', 'None')
@@ -126,7 +133,7 @@ class Stop(MethodAction):
 
     def get_requst(self, instance):
         req = models.StopInstancesRequest()
-        params = {"InstanceId": instance['InstanceId']}
+        params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).StopInstances(req)
         return resp.to_json_string().replace('null', 'None')
@@ -147,7 +154,7 @@ class Delete(MethodAction):
 
     def get_requst(self, instance):
         req = models.TerminateInstancesRequest()
-        params = {"InstanceId": instance['InstanceId']}
+        params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).TerminateInstances(req)
         return resp.to_json_string().replace('null', 'None')
