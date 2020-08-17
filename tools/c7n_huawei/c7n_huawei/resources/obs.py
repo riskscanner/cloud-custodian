@@ -28,25 +28,30 @@ class Obs(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'obs'
-        enum_spec = (None, 'buckets', None)
-        id = 'bucketname'
+        enum_spec = (None, 'body.buckets', None)
+        id = 'name'
 
     def get_requst(self):
         try:
-            json = list()
             # 列举桶
             resp = Session.client(self, service).listBuckets(isQueryLocation=True)
             if resp.status < 300:
+                arrs = list()
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 for bucket in resp.body.buckets:
-                    # 列举对象
-                    json.append(bucket)
-                    res = Session.client(self, service).listObjects(bucket.name)
-                    for content in res.body.contents:
-                        json.append(content)
-                return json
+                    if Session.get_default_region(self) != bucket.location:
+                        arrs.append(bucket)
+                    else:
+                        # 列举对象
+                        res = Session.client(self, service).listObjects(bucket.name)
+                        if res.status < 300:
+                            bucket['contents'] = res.body.contents
+                        else:
+                            bucket['contents'] = []
+                for arr in arrs:
+                    resp.body.buckets.remove(arr)
+                return resp
             else:
                 # 操作失败，获取详细异常信息
                 return resp.errorMessage
@@ -66,7 +71,7 @@ class GlobalGrantsFilter(Filter):
 
        policies:
          - name: huawei-global-grants
-           resource: huawei.oss
+           resource: huawei.obs
            filters:
             - type: global-grants
     """
@@ -87,20 +92,43 @@ class GlobalGrantsFilter(Filter):
             return results
 
     def process_bucket(self, b):
-        resp = Session.client(self, service).listBuckets(isQueryLocation=True)
-        # 有效值：private、public-read、public-read-write
-        acl = resp.get_bucket_acl().acl
-        if acl == 'private':
-            return
-
-        results = []
-        perms = self.data.get('permissions', [])
-        if not perms or (perms and acl in perms):
-            results.append(acl)
-
-        if results:
-            set_annotation(b, 'GlobalPermissions', results)
+        # READ
+        #
+        # 若有桶的读权限，则可以获取该桶内对象列表、桶内多段任务、桶的元数据、桶的多版本。
+        #
+        # 若有对象的读权限，则可以获取该对象内容和元数据。
+        #
+        # WRITE
+        #
+        # 若有桶的写权限，则可以上传、覆盖和删除该桶内任何对象和段。
+        #
+        # 此权限在对象上不适用。
+        #
+        # READ_ACP
+        #
+        # 若有读ACP的权限，则可以获取对应的桶或对象的权限控制列表（ACL）。
+        #
+        # 桶或对象的所有者永远拥有读对应桶或对象ACP的权限。
+        #
+        # WRITE_ACP
+        #
+        # 若有写ACP的权限，则可以更新对应桶或对象的权限控制列表（ACL）。
+        #
+        # 桶或对象的所有者永远拥有写对应桶或对象的ACP的权限。
+        #
+        # 拥有了写ACP的权限，由于可以更改权限控制策略，实际上意味着拥有了完全访问的权限。
+        #
+        # FULL_CONTROL
+        #
+        # 若有桶的完全控制权限意味着拥有READ、WRITE、READ_ACP和WRITE_ACP的权限。
+        #
+        # 若有对象的完全控制权限意味着拥有READ、READ_ACP和WRITE_ACP的权限。
+        acl = Session.client(self, service).getBucketAcl(b.name)
+        b['permission'] = acl.body.grants
+        if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
             return b
+        else:
+            return
 
 @Obs.action_registry.register('createBucket')
 class ObsCreateBucket(MethodAction):

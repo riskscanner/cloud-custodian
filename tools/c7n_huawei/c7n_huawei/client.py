@@ -57,13 +57,10 @@ class Session:
         self.server = server
 
     def get_default_region(self):
-        if self.region:
+        if os.getenv('HUAWEI_DEFAULT_REGION'):
+            return os.getenv('HUAWEI_DEFAULT_REGION')
+        else:
             return self.region
-        for k in ('HUAWEI_DEFAULT_REGION'):
-            if k in os.environ:
-                return os.environ[k]
-            else:
-                return 'cn-north-1'
 
     def client(self, service):
         if service == 'obs':
@@ -71,7 +68,7 @@ class Session:
             obsClient = ObsClient(
                 access_key_id=os.getenv('HUAWEI_AK'),
                 secret_access_key=os.getenv('HUAWEI_SK'),
-                server=os.getenv('HUAWEI_ENDPOINT')
+                server='obs.' + os.getenv('HUAWEI_DEFAULT_REGION') + '.myhuaweicloud.com'
             )
             clt = obsClient
         else:
@@ -91,8 +88,6 @@ class Session:
             elif 'block_store' in service:
                 clt = conn.block_store
             elif 'rdsv3' in service:
-                clt = conn.rdsv3
-            elif 'obs' in service:
                 clt = conn.rdsv3
             else:
                 clt = conn.compute

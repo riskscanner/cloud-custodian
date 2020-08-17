@@ -41,10 +41,10 @@ class ResourceQuery:
             params.update(extra_args)
 
         if m.service == 'obs':
-            result = client.listBuckets()
+            result = resource_manager.get_requst()
             buckets = []
-            for b in result.buckets:
-                buckets.append(b.__dict__)
+            for b in result.body.buckets:
+                buckets.append(b)
             return buckets
         else:
             request = resource_manager.get_requst()
