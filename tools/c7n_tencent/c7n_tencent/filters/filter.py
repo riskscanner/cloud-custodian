@@ -33,7 +33,6 @@ class TencentDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        print(i)
         if i['DiskState'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
@@ -277,6 +276,13 @@ class SGPermission(Filter):
                                 if port == int(str):
                                     found = True
                                     break
+                        elif '-' in FromPort:
+                            strs = FromPort.split('-')
+                            p1 = int(strs[0])
+                            p2 = int(strs[1])
+                            if port >= p1 and port <= p2:
+                                found = True
+                                break
                         else:
                             if port == int(FromPort):
                                 found = True

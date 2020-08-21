@@ -14,6 +14,7 @@
 import json
 import logging
 
+from qcloud_cos import CosClientError
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n_tencent.client import Session
@@ -39,12 +40,16 @@ class Cos(QueryResourceManager):
             for obj in resp['Buckets']['Bucket']:
                 objects = list()
                 while True:
-                    response = Session.client(self, service).list_objects(
-                        Bucket=obj['Name']
-                    )
-                    objects.append(response['Contents'])
-                    if response['IsTruncated'] == 'false':
-                        break
+                    try:
+                        response = Session.client(self, service).list_objects(
+                            Bucket=obj['Name']
+                        )
+                        objects.append(response['Contents'])
+                        if response['IsTruncated'] == 'false':
+                            break
+                    except Exception as e:  # 捕获requests抛出的如timeout等客户端错误,转化为客户端错误
+                        logging.error(str(e))
+                        return json.dumps(str(e))
                 obj['Objects'] = objects
         except TencentCloudSDKException as err:
             import traceback

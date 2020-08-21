@@ -36,6 +36,8 @@ class Vpc(QueryResourceManager):
     def get_requst(self):
         try:
             req = models.DescribeVpcsRequest()
+            params = '{}'
+            req.from_json_string(params)
             resp = Session.client(self, service).DescribeVpcs(req)
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))

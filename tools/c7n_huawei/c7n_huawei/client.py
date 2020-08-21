@@ -29,7 +29,7 @@ class Session:
     # password = os.getenv('HUAWEI_PASSWORD')  # 用户密码
     # projectId = os.getenv('HUAWEI_PROJECTID')  # 项目ID
     # userDomainId = os.getenv('HUAWEI_USERDOMAINID')  # 账户ID
-    # auth_url = "https://iam.example.com/v3"  # endpoint url
+    # auth_url = os.getenv('HUAWEI_ENDPOINT')  # endpoint url
     # cloud = os.getenv('HUAWEI_CLOUD')
     # ak = os.getenv('HUAWEI_AK')
     # sk = os.getenv('HUAWEI_SK')

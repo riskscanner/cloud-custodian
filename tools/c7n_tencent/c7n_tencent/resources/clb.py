@@ -27,7 +27,6 @@ service = 'clb_client.clb'
 
 @resources.register('clb')
 class Clb(QueryResourceManager):
-
     class resource_type(TypeInfo):
         service = 'clb_client.clb'
         enum_spec = (None, 'LoadBalancerSet', None)
@@ -37,8 +36,8 @@ class Clb(QueryResourceManager):
         try:
             # 实例化一个cvm实例信息查询请求对象,每个接口都会对应一个request对象。
             req = models.DescribeLoadBalancersRequest()
-            # 通过client对象调用DescribeInstances方法发起请求。注意请求方法名与请求对象是对应的。
-            # 返回的resp是一个DescribeInstancesResponse类的实例，与请求对象对应。
+            params = '{}'
+            req.from_json_string(params)
             resp = Session.client(self, service).DescribeLoadBalancers(req)
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))
@@ -70,7 +69,7 @@ class TencentClbFilter(TencentClbFilter):
     """
     # 负载均衡实例的状态，包括0：创建中，1：正常运行。
     # 注意：此字段可能返回null，表示取不到有效值。
-    schema = type_schema(1)
+    schema = type_schema('1')
 
 @Clb.action_registry.register('delete')
 class ClbDelete(MethodAction):

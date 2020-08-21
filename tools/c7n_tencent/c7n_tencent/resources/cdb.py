@@ -64,6 +64,9 @@ class TencentCdbFilter(TencentCdbFilter):
                resource: tencent.cdb
                filters:
                  - type: running
+                 - or:
+                    - StorageEncrypted: false
+                    - PubliclyAccessible: true
     """
     # 实例状态。取值范围：
     # 1：申请中
@@ -78,7 +81,7 @@ class TencentCdbFilter(TencentCdbFilter):
     # 10：实例迁移中
     # 11：只读
     # 12：重启中
-    schema = type_schema(2)
+    schema = type_schema('2')
 
 @Cdb.action_registry.register('restart')
 class CdbReStart(MethodAction):
