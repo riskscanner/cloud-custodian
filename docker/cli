@@ -30,9 +30,9 @@ ADD tools/c7n_kube /src/tools/c7n_kube
 RUN rm -R tools/c7n_kube/tests
 ADD tools/c7n_aliyun /src/tools/c7n_aliyun
 RUN rm -R tools/c7n_aliyun/test
-ADD tools/c7n_aliyun /src/tools/c7n_huawei
+ADD tools/c7n_huawei /src/tools/c7n_huawei
 RUN rm -R tools/c7n_huawei/test
-ADD tools/c7n_aliyun /src/tools/c7n_tencent
+ADD tools/c7n_tencent /src/tools/c7n_tencent
 RUN rm -R tools/c7n_tencent/test
 
 # Install requested providers
