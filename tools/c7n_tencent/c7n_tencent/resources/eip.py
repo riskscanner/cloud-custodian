@@ -76,6 +76,6 @@ class EipDelete(MethodAction):
 
     def get_requst(self, eip):
         req = models.ReleaseAddressesRequest()
-        params = '{"AddressId" :"' + eip["AddressId"] + '"}'
+        params = '{"AddressIds" :["' + eip["AddressId"] + '"]}'
         req.from_json_string(params)
         Session.client(self, service).ReleaseAddresses(req)
