@@ -57,7 +57,7 @@ class Session:
     def get_oss_region(self, regionId):
         region = REGION_ENDPOINT.get(self, regionId)
         if "aliyuncs.com" not in region:
-            region = 'oss-' + region + '.aliyuncs.com'
+            region = 'oss-' + regionId + '.aliyuncs.com'
         return region
 
 REGION_ENDPOINT = {
@@ -80,7 +80,7 @@ REGION_ENDPOINT = {
         'eu-central-1': 'oss-eu-central-1.aliyuncs.com',
         'eu-west-1': 'oss-eu-west-1.aliyuncs.com',
         'me-east-1': 'oss-me-east-1.aliyuncs.com',
-        'cn-wulanchabu': 'oss-cn-wulanchabu-internal.aliyuncs.com',
-        'cn-heyuan': 'oss-cn-heyuan-internal.aliyuncs.com',
-        'cn-chengdu': 'oss-cn-chengdu-internal.aliyuncs.com'
+        'cn-wulanchabu': 'oss-cn-wulanchabu.aliyuncs.com',
+        'cn-heyuan': 'oss-cn-heyuan.aliyuncs.com',
+        'cn-chengdu': 'oss-cn-chengdu.aliyuncs.com'
     }

@@ -13,8 +13,6 @@ from aliyunsdkecs.request.v20140526.DescribeSecurityGroupAttributeRequest import
 from aliyunsdkecs.request.v20140526.DescribeSecurityGroupsRequest import DescribeSecurityGroupsRequest
 from aliyunsdkecs.request.v20140526.DescribeVpcsRequest import DescribeVpcsRequest
 from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceRequest
-# configuration the log output formatter, if you want to save the output to file,
-# append ",filename='ecs_invoke.log'" after datefmt.
 from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import DescribeLoadBalancersRequest

@@ -31,7 +31,8 @@ class Slb(QueryResourceManager):
         id = 'LoadBalancerId'
 
     def get_requst(self):
-        return DescribeLoadBalancersRequest()
+        request = DescribeLoadBalancersRequest()
+        return request
 
 @Slb.filter_registry.register('unused')
 class AliyunSlbFilter(AliyunSlbFilter):

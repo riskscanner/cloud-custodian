@@ -47,7 +47,7 @@ class AliyunSlbFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+        if i['LoadBalancerStatus'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -269,7 +269,11 @@ class SGPermission(Filter):
                 if port >= FromPort and port <= ToPort:
                     found = True
                     break
-                found = False
+                elif FromPort == -1 and ToPort == -1:
+                    found = True
+                    break
+                else:
+                    found = False
             only_found = False
             for port in self.only_ports:
                 if port == FromPort and port == ToPort:
@@ -379,7 +383,6 @@ class SGPermission(Filter):
             # perm_matches['description'] = self.process_description(perm)
             perm_matches['ports'] = self.process_ports(perm)
             perm_matches['cidrs'] = self.process_self_cidrs(perm)
-
             # perm_matches['self-refs'] = self.process_self_reference(perm, sg_id)
             # perm_matches['sg-refs'] = self.process_sg_references(perm, owner_id)
             perm_match_values = list(filter(
@@ -548,7 +551,6 @@ class MetricsFilter(Filter):
             # that here before testing for matches. Otherwise, skip
             # matching entirely.
             # for m in collected_metrics[key]:
-            #     print(m)
 
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' not in self.data:

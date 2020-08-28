@@ -48,10 +48,13 @@ class ResourceQuery:
             return buckets
         else:
             request = resource_manager.get_requst()
-            result = client.do_action_with_exception(request)
-            false = "false"
-            true = "true"
-            return jmespath.search(path, eval(result))
+            if request:
+                result = client.do_action_with_exception(request)
+                false = "false"
+                true = "true"
+                return jmespath.search(path, eval(result))
+            else:
+                return None
 
     def _invoke_client_enum(self, client, request, params, path):
         result = client.do_action_with_exception(request)
