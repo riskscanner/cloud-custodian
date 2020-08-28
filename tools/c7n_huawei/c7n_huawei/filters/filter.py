@@ -455,7 +455,7 @@ class MetricsFilter(Filter):
 
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
-        'ecs': 'acs_ecs_dashboard',
+        'compute.ecs': 'acs_ecs_dashboard',
     }
 
     def process(self, resources, event=None):

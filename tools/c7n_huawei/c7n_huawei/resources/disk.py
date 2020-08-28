@@ -73,12 +73,4 @@ class DiskDelete(MethodAction):
     attr_filter = ('status', ('available','error', None, ))
 
     def get_requst(self, disk):
-        obj = Session.client(self, service).delete_volume(disk['id'])
-        json = dict()  # 创建 {}
-        if obj is not None:
-            for name in dir(obj):
-                if not name.startswith('_'):
-                    value = getattr(obj, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
+        Session.client(self, service).delete_volume(disk['id'])

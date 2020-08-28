@@ -50,7 +50,18 @@ class Ecs(QueryResourceManager):
 class EcsMetricsFilter(MetricsFilter):
 
     def get_requst(self):
-        return None
+        servers = Session.client(self, service).servers(limit=10000)
+        arr = list()  # 创建 []
+        if servers is not None:
+            for server in servers:
+                json = dict()  # 创建 {}
+                for name in dir(server):
+                    if not name.startswith('_'):
+                        value = getattr(server, name)
+                        if not callable(value):
+                            json[name] = value
+                arr.append(json)
+        return arr
 
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(HuaweiAgeFilter):
@@ -94,15 +105,6 @@ class Start(MethodAction):
 
     def get_requst(self, instance):
         Session.client(self, service).start_server(instance['id'])
-        server = Session.client(self, service).get_server(instance['id'])
-        json = dict()  # 创建 {}
-        if server is not None:
-            for name in dir(server):
-                if not name.startswith('_'):
-                    value = getattr(server, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
 
 @Ecs.action_registry.register('stop')
 class Stop(MethodAction):
@@ -119,16 +121,6 @@ class Stop(MethodAction):
 
     def get_requst(self, instance):
         Session.client().stop_server(instance['id'])
-        server = Session.client().get_server(instance['id'])
-        json = dict()  # 创建 {}
-        if server is not None:
-            for name in dir(server):
-                if not name.startswith('_'):
-                    value = getattr(server, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
-
 
 @Ecs.action_registry.register('delete')
 class Delete(MethodAction):
@@ -144,12 +136,4 @@ class Delete(MethodAction):
     attr_filter = ('status', ('SHUTOFF',))
 
     def get_requst(self, instance):
-        server = Session.client(self, service).delete_server(instance['id'])
-        json = dict()  # 创建 {}
-        if server is not None:
-            for name in dir(server):
-                if not name.startswith('_'):
-                    value = getattr(server, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
+        Session.client(self, service).delete_server(instance['id'])
