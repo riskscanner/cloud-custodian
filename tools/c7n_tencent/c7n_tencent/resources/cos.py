@@ -52,10 +52,8 @@ class Cos(QueryResourceManager):
                         return json.dumps(str(e))
                 obj['Objects'] = objects
         except TencentCloudSDKException as err:
-            import traceback
-            # 发生异常，打印异常堆栈
             logging.error(err)
-            return traceback.format_exc()
+            return False
         return json.dumps(resp)
 
 @Cos.filter_registry.register('global-grants')

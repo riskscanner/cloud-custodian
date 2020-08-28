@@ -52,10 +52,8 @@ class Cvm(QueryResourceManager):
             # print(resp.InstanceSet)
             # print(resp.to_json_string())
         except TencentCloudSDKException as err:
-            import traceback
-            # 发生异常，打印异常堆栈
             logging.error(err)
-            return traceback.format_exc()
+            return False
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
@@ -156,5 +154,4 @@ class Delete(MethodAction):
         req = models.TerminateInstancesRequest()
         params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
-        resp = Session.client(self, service).TerminateInstances(req)
-        return resp.to_json_string().replace('null', 'None')
+        Session.client(self, service).TerminateInstances(req)

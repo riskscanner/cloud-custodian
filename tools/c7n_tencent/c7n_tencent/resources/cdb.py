@@ -44,10 +44,8 @@ class Cdb(QueryResourceManager):
             # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
             # print(resp.to_json_string())
         except TencentCloudSDKException as err:
-            import traceback
-            # 发生异常，打印异常堆栈
             logging.error(err)
-            return traceback.format_exc()
+            return False
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
@@ -99,7 +97,6 @@ class CdbReStart(MethodAction):
 
     def get_requst(self, cdb):
         req = models.RestartDBInstancesRequest()
-        params = {"ItemId": cdb['ItemId']}
+        params = '{"ItemId" :"' + cdb["ItemId"] + '"}'
         req.from_json_string(params)
-        resp = Session.client(self, service).RestartDBInstances(req)
-        return resp.to_json_string().replace('null', 'None')
+        Session.client(self, service).RestartDBInstances(req)
