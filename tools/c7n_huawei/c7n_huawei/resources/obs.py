@@ -31,7 +31,7 @@ class Obs(QueryResourceManager):
         enum_spec = (None, 'body.buckets', None)
         id = 'name'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             # 列举桶
             resp = Session.client(self, service).listBuckets(isQueryLocation=True)
@@ -136,7 +136,7 @@ class ObsCreateBucket(MethodAction):
     schema = type_schema('createBucket')
     method_spec = {'op': 'createBucket'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             # 调用createBucket创建桶
             resp = Session.client(self, service).createBucket(bucket['bucketname'])
@@ -162,7 +162,7 @@ class ObsPutContent(MethodAction):
     schema = type_schema('putContent')
     method_spec = {'op': 'putContent'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             # 调用putContent接口上传对象到桶内
             # resp = obsClient.putContent('bucketname', 'objectname', 'Hello OBS')
@@ -189,7 +189,7 @@ class ObsGetObject(MethodAction):
     schema = type_schema('getObject')
     method_spec = {'op': 'getObject'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             # 调用getObject接口下载桶内对象
             resp = Session.client(self, service).getObject(bucket['bucketname'], bucket['objectname'])
@@ -215,7 +215,7 @@ class ObsDeleteObject(MethodAction):
     schema = type_schema('deleteObject')
     method_spec = {'op': 'deleteObject'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             # 调用deleteObject接口删除指定桶内的指定对象
             resp = Session.client(self, service).deleteObject(bucket['bucketname'], bucket['objectname'])

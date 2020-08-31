@@ -33,7 +33,7 @@ class Eip(QueryResourceManager):
         enum_spec = (None, 'AddressSet', None)
         id = 'AddressId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             req = models.DescribeAddressesRequest()
             resp = Session.client(self, service).DescribeAddresses(req)
@@ -74,7 +74,7 @@ class EipDelete(MethodAction):
     method_spec = {'op': 'delete'}
     attr_filter = ('AddressStatus', ('UNBIND',))
 
-    def get_requst(self, eip):
+    def get_request(self, eip):
         req = models.ReleaseAddressesRequest()
         params = '{"AddressIds" :["' + eip["AddressId"] + '"]}'
         req.from_json_string(params)

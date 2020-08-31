@@ -32,7 +32,7 @@ class Clb(QueryResourceManager):
         enum_spec = (None, 'LoadBalancerSet', None)
         id = 'LoadBalancerId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             # 实例化一个cvm实例信息查询请求对象,每个接口都会对应一个request对象。
             req = models.DescribeLoadBalancersRequest()
@@ -81,7 +81,7 @@ class ClbDelete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, clb):
+    def get_request(self, clb):
         req = models.DeleteLoadBalancerRequest()
         params = '{"LoadBalancerId" :"' + clb["LoadBalancerId"] + '"}'
         req.from_json_string(params)

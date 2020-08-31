@@ -33,7 +33,7 @@ class Dcdb(QueryResourceManager):
         enum_spec = (None, 'Instances', None)
         id = 'InstancesId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             req = models.DescribeDCDBInstancesRequest()
             resp = Session.client(self, service).DescribeDCDBInstances(req)

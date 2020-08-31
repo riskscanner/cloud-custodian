@@ -30,7 +30,7 @@ class Slb(QueryResourceManager):
         enum_spec = (None, 'LoadBalancers.LoadBalancer', None)
         id = 'LoadBalancerId'
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeLoadBalancersRequest()
         return request
 
@@ -63,7 +63,7 @@ class SlbDelete(MethodAction):
     method_spec = {'op': 'delete'}
 
 
-    def get_requst(self, slb):
+    def get_request(self, slb):
         request = DeleteLoadBalancerRequest()
         request.set_LoadBalancerId(slb['LoadBalancerId'])
         request.set_accept_format('json')

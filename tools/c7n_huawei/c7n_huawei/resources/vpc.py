@@ -29,7 +29,7 @@ class Vpc(QueryResourceManager):
         enum_spec = (None, None, None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         query = {
             "limit": 10000
         }
@@ -75,5 +75,5 @@ class Delete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, vpc):
+    def get_request(self, vpc):
         Session.client(self, service).delete_vpc(vpc['id'])

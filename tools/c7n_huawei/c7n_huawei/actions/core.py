@@ -78,7 +78,7 @@ class MethodAction(Action):
         result_key = self.method_spec.get('result_key')
         annotation_key = self.method_spec.get('annotation_key')
         for resource in resources:
-            result = self.get_requst(resource)
+            result = self.get_request(resource)
             if result_key and annotation_key:
                 resource[annotation_key] = result.get(result_key)
 
@@ -103,7 +103,7 @@ class MethodAction(Action):
     def get_resource_params(self, model, resource):
         raise NotImplementedError("subclass responsibility")
 
-    def get_requst(self, resource):
+    def get_request(self, resource):
         raise NotImplementedError("subclass responsibility")
 
     def get_client(self, session, model):

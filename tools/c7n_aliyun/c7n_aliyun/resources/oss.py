@@ -37,7 +37,7 @@ class Oss(QueryResourceManager):
         enum_spec = (None, 'buckets', None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         pass
 
 @Oss.filter_registry.register('global-grants')
@@ -89,7 +89,7 @@ class OssCreateBucket(MethodAction):
     schema = type_schema('create_bucket')
     method_spec = {'op': 'create_bucket'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
             bucketConfig = oss2.models.BucketCreateConfig(oss2.BUCKET_STORAGE_CLASS_STANDARD,
@@ -112,7 +112,7 @@ class OssPutObject(MethodAction):
     schema = type_schema('put_object')
     method_spec = {'op': 'put_object'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             headers = dict()
             headers["x-oss-storage-class"] = "Standard"
@@ -136,7 +136,7 @@ class OssGetObject(MethodAction):
     schema = type_schema('get_object_to_file')
     method_spec = {'op': 'get_object_to_file'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
             resp = bucket.get_object_to_file(bucket['objectname'], bucket['localFile'])
@@ -157,7 +157,7 @@ class OssDeleteObject(MethodAction):
     schema = type_schema('delete_object')
     method_spec = {'op': 'delete_object'}
 
-    def get_requst(self, bucket):
+    def get_request(self, bucket):
         try:
             bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
             resp = bucket.delete_object(bucket['objectname'])

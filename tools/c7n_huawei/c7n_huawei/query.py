@@ -41,13 +41,13 @@ class ResourceQuery:
             params.update(extra_args)
 
         if m.service == 'obs':
-            result = resource_manager.get_requst()
+            result = resource_manager.get_request()
             buckets = []
             for b in result.body.buckets:
                 buckets.append(b)
             return buckets
         else:
-            request = resource_manager.get_requst()
+            request = resource_manager.get_request()
             result = request
             false = "false"
             true = "true"

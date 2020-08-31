@@ -30,7 +30,7 @@ class Eip(QueryResourceManager):
         enum_spec = (None, 'EipAddresses.EipAddress', None)
         id = 'AllocationId'
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeEipAddressesRequest()
         return request
 
@@ -76,7 +76,7 @@ class EipRelease(MethodAction):
     schema = type_schema('release')
     method_spec = {'op': 'release'}
 
-    def get_requst(self, eip):
+    def get_request(self, eip):
         request = ReleaseEipAddressRequest()
         request.set_AllocationId(eip['AllocationId'])
         request.set_accept_format('json')

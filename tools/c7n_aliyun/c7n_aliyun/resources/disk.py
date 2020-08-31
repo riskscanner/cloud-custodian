@@ -30,7 +30,7 @@ class Disk(QueryResourceManager):
         enum_spec = (None, 'Disks.Disk', None)
         id = 'DiskId'
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeDisksRequest()
         return request
 
@@ -61,7 +61,7 @@ class DiskDelete(MethodAction):
     method_spec = {'op': 'delete'}
     attr_filter = ('Status', ('Available', ))
 
-    def get_requst(self, disk):
+    def get_request(self, disk):
         request = DeleteDiskRequest()
         request.set_DiskId(disk['DiskId'])
         request.set_accept_format('json')

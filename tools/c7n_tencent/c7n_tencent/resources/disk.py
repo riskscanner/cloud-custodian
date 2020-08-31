@@ -33,7 +33,7 @@ class Disk(QueryResourceManager):
         enum_spec = (None, 'DiskSet', None)
         id = 'DiskId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             req = models.DescribeDisksRequest()
             resp = Session.client(self, service).DescribeDisks(req)
@@ -81,7 +81,7 @@ class DiskDelete(MethodAction):
     method_spec = {'op': 'delete'}
     attr_filter = ('Status', ('AVAILABLE', ))
 
-    def get_requst(self, disk):
+    def get_request(self, disk):
         req = models.TerminateDisksRequest()
         params = '{"DiskId" :"' + disk["DiskId"] + '"}'
         req.from_json_string(params)

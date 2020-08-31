@@ -34,7 +34,7 @@ class Cos(QueryResourceManager):
         enum_spec = (None, 'Buckets.Bucket', None)
         id = 'BucketId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             resp = Session.client(self, service).list_buckets()
             for obj in resp['Buckets']['Bucket']:

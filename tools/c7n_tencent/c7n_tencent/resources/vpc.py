@@ -33,7 +33,7 @@ class Vpc(QueryResourceManager):
         enum_spec = (None, 'VpcSet', None)
         id = 'VpcId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             req = models.DescribeVpcsRequest()
             params = '{}'
@@ -57,7 +57,7 @@ class VpcDelete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, vpc):
+    def get_request(self, vpc):
         req = models.DeleteVpcRequest()
         params = '{"VpcId" :"' + vpc["VpcId"] + '"}'
         req.from_json_string(str(params))

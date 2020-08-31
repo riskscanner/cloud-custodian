@@ -33,7 +33,7 @@ class Cdb(QueryResourceManager):
         enum_spec = (None, 'Items', None)
         id = 'ItemId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             req = models.DescribeDBInstancesRequest()
             resp = Session.client(self, service).DescribeDBInstances(req)
@@ -95,7 +95,7 @@ class CdbReStart(MethodAction):
     method_spec = {'op': 'restart'}
     attr_filter = ('status', ('SHUTOFF',))
 
-    def get_requst(self, cdb):
+    def get_request(self, cdb):
         req = models.RestartDBInstancesRequest()
         params = '{"ItemId" :"' + cdb["ItemId"] + '"}'
         req.from_json_string(params)

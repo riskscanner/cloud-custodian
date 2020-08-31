@@ -29,7 +29,7 @@ class Disk(QueryResourceManager):
         enum_spec = (None, None, None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         volumes = Session.client(self, service).volumes(details=False)
         arr = list()  # 创建 []
         if volumes is not None:
@@ -72,5 +72,5 @@ class DiskDelete(MethodAction):
     method_spec = {'op': 'delete'}
     attr_filter = ('status', ('available','error', None, ))
 
-    def get_requst(self, disk):
+    def get_request(self, disk):
         Session.client(self, service).delete_volume(disk['id'])

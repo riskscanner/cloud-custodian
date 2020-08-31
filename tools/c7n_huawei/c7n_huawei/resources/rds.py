@@ -28,7 +28,7 @@ class Rds(QueryResourceManager):
         enum_spec = (None, None, None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         query = {
             'offset': 0,
             'limit': 10000
@@ -59,5 +59,5 @@ class RdsDelete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, rds):
+    def get_request(self, rds):
         Session.client(self, service).delete_security_group(rds['id'])

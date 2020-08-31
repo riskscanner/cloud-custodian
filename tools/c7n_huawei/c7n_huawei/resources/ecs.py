@@ -32,7 +32,7 @@ class Ecs(QueryResourceManager):
         id = 'id'
         dimension = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         servers = Session.client(self, service).servers(limit=10000)
         arr = list()  # 创建 []
         if servers is not None:
@@ -49,7 +49,7 @@ class Ecs(QueryResourceManager):
 @Ecs.filter_registry.register('metrics')
 class EcsMetricsFilter(MetricsFilter):
 
-    def get_requst(self):
+    def get_request(self):
         servers = Session.client(self, service).servers(limit=10000)
         arr = list()  # 创建 []
         if servers is not None:
@@ -103,7 +103,7 @@ class Start(MethodAction):
     method_spec = {'op': 'start'}
     attr_filter = ('status', ('SHUTOFF',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         Session.client(self, service).start_server(instance['id'])
 
 @Ecs.action_registry.register('stop')
@@ -119,7 +119,7 @@ class Stop(MethodAction):
     method_spec = {'op': 'stop'}
     attr_filter = ('status', ('ACTIVE',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         Session.client().stop_server(instance['id'])
 
 @Ecs.action_registry.register('delete')
@@ -135,5 +135,5 @@ class Delete(MethodAction):
     method_spec = {'op': 'delete'}
     attr_filter = ('status', ('SHUTOFF',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         Session.client(self, service).delete_server(instance['id'])

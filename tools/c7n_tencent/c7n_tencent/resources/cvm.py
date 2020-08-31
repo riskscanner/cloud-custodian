@@ -37,7 +37,7 @@ class Cvm(QueryResourceManager):
         id = 'InstanceId'
         dimension = 'InstanceId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             # 实例化一个cvm实例信息查询请求对象,每个接口都会对应一个request对象。
             req = models.DescribeInstancesRequest()
@@ -60,7 +60,7 @@ class Cvm(QueryResourceManager):
 @Cvm.filter_registry.register('metrics')
 class CvmMetricsFilter(MetricsFilter):
 
-    def get_requst(self):
+    def get_request(self):
         from tencentcloud.monitor.v20180724 import models
         service = 'monitor_client.cvm'
         req = models.DescribeBaseMetricsRequest()
@@ -109,7 +109,7 @@ class Start(MethodAction):
     method_spec = {'op': 'start'}
     attr_filter = ('status', ('SHUTOFF',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         req = models.StartInstancesRequest()
         params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
@@ -129,7 +129,7 @@ class Stop(MethodAction):
     method_spec = {'op': 'stop'}
     attr_filter = ('status', ('ACTIVE',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         req = models.StopInstancesRequest()
         params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
@@ -150,7 +150,7 @@ class Delete(MethodAction):
     method_spec = {'op': 'delete'}
     attr_filter = ('status', ('SHUTOFF',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         req = models.TerminateInstancesRequest()
         params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)

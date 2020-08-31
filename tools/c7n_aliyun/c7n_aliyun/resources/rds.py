@@ -38,7 +38,7 @@ class Rds(QueryResourceManager):
         enum_spec = (None, 'Items.DBInstance', None)
         id = 'DBInstanceId'
 
-    def get_requst(self):
+    def get_request(self):
         clt = client.AcsClient(accessKeyId, accessSecret, "cn-beijing")
         request = DescribeRegionsRequest()
         request.set_accept_format('json')
@@ -65,7 +65,7 @@ class RdsDelete(MethodAction):
     method_spec = {'op': 'delete'}
 
 
-    def get_requst(self, rds):
+    def get_request(self, rds):
         request = DeleteDBInstanceRequest()
         request.set_DBInstanceId(rds['DBInstanceId'])
         request.set_accept_format('json')

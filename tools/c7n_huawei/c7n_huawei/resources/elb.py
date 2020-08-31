@@ -29,7 +29,7 @@ class Elb(QueryResourceManager):
         enum_spec = (None, None, None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         lbs = Session.client(self, service).loadbalancers()
         arr = list()  # 创建 []
         if lbs is not None:
@@ -75,5 +75,5 @@ class ElbDelete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, elb):
+    def get_request(self, elb):
         Session.client(self, service).delete_loadbalancer(elb['id'])

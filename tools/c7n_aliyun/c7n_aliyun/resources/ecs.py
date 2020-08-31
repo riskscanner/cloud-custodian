@@ -37,7 +37,7 @@ class Ecs(QueryResourceManager):
         id = 'InstanceId'
         dimension = 'InstanceId'
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeInstancesRequest()
         return request
 
@@ -75,7 +75,7 @@ class EcsAgeFilter(AliyunAgeFilter):
 @Ecs.filter_registry.register('metrics')
 class EcsMetricsFilter(MetricsFilter):
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeMetricListRequest()
         request.set_accept_format('json')
         return request
@@ -88,7 +88,7 @@ class Start(MethodAction):
     method_spec = {'op': 'start'}
     attr_filter = ('Status', ('Stopped',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         request = StartInstanceRequest()
         request.set_InstanceId(instance['InstanceId'])
         request.set_accept_format('json')
@@ -101,7 +101,7 @@ class Stop(MethodAction):
     method_spec = {'op': 'stop'}
     attr_filter = ('Status', ('Running',))
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         request = StopInstanceRequest()
         request.set_InstanceId(instance['InstanceId'])
         request.set_ForceStop(True)
@@ -115,7 +115,7 @@ class Delete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, instance):
+    def get_request(self, instance):
         request = DeleteInstanceRequest()
         request.set_InstanceId(instance['InstanceId'])
         request.set_accept_format('json')

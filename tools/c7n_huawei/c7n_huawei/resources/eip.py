@@ -29,7 +29,7 @@ class Eip(QueryResourceManager):
         enum_spec = (None, None, None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         query = {
             "limit": 10000
         }
@@ -70,5 +70,5 @@ class EipRelease(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, eip):
+    def get_request(self, eip):
         Session.client(self, service).delete_ip(eip['id'])

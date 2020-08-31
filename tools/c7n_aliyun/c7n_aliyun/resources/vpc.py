@@ -35,7 +35,7 @@ class Vpc(QueryResourceManager):
         enum_spec = (None, 'Vpcs.Vpc', None)
         id = 'VpcId'
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeVpcsRequest()
         return request
 
@@ -64,7 +64,7 @@ class Delete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, vpc):
+    def get_request(self, vpc):
         request = DeleteVpcRequest()
         request.set_InstanceId(vpc['VpcId'])
         request.set_accept_format('json')
@@ -80,7 +80,7 @@ class SecurityGroup(QueryResourceManager):
         enum_spec = (None, 'SecurityGroups.SecurityGroup', None)
         id = 'SecurityGroupId'
 
-    def get_requst(self):
+    def get_request(self):
         request = DescribeSecurityGroupsRequest()
         return request
 
@@ -133,7 +133,7 @@ class Delete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, sg):
+    def get_request(self, sg):
         request = DeleteSecurityGroupRequest()
         request.set_InstanceId(sg['SecurityGroupId'])
         request.set_accept_format('json')

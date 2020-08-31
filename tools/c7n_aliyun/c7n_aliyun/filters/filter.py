@@ -524,7 +524,7 @@ class MetricsFilter(Filter):
             # commonly overridden so we can't do it there.
             # dimensions.extend(self.get_user_dimensions())
 
-            request = self.get_requst()
+            request = self.get_request()
             request.set_accept_format('json')
             request.set_StartTime(self.start)
             request.set_Dimensions(dimensions)

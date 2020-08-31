@@ -47,7 +47,7 @@ class ResourceQuery:
                 buckets.append(b.__dict__)
             return buckets
         else:
-            request = resource_manager.get_requst()
+            request = resource_manager.get_request()
             if request:
                 result = request
             else:
