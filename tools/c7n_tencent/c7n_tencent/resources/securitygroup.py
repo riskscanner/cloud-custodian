@@ -34,7 +34,7 @@ class SecurityGroup(QueryResourceManager):
         enum_spec = (None, 'SecurityGroupSet', None)
         id = 'SecurityGroupId'
 
-    def get_requst(self):
+    def get_request(self):
         try:
             req = models.DescribeSecurityGroupsRequest()
             resp = Session.client(self, service).DescribeSecurityGroups(req)
@@ -70,7 +70,7 @@ class Delete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, security_group):
+    def get_request(self, security_group):
         req = models.DeleteSecurityGroupRequest()
         params = '{"SecurityGroupId" :"' + security_group["SecurityGroupId"] + '"}'
         req.from_json_string(params)
@@ -115,6 +115,7 @@ class IPPermission(SGPermission):
         self.process_cidrs(perm, 'CidrBlock', 'Ipv6CidrBlock')
 
     def securityGroupAttributeRequst(self, sg):
+        self.direction = 'Ingress'
         req = models.DescribeSecurityGroupsRequest()
         params = '{"SecurityGroupId" :"' + sg["SecurityGroupId"] + '"}'
         req.from_json_string(params)
@@ -139,6 +140,7 @@ class IPPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def securityGroupAttributeRequst(self, sg):
+        self.direction = 'Egress'
         req = models.DescribeSecurityGroupsRequest()
         params = '{"SecurityGroupId" :"' + sg["SecurityGroupId"] + '"}'
         req.from_json_string(params)

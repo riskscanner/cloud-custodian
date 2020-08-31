@@ -391,9 +391,9 @@ class SGPermission(Filter):
         matched = []
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
         for perm in jmespath.search(self.ip_permissions_key, json.loads(result)):
+            if not perm.get('IpPermissions').get(self.direction):
+                continue
             perm_matches = {}
-            for idx, f in enumerate(self.vfilters):
-                perm_matches[idx] = bool(f(perm))
             perm_matches['ports'] = self.process_ports(perm)
             perm_matches['cidrs'] = self.process_self_cidrs(perm)
             perm_match_values = list(filter(
@@ -510,7 +510,7 @@ class MetricsFilter(Filter):
             # commonly overridden so we can't do it there.
             # dimensions.extend(self.get_user_dimensions())
 
-            request = self.get_requst()
+            request = self.get_request()
             request.set_accept_format('json')
             request.set_StartTime(self.start)
             request.set_Dimensions(dimensions)
