@@ -30,7 +30,7 @@ class SecurityGroup(QueryResourceManager):
         enum_spec = (None, None, None)
         id = 'id'
 
-    def get_requst(self):
+    def get_request(self):
         query = {
             "limit": 10000
         }
@@ -60,16 +60,8 @@ class Delete(MethodAction):
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
 
-    def get_requst(self, security_group):
-        obj = Session.client(self, service).delete_security_group(security_group['id'])
-        json = dict()  # 创建 {}
-        if obj is not None:
-            for name in dir(obj):
-                if not name.startswith('_'):
-                    value = getattr(obj, name)
-                    if not callable(value):
-                        json[name] = value
-        return json
+    def get_request(self, security_group):
+        Session.client(self, service).delete_security_group(security_group['id'])
 
 @SecurityGroup.filter_registry.register('ingress')
 class IPPermission(SGPermission):
@@ -110,6 +102,7 @@ class IPPermission(SGPermission):
 
 
     def securityGroupAttributeRequst(self, sg):
+        self.direction = 'ingress'
         obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
         if obj is not None:
@@ -131,6 +124,7 @@ class IPPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def securityGroupAttributeRequst(self, sg):
+        self.direction = 'egress'
         obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
         if obj is not None:
