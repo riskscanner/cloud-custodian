@@ -31,7 +31,7 @@ class Rds(QueryResourceManager):
     def get_request(self):
         query = {
             'offset': 0,
-            'limit': 10000
+            'limit': 100
         }
         rds = Session.client(self, service).instances(**query)
         arr = list()  # 创建 []
