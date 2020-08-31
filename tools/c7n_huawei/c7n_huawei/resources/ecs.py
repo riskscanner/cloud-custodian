@@ -50,17 +50,20 @@ class Ecs(QueryResourceManager):
 class EcsMetricsFilter(MetricsFilter):
 
     def get_request(self):
-        servers = Session.client(self, service).servers(limit=10000)
-        arr = list()  # 创建 []
-        if servers is not None:
-            for server in servers:
-                json = dict()  # 创建 {}
-                for name in dir(server):
-                    if not name.startswith('_'):
-                        value = getattr(server, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
+        try:
+            servers = Session.client(self, service).servers(limit=10000)
+            arr = list()  # 创建 []
+            if servers is not None:
+                for server in servers:
+                    json = dict()  # 创建 {}
+                    for name in dir(server):
+                        if not name.startswith('_'):
+                            value = getattr(server, name)
+                            if not callable(value):
+                                json[name] = value
+                    arr.append(json)
+        except Exception as err:
+            pass
         return arr
 
 @Ecs.filter_registry.register('instance-age')

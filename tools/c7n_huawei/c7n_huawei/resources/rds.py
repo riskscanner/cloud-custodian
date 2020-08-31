@@ -33,17 +33,20 @@ class Rds(QueryResourceManager):
             'offset': 0,
             'limit': 100
         }
-        rds = Session.client(self, service).instances(**query)
-        arr = list()  # 创建 []
-        if rds is not None:
-            for rd in rds:
-                json = dict()  # 创建 {}
-                for name in dir(rd):
-                    if not name.startswith('_'):
-                        value = getattr(rd, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
+        try:
+            rds = Session.client(self, service).instances(**query)
+            arr = list()  # 创建 []
+            if rds is not None:
+                for rd in rds:
+                    json = dict()  # 创建 {}
+                    for name in dir(rd):
+                        if not name.startswith('_'):
+                            value = getattr(rd, name)
+                            if not callable(value):
+                                json[name] = value
+                    arr.append(json)
+        except Exception as err:
+            pass
         return arr
 
 

@@ -33,17 +33,20 @@ class Vpc(QueryResourceManager):
         query = {
             "limit": 10000
         }
-        vpcs = Session.client(self, service).vpcs(**query)
-        arr = list() # 创建 []
-        if vpcs is not None:
-            for vpc in vpcs:
-                json = dict() # 创建 {}
-                for name in dir(vpc):
-                    if not name.startswith('_'):
-                        value = getattr(vpc, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
+        try:
+            vpcs = Session.client(self, service).vpcs(**query)
+            arr = list() # 创建 []
+            if vpcs is not None:
+                for vpc in vpcs:
+                    json = dict() # 创建 {}
+                    for name in dir(vpc):
+                        if not name.startswith('_'):
+                            value = getattr(vpc, name)
+                            if not callable(value):
+                                json[name] = value
+                    arr.append(json)
+        except Exception as err:
+            pass
         return arr
 
 @Vpc.filter_registry.register('unused')

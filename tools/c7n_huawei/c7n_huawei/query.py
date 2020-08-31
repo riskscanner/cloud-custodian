@@ -48,7 +48,10 @@ class ResourceQuery:
             return buckets
         else:
             request = resource_manager.get_request()
-            result = request
+            if request:
+                result = request
+            else:
+                return None
             false = "false"
             true = "true"
             if path is None:

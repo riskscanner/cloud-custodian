@@ -34,17 +34,20 @@ class SecurityGroup(QueryResourceManager):
         query = {
             "limit": 10000
         }
-        sgs = Session.client(self, service).security_groups(**query)
-        arr = list() # 创建 []
-        if sgs is not None:
-            for sg in sgs:
-                json = dict() # 创建 {}
-                for name in dir(sg):
-                    if not name.startswith('_'):
-                        value = getattr(sg, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
+        try:
+            sgs = Session.client(self, service).security_groups(**query)
+            arr = list() # 创建 []
+            if sgs is not None:
+                for sg in sgs:
+                    json = dict() # 创建 {}
+                    for name in dir(sg):
+                        if not name.startswith('_'):
+                            value = getattr(sg, name)
+                            if not callable(value):
+                                json[name] = value
+                    arr.append(json)
+        except Exception as err:
+            pass
         return arr
 
 @SecurityGroup.action_registry.register('delete')

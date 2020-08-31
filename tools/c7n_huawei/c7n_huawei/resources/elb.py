@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import logging
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
@@ -30,17 +30,21 @@ class Elb(QueryResourceManager):
         id = 'id'
 
     def get_request(self):
-        lbs = Session.client(self, service).loadbalancers()
-        arr = list()  # 创建 []
-        if lbs is not None:
-            for slb in lbs:
-                json = dict()  # 创建 {}
-                for name in dir(slb):
-                    if not name.startswith('_'):
-                        value = getattr(slb, name)
-                        if not callable(value):
-                            json[name] = value
-                arr.append(json)
+        try:
+            lbs = Session.client(self, service).loadbalancers()
+            arr = list()  # 创建 []
+            if lbs is not None:
+                print("lllfadads", len(list(lbs)))
+                for lb in lbs:
+                    json = dict()  # 创建 {}
+                    for name in dir(lb):
+                        if not name.startswith('_'):
+                            value = getattr(lb, name)
+                            if not callable(value):
+                                json[name] = value
+                    arr.append(json)
+        except Exception as err:
+            pass
         return arr
 
 
