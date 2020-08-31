@@ -300,7 +300,7 @@ class SGPermission(Filter):
         vf.annotate = False
         found = vf(SourceCidrIp)
         if found:
-            pass
+            found = True
         else:
             found = False
         return found
@@ -378,13 +378,8 @@ class SGPermission(Filter):
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
         for perm in jmespath.search(self.ip_permissions_key, eval(result)):
             perm_matches = {}
-            for idx, f in enumerate(self.vfilters):
-                perm_matches[idx] = bool(f(perm))
-            # perm_matches['description'] = self.process_description(perm)
             perm_matches['ports'] = self.process_ports(perm)
             perm_matches['cidrs'] = self.process_self_cidrs(perm)
-            # perm_matches['self-refs'] = self.process_self_reference(perm, sg_id)
-            # perm_matches['sg-refs'] = self.process_sg_references(perm, owner_id)
             perm_match_values = list(filter(
                 lambda x: x is not None, perm_matches.values()))
             # account for one python behavior any([]) == False, all([]) == True

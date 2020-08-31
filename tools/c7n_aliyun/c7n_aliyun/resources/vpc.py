@@ -98,13 +98,13 @@ class IPPermission(SGPermission):
     def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "SourceCidrIp", "Ipv6SourceCidrIp")
 
-
     def securityGroupAttributeRequst(self, sg):
         requst = DescribeSecurityGroupAttributeRequest();
         requst.set_SecurityGroupId(sg["SecurityGroupId"])
-        requst.set_Direction("egress")
+        requst.set_Direction("ingress")
         requst.set_accept_format('json')
         return requst
+
 
 @SecurityGroup.filter_registry.register('egress')
 class IPPermission(SGPermission):
@@ -125,9 +125,6 @@ class IPPermission(SGPermission):
 
     def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
-
-
-
 
 
 @SecurityGroup.action_registry.register('delete')
