@@ -41,10 +41,12 @@ class ResourceQuery:
             params.update(extra_args)
 
         if m.service == 'oss':
+            request = resource_manager.get_request()
             result = client.list_buckets()
             buckets = []
             for b in result.buckets:
-                buckets.append(b.__dict__)
+                if request in b.__dict__['location']:
+                    buckets.append(b.__dict__)
             return buckets
         else:
             request = resource_manager.get_request()

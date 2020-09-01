@@ -38,7 +38,7 @@ class Oss(QueryResourceManager):
         id = 'id'
 
     def get_request(self):
-        pass
+        return regionId
 
 @Oss.filter_registry.register('global-grants')
 class GlobalGrantsFilter(Filter):
@@ -82,93 +82,3 @@ class GlobalGrantsFilter(Filter):
         if results:
             set_annotation(b, 'GlobalPermissions', results)
             return b
-
-@Oss.action_registry.register('create_bucket')
-class OssCreateBucket(MethodAction):
-
-    schema = type_schema('create_bucket')
-    method_spec = {'op': 'create_bucket'}
-
-    def get_request(self, bucket):
-        try:
-            bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
-            bucketConfig = oss2.models.BucketCreateConfig(oss2.BUCKET_STORAGE_CLASS_STANDARD,
-                                                          oss2.BUCKET_DATA_REDUNDANCY_TYPE_ZRS)
-            resp = bucket.create_bucket(oss2.BUCKET_ACL_PRIVATE, bucketConfig)
-            if resp.status < 300:
-                # 操作成功
-                # 处理操作成功后业务逻辑
-                return resp
-            else:
-                # 操作失败，获取详细异常信息
-                return resp.errorMessage
-        except Exception as e:
-            import traceback
-            # 发生异常，打印异常堆栈
-            return traceback.format_exc()
-
-@Oss.action_registry.register('put_object')
-class OssPutObject(MethodAction):
-    schema = type_schema('put_object')
-    method_spec = {'op': 'put_object'}
-
-    def get_request(self, bucket):
-        try:
-            headers = dict()
-            headers["x-oss-storage-class"] = "Standard"
-            headers["x-oss-object-acl"] = oss2.OBJECT_ACL_PRIVATE
-            bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
-            resp = bucket.put_object(bucket['objectname'], bucket['obj'], headers)
-            if resp.status < 300:
-                # 操作成功
-                # 处理操作成功后业务逻辑
-                return resp
-            else:
-                # 操作失败，获取详细异常信息
-                return resp.errorMessage
-        except Exception as e:
-            import traceback
-            # 发生异常，打印异常堆栈
-            return traceback.format_exc()
-
-@Oss.action_registry.register('get_object_to_file')
-class OssGetObject(MethodAction):
-    schema = type_schema('get_object_to_file')
-    method_spec = {'op': 'get_object_to_file'}
-
-    def get_request(self, bucket):
-        try:
-            bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
-            resp = bucket.get_object_to_file(bucket['objectname'], bucket['localFile'])
-            if resp.status < 300:
-                # 操作成功
-                # 处理操作成功后业务逻辑
-                return resp
-            else:
-                # 操作失败，获取详细异常信息
-                return resp.errorMessage
-        except Exception as e:
-            import traceback
-            # 发生异常，打印异常堆栈
-            return traceback.format_exc()
-
-@Oss.action_registry.register('delete_object')
-class OssDeleteObject(MethodAction):
-    schema = type_schema('delete_object')
-    method_spec = {'op': 'delete_object'}
-
-    def get_request(self, bucket):
-        try:
-            bucket = oss2.Bucket(auth, REGION_ENDPOINT[regionId], bucket['bucketname'])
-            resp = bucket.delete_object(bucket['objectname'])
-            if resp.status < 300:
-                # 操作成功
-                # 处理操作成功后业务逻辑
-                return resp
-            else:
-                # 操作失败，获取详细异常信息
-                return resp.errorMessage
-        except Exception as e:
-            import traceback
-            # 发生异常，打印异常堆栈
-            return traceback.format_exc()
