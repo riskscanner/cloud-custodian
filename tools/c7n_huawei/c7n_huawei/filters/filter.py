@@ -84,14 +84,17 @@ class HuaweiAgeFilter(Filter):
         v = self.get_resource_date(i)
         if v is None:
             return False
+        # Work around placebo issues with tz
+        utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
+        v = utc_date + datetime.timedelta(hours=8)
         op = OPERATORS[self.data.get('op', 'greater-than')]
+
         if not self.threshold_date:
+
             days = self.data.get('days', 0)
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
-            # Work around placebo issues with tz
-            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%S.%f')
-            v = utc_date + datetime.timedelta(hours=8)
+
             n = datetime.datetime.now()
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
 

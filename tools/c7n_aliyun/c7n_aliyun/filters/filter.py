@@ -76,14 +76,17 @@ class AliyunAgeFilter(Filter):
         v = self.get_resource_date(i)
         if v is None:
             return False
+        # Work around placebo issues with tz
+        utc_date = datetime.datetime.strptime(v, "%Y-%m-%dT%H:%MZ")
+        v = utc_date + datetime.timedelta(hours=8)
         op = OPERATORS[self.data.get('op', 'greater-than')]
+
         if not self.threshold_date:
+
             days = self.data.get('days', 0)
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
-            # Work around placebo issues with tz
-            utc_date = datetime.datetime.strptime(v, "%Y-%m-%dT%H:%MZ")
-            v = utc_date + datetime.timedelta(hours=8)
+
             n = datetime.datetime.now()
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
 
@@ -491,7 +494,6 @@ class MetricsFilter(Filter):
             for resource_set in chunks(resources, 50):
                 futures.append(
                     w.submit(self.process_resource_set, resource_set))
-
             for f in as_completed(futures):
                 if f.exception():
                     self.log.warning(

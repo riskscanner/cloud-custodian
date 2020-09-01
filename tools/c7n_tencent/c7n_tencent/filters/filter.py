@@ -84,14 +84,17 @@ class TencentAgeFilter(Filter):
         v = self.get_resource_date(i)
         if v is None:
             return False
+        # Work around placebo issues with tz
+        utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
+        v = utc_date + datetime.timedelta(hours=8)
         op = OPERATORS[self.data.get('op', 'greater-than')]
+
         if not self.threshold_date:
+
             days = self.data.get('days', 0)
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
-            # Work around placebo issues with tz
-            utc_date = datetime.datetime.strptime(v, '%Y-%m-%dT%H:%M:%SZ')
-            v = utc_date + datetime.timedelta(hours=8)
+
             n = datetime.datetime.now()
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
 
@@ -455,7 +458,7 @@ class MetricsFilter(Filter):
 
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
-        'cvm': 'acs_cvm_dashboard',
+        'cvm': 'CPUUsage',
     }
 
     def process(self, resources, event=None):
@@ -477,13 +480,13 @@ class MetricsFilter(Filter):
             for resource_set in chunks(resources, 50):
                 futures.append(
                     w.submit(self.process_resource_set, resource_set))
-
             for f in as_completed(futures):
                 if f.exception():
                     self.log.warning(
-                        "CW Retrieval error(json数据不合法,类似“group_buy_create_description_text”: “1. Select the blue “Buy” button to let other shoppers buy with you.” 这样的内容出现在json数据中): %s" % f.exception())
+                        "CW Retrieval error(): %s" % f.exception())
                     continue
                 matched.extend(f.result())
+
         return matched
 
     def get_dimensions(self, resource):
