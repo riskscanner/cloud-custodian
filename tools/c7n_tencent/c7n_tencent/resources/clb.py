@@ -54,7 +54,6 @@ class Clb(QueryResourceManager):
 
 @Clb.filter_registry.register('running')
 class TencentClbFilter(TencentClbFilter):
-    # 查询指定地域已创建的EIP
     """Filters:Example:
        .. code-block:: yaml
 

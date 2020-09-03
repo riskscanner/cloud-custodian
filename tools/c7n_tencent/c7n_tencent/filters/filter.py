@@ -54,7 +54,7 @@ class TencentClbFilter(Filter):
     def validate(self):
         return self
 
-    def __call__(self, i, data):
+    def __call__(self, i):
         if i['Status'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
