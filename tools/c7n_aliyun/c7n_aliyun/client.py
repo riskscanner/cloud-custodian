@@ -47,11 +47,11 @@ class Session:
 
     def client(self,  service):
         if service == 'oss':
-            auth = oss2.Auth(self.accessKeyId, self.accessSecret)
-            region = self.get_oss_region(self.regionId)
+            auth = oss2.Auth(os.getenv('ALIYUN_ACCESSKEYID'), os.getenv('ALIYUN_ACCESSSECRET'))
+            region = self.get_oss_region(os.getenv('ALIYUN_DEFAULT_REGION'))
             clt = oss2.Service(auth, region)
         else:
-            clt = client.AcsClient(self.accessKeyId, self.accessSecret, self.regionId)
+            clt = client.AcsClient(os.getenv('ALIYUN_ACCESSKEYID'), os.getenv('ALIYUN_ACCESSSECRET'), os.getenv('ALIYUN_DEFAULT_REGION'))
         return clt
 
     def get_oss_region(self, regionId):

@@ -11,17 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
 import json
 import logging
+import os
 
-from aliyunsdkrds.request.v20140815.DescribeRegionsRequest import DescribeRegionsRequest
+from aliyunsdkcore import client
 from aliyunsdkrds.request.v20140815.DeleteDBInstanceRequest import DeleteDBInstanceRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
+from aliyunsdkrds.request.v20140815.DescribeRegionsRequest import DescribeRegionsRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
-from aliyunsdkcore import client
+
 from c7n.utils import type_schema
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
@@ -39,7 +41,7 @@ class Rds(QueryResourceManager):
         id = 'DBInstanceId'
 
     def get_request(self):
-        clt = client.AcsClient(accessKeyId, accessSecret, "cn-beijing")
+        clt = client.AcsClient(accessKeyId, accessSecret, regionId)
         request = DescribeRegionsRequest()
         request.set_accept_format('json')
         response_str = clt.do_action(request)
@@ -57,6 +59,24 @@ class Rds(QueryResourceManager):
         else:
             logging.error("RDS service in this region is not supported!")
             return False
+
+@Rds.filter_registry.register('Internet')
+class AliyunRdsFilter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            - name: aliyun-rds
+              resource: aliyun.rds
+              filters:
+                - type: Internet
+    """
+    # 实例是内网或外网，取值：
+    #
+    # Internet：外网
+    # Intranet：内网
+    schema = type_schema('Internet')
 
 @Rds.action_registry.register('delete')
 class RdsDelete(MethodAction):

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import json
 from aliyunsdkecs.request.v20140526.DeleteSecurityGroupRequest import DeleteSecurityGroupRequest
 from aliyunsdkecs.request.v20140526.DeleteVpcRequest import DeleteVpcRequest
 from aliyunsdkecs.request.v20140526.DescribeSecurityGroupAttributeRequest import DescribeSecurityGroupAttributeRequest
@@ -25,7 +25,9 @@ from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 from c7n.utils import type_schema
-
+from c7n_aliyun.resources.ecs import Ecs
+from c7n_aliyun.resources.rds import Rds
+from c7n_aliyun.client import Session
 
 @resources.register('vpc')
 class Vpc(QueryResourceManager):
@@ -56,6 +58,28 @@ class AliyunVpcFilter(AliyunVpcFilter):
     # InUse：已分配。
     # Available：可用。
     schema = type_schema('Available')
+
+    def get_request(self, i):
+        VpcId = i['VpcId']
+        #vpc 查询vpc下是否有ECS资源
+        ecs_request = Ecs.get_request(self)
+        ecs_request.set_accept_format('json')
+        ecs_response_str = Session.client(self, service='ecs').do_action(ecs_request)
+        ecs_response_detail = json.loads(ecs_response_str)
+        if ecs_response_detail['Instances']['Instance']:
+            for ecs in ecs_response_detail['Instances']['Instance']:
+                if VpcId == ecs['VpcAttributes']['VpcId']:
+                    return None
+        # vpc 查询vpc下是否有RDS资源
+        rds_request = Rds.get_request(self)
+        rds_request.set_accept_format('json')
+        rds_response_str = Session.client(self, service='ecs').do_action(rds_request)
+        rds_response_detail = json.loads(rds_response_str)
+        if rds_response_detail['Items']['DBInstance']:
+            for rds in rds_response_detail['Items']['DBInstance']:
+                if VpcId == rds['VpcId']:
+                    return None
+        return i
 
 
 @Vpc.action_registry.register('delete')

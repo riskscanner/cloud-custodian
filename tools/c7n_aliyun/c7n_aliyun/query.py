@@ -28,7 +28,6 @@ log = logging.getLogger('c7n_aliyun.query')
 
 
 class ResourceQuery:
-
     def __init__(self, session_factory):
         self.session_factory = session_factory
 

@@ -16,7 +16,6 @@ from c7n.utils import type_schema
 
 
 class AliyunEipFilter(Filter):
-    threshold_date = None
     schema = None
 
     def validate(self):
@@ -28,7 +27,6 @@ class AliyunEipFilter(Filter):
         return i
 
 class AliyunDiskFilter(Filter):
-    threshold_date = None
     schema = None
 
     def validate(self):
@@ -36,6 +34,16 @@ class AliyunDiskFilter(Filter):
 
     def __call__(self, i):
         if i['Status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
+
+class AliyunRdsFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['DBInstanceNetType'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -47,9 +55,8 @@ class AliyunSlbFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['LoadBalancerStatus'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
+        request = self.get_request(i)
+        return request
 
 class AliyunAgeFilter(Filter):
     """Automatically filter resources older than a given date.
@@ -93,16 +100,13 @@ class AliyunAgeFilter(Filter):
         return op(self.threshold_date, v)
 
 class AliyunVpcFilter(Filter):
-    threshold_date = None
-    schema = None
 
     def validate(self):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
+        request = self.get_request(i)
+        return request
 
 class SGPermission(Filter):
     """Filter for verifying security group ingress and egress permissions
