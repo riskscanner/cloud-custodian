@@ -64,10 +64,11 @@ class CvmMetricsFilter(MetricsFilter):
         from tencentcloud.monitor.v20180724 import models
         service = 'monitor_client.cvm'
         req = models.DescribeBaseMetricsRequest()
-        params = '{"Namespace" :"' + self.namespace  + ',' + '"MetricName":' + self.metric + '"}'
+        params = '{"Namespace" :"' + self.namespace  + '",' + '"MetricName":"' + self.metric + '"}'
         req.from_json_string(params)
         resp = Session.client(self, service).DescribeBaseMetrics(req)
-        return resp.to_json_string().replace('null', 'None')
+        print("resp", resp)
+        return resp['MetricSet'].to_json_string().replace('null', 'None')
 
 @Cvm.filter_registry.register('instance-age')
 class CvmAgeFilter(TencentAgeFilter):

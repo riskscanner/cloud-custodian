@@ -34,7 +34,7 @@ class Slb(QueryResourceManager):
         request = DescribeLoadBalancersRequest()
         return request
 
-@Slb.filter_registry.register('unused')
+@Slb.filter_registry.register('inactive')
 class AliyunSlbFilter(AliyunSlbFilter):
     """Filters
 
@@ -46,7 +46,7 @@ class AliyunSlbFilter(AliyunSlbFilter):
             - name: aliyun-elb-mark-unused-for-deletion
               resource: aliyun.slb
               filters:
-                - unused
+                - inactive
               actions:
                 - delete
     """

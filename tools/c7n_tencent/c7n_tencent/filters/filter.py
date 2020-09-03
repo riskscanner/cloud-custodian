@@ -44,7 +44,7 @@ class TencentCdbFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+        if i['Status'] != self.schema['properties']['type']['enum'][0] or i['WanStatus'] != self.net_schema['properties']['type']['enum'][0]:
             return False
         return i
 

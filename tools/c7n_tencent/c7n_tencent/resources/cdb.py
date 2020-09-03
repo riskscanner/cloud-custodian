@@ -31,7 +31,11 @@ class Cdb(QueryResourceManager):
     class resource_type(TypeInfo):
         service = 'cdb_client.cdb'
         enum_spec = (None, 'Items', None)
-        id = 'ItemId'
+        id = 'InstanceId'
+        default_report_fields = (
+            'StorageEncrypted',
+            'PubliclyAccessible'
+        )
 
     def get_request(self):
         try:
@@ -49,7 +53,7 @@ class Cdb(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Cdb.filter_registry.register('running')
+@Cdb.filter_registry.register('ExtranetByRunning')
 class TencentCdbFilter(TencentCdbFilter):
     """Filters
 
@@ -62,9 +66,6 @@ class TencentCdbFilter(TencentCdbFilter):
                resource: tencent.cdb
                filters:
                  - type: running
-                 - or:
-                    - StorageEncrypted: false
-                    - PubliclyAccessible: true
     """
     # 实例状态。取值范围：
     # 1：申请中
@@ -80,6 +81,9 @@ class TencentCdbFilter(TencentCdbFilter):
     # 11：只读
     # 12：重启中
     schema = type_schema('2')
+    # 外网状态，可能的返回值为：0-未开通外网；1-已开通外网；2-已关闭外网
+    net_schema = type_schema('1')
+
 
 @Cdb.action_registry.register('restart')
 class CdbReStart(MethodAction):
