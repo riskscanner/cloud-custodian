@@ -57,11 +57,11 @@ class TencentDiskFilter(TencentDiskFilter):
 
        .. code-block:: yaml
 
-           policies:
-             - name: tencent-orphaned-disk
-               resource: tencent.disk
-               filters:
-                 - type: unused
+policies:
+ - name: tencent-orphaned-disk
+   resource: tencent.disk
+   filters:
+     - type: unused
     """
     # 云盘状态。取值范围：
     # UNATTACHED：未挂载
@@ -79,10 +79,9 @@ class DiskDelete(MethodAction):
 
     schema = type_schema('delete')
     method_spec = {'op': 'delete'}
-    attr_filter = ('Status', ('AVAILABLE', ))
 
     def get_request(self, disk):
         req = models.TerminateDisksRequest()
-        params = '{"DiskId" :"' + disk["DiskId"] + '"}'
+        params = '{"DiskIds" :["' + disk["DiskId"] + '"]}'
         req.from_json_string(params)
         Session.client(self, service).TerminateDisks(req)

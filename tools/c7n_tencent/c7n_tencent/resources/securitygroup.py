@@ -121,6 +121,8 @@ class IPPermission(SGPermission):
         req.from_json_string(params)
         resp = Session.client(self, service).DescribeSecurityGroups(req)
         for res in resp.SecurityGroupSet:
+            if sg["SecurityGroupId"] != res.SecurityGroupId:
+                continue
             req2 = models.DescribeSecurityGroupPoliciesRequest()
             params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
             req2.from_json_string(params)

@@ -49,15 +49,22 @@ class TencentCdbFilter(Filter):
         return i
 
 class TencentClbFilter(Filter):
-    schema = None
 
     def validate(self):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
+        request = self.get_request(i)
+        return request
+
+class TencentVpcFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
 
 class TencentAgeFilter(Filter):
     """Automatically filter resources older than a given date.
@@ -394,7 +401,7 @@ class SGPermission(Filter):
         matched = []
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
         for perm in jmespath.search(self.ip_permissions_key, json.loads(result)):
-            if not perm.get('IpPermissions').get(self.direction):
+            if perm.get('IpPermissions') is None or len(perm.get('IpPermissions').get(self.direction)) == 0:
                 continue
             perm_matches = {}
             perm_matches['ports'] = self.process_ports(perm)

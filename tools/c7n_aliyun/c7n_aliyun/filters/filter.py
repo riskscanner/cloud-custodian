@@ -38,6 +38,7 @@ class AliyunDiskFilter(Filter):
         return i
 
 class AliyunRdsFilter(Filter):
+    schema = None
 
     def validate(self):
         return self
@@ -48,8 +49,6 @@ class AliyunRdsFilter(Filter):
         return i
 
 class AliyunSlbFilter(Filter):
-    threshold_date = None
-    schema = None
 
     def validate(self):
         return self

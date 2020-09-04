@@ -52,7 +52,7 @@ class Clb(QueryResourceManager):
         return resp.to_json_string().replace('null', 'None')
 
 
-@Clb.filter_registry.register('running')
+@Clb.filter_registry.register('unused')
 class TencentClbFilter(TencentClbFilter):
     """Filters:Example:
        .. code-block:: yaml
@@ -61,12 +61,25 @@ class TencentClbFilter(TencentClbFilter):
              - name: tencent-running-clb
                resource: tencent.clb
                filters:
-                 - type: running
+                 - type: unused
 
     """
     # 负载均衡实例的状态，包括0：创建中，1：正常运行。
     # 注意：此字段可能返回null，表示取不到有效值。
     schema = type_schema('1')
+
+    def get_request(self, i):
+        LoadBalancerId = i['LoadBalancerId']
+        # slb 查询slb下是否有ECS资源
+        self.LoadBalancerId = LoadBalancerId
+        req = models.DescribeTargetsRequest()
+        params = '{"LoadBalancerId" :"' + LoadBalancerId + '"}'
+        req.from_json_string(params)
+
+        resp = Session.client(self, service).DescribeTargets(req)
+        if len(resp.Listeners) > 0:
+            return None
+        return i
 
 @Clb.action_registry.register('delete')
 class ClbDelete(MethodAction):
