@@ -71,15 +71,15 @@ class AliyunSlbFilter(AliyunSlbFilter):
             return None
         return i
 
-@Slb.action_registry.register('delete')
-class SlbDelete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-
-    def get_request(self, slb):
-        request = DeleteLoadBalancerRequest()
-        request.set_LoadBalancerId(slb['LoadBalancerId'])
-        request.set_accept_format('json')
-        return request
+# @Slb.action_registry.register('delete')
+# class SlbDelete(MethodAction):
+#
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#
+#
+#     def get_request(self, slb):
+#         request = DeleteLoadBalancerRequest()
+#         request.set_LoadBalancerId(slb['LoadBalancerId'])
+#         request.set_accept_format('json')
+#         return request

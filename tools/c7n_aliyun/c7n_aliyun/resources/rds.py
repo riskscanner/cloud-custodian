@@ -15,11 +15,11 @@ import json
 import logging
 import os
 
-from aliyunsdkcore import client
 from aliyunsdkrds.request.v20140815.DeleteDBInstanceRequest import DeleteDBInstanceRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
 from aliyunsdkrds.request.v20140815.DescribeRegionsRequest import DescribeRegionsRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.client import Session
 from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
@@ -27,9 +27,8 @@ from c7n_aliyun.query import QueryResourceManager, TypeInfo
 from c7n.utils import type_schema
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+
 service = 'rds'
-accessKeyId = os.getenv('ALIYUN_ACCESSKEYID')
-accessSecret = os.getenv('ALIYUN_ACCESSSECRET')
 regionId = os.getenv('ALIYUN_DEFAULT_REGION')
 
 @resources.register('rds')
@@ -41,24 +40,37 @@ class Rds(QueryResourceManager):
         id = 'DBInstanceId'
 
     def get_request(self):
-        clt = client.AcsClient(accessKeyId, accessSecret, regionId)
-        request = DescribeRegionsRequest()
-        request.set_accept_format('json')
-        response_str = clt.do_action(request)
-        response = json.loads(response_str)
-        if response is not None:
-            region_list = response.get('Regions').get('RDSRegion')
-        flag = False
-        for res in region_list:
-            if regionId == res['RegionId']:
+        try:
+            # clt = Session.client(self, service)
+            # request = DescribeRegionsRequest()
+            # request.set_accept_format('json')
+            # response_str = clt.do_action_with_exception(request)
+            # response = json.loads(response_str)
+            """
+                aliyunsdkcore.client:ERROR ServerException occurred. Host:location-readonly.aliyuncs.com SDK-Version:2.13.11 
+                ServerException:HTTP Status: 404 Error:InvalidRegionId The specified region does not exist. 
+                RequestID: 4B62B859-1CBD-46E9-9A41-A2F5FD672E2C
+                用DescribeRegionsRequest去查,sdk直接会抛出ERROR异常，虽然不影响返回的数据，但是在安全合规模块遇到ERROR会报错。所以暂时写死region
+            """
+            if regionId == "cn-wulanchabu":
+                flag = False
+            else:
                 flag = True
-                break
+            # if response is not None:
+            #     region_list = response.get('Regions').get('RDSRegion')
+            #     for res in region_list:
+            #         if regionId == res['RegionId']:
+            #             flag = True
+            #             break
+        except Exception as error:
+            logging.warn(error)
+            flag = False
         if flag:
             # 乌兰察布暂时不支持rds
             return DescribeDBInstancesRequest()
         else:
-            logging.error("RDS service in this region is not supported!")
-            return False
+            logging.warn("RDS service in %s is not supported!", regionId)
+            return flag
 
 @Rds.filter_registry.register('Internet')
 class AliyunRdsFilter(AliyunRdsFilter):

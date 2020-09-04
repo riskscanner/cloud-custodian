@@ -72,6 +72,8 @@ class AliyunVpcFilter(AliyunVpcFilter):
                     return None
         # vpc 查询vpc下是否有RDS资源
         rds_request = Rds.get_request(self)
+        if not rds_request:
+            return i
         rds_request.set_accept_format('json')
         rds_response_str = Session.client(self, service='ecs').do_action(rds_request)
         rds_response_detail = json.loads(rds_response_str)
@@ -81,19 +83,18 @@ class AliyunVpcFilter(AliyunVpcFilter):
                     return None
         return i
 
-
-@Vpc.action_registry.register('delete')
-class Delete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, vpc):
-        request = DeleteVpcRequest()
-        request.set_InstanceId(vpc['VpcId'])
-        request.set_accept_format('json')
-        return request
-
+# 删除vpc 需要先删除底下所有资源（子网等）
+# @Vpc.action_registry.register('delete')
+# class Delete(MethodAction):
+#
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#
+#     def get_request(self, vpc):
+#         request = DeleteVpcRequest()
+#         request.set_InstanceId(vpc['VpcId'])
+#         request.set_accept_format('json')
+#         return request
 
 
 @resources.register('security-group')

@@ -87,14 +87,14 @@ class TencentVpcFilter(TencentVpcFilter):
                     return None
         return i
 
-@Vpc.action_registry.register('delete')
-class VpcDelete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, vpc):
-        req = models.DeleteVpcRequest()
-        params = '{"VpcId" :"' + vpc["VpcId"] + '"}'
-        req.from_json_string(str(params))
-        Session.client(self, service).DeleteVpc(req)
+# @Vpc.action_registry.register('delete')
+# class VpcDelete(MethodAction):
+#
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#
+#     def get_request(self, vpc):
+#         req = models.DeleteVpcRequest()
+#         params = '{"VpcId" :"' + vpc["VpcId"] + '"}'
+#         req.from_json_string(str(params))
+#         Session.client(self, service).DeleteVpc(req)

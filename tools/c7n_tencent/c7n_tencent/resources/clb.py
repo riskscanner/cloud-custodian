@@ -70,10 +70,11 @@ class TencentClbFilter(TencentClbFilter):
 
     def get_request(self, i):
         LoadBalancerId = i['LoadBalancerId']
-        # slb 查询slb下是否有ECS资源
+        # clb 查询clb下是否有监听
         self.LoadBalancerId = LoadBalancerId
         req = models.DescribeTargetsRequest()
         params = '{"LoadBalancerId" :"' + LoadBalancerId + '"}'
+        # params = '{"LoadBalancerIds" :["' + LoadBalancerId + '"]}'
         req.from_json_string(params)
 
         resp = Session.client(self, service).DescribeTargets(req)
@@ -81,20 +82,20 @@ class TencentClbFilter(TencentClbFilter):
             return None
         return i
 
-@Clb.action_registry.register('delete')
-class ClbDelete(MethodAction):
-    """
-         policies:
-           - name: tencent-clb-delete
-             resource: tencent.clb
-             actions:
-               - delete
-     """
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, clb):
-        req = models.DeleteLoadBalancerRequest()
-        params = '{"LoadBalancerId" :"' + clb["LoadBalancerId"] + '"}'
-        req.from_json_string(params)
-        Session.client(self, service).DeleteLoadBalancer(req)
+# @Clb.action_registry.register('delete')
+# class ClbDelete(MethodAction):
+#     """
+#          policies:
+#            - name: tencent-clb-delete
+#              resource: tencent.clb
+#              actions:
+#                - delete
+#      """
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#
+#     def get_request(self, clb):
+#         req = models.DeleteLoadBalancerRequest()
+#         params = '{"LoadBalancerId" :"' + clb["LoadBalancerId"] + '"}'
+#         req.from_json_string(params)
+#         Session.client(self, service).DeleteLoadBalancer(req)
