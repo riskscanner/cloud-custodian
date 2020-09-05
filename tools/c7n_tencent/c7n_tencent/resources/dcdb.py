@@ -49,7 +49,7 @@ class Dcdb(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Dcdb.filter_registry.register('running')
+@Dcdb.filter_registry.register('Internet')
 class TencentDcdbFilter(TencentCdbFilter):
     """Filters
 
@@ -61,7 +61,7 @@ class TencentDcdbFilter(TencentCdbFilter):
              - name: tencent-running-dcdb
                resource: tencent.dcdb
                filters:
-                 - type: running
+                 - type: Internet
     """
     # 实例状态。取值范围：
     # 1：申请中
@@ -76,5 +76,6 @@ class TencentDcdbFilter(TencentCdbFilter):
     # 10：实例迁移中
     # 11：只读
     # 12：重启中
-    schema = type_schema(2)
-
+    schema = type_schema('running')
+    # 外网状态，可能的返回值为：0-未开通外网；1-已开通外网(Internet)；2-已关闭外网
+    net_schema = type_schema('Internet')

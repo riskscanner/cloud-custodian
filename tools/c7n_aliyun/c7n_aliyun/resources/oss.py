@@ -14,8 +14,6 @@
 import os
 
 import oss2
-from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.client import REGION_ENDPOINT
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
@@ -27,7 +25,6 @@ service = 'oss'
 accessKeyId = os.getenv('ALIYUN_ACCESSKEYID')
 accessSecret = os.getenv('ALIYUN_ACCESSSECRET')
 regionId = os.getenv('ALIYUN_DEFAULT_REGION')
-auth = oss2.Auth(accessKeyId, accessSecret)
 
 @resources.register('oss')
 class Oss(QueryResourceManager):
@@ -68,6 +65,7 @@ class GlobalGrantsFilter(Filter):
             return results
 
     def process_bucket(self, b):
+        auth = oss2.Auth(accessKeyId, accessSecret)
         bucket = oss2.Bucket(auth, b['extranet_endpoint'], b['name'])
         # 有效值：private、public-read、public-read-write
         acl = bucket.get_bucket_acl().acl

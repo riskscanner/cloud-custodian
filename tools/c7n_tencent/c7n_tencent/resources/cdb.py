@@ -76,9 +76,9 @@ class TencentCdbFilter(TencentCdbFilter):
     # 10：实例迁移中
     # 11：只读
     # 12：重启中
-    schema = type_schema('2')
-    # 外网状态，可能的返回值为：0-未开通外网；1-已开通外网；2-已关闭外网
-    net_schema = type_schema('1')
+    schema = type_schema('running')
+    # 外网状态，可能的返回值为：0-未开通外网；1-已开通外网(Internet)；2-已关闭外网
+    net_schema = type_schema('Internet')
 
 
 @Cdb.action_registry.register('restart')

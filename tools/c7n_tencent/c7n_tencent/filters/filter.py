@@ -39,12 +39,16 @@ class TencentDiskFilter(Filter):
 
 class TencentCdbFilter(Filter):
     schema = None
+    net_schema = None
 
     def validate(self):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0] or i['WanStatus'] != self.net_schema['properties']['type']['enum'][0]:
+        Internet = 0
+        if self.net_schema['properties']['type']['enum'][0] == 'Internet':
+            Internet = 1
+        if i['WanStatus'] != Internet:
             return False
         return i
 
@@ -429,7 +433,7 @@ class MetricsFilter(Filter):
         resource: tencent.cvm
         filters:
           - type: metrics
-            name: CPUUtilization
+            name: CPUUsage
             days: 4
             period: 86400
             value: 30
@@ -509,7 +513,7 @@ class MetricsFilter(Filter):
             dims.append({'Name': k, 'Value': v})
         return dims
 
-        def process_resource_set(self, resource_set):
+    def process_resource_set(self, resource_set):
         service = []
         service.append("monitor_client")
         client = local_session(

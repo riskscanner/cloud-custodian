@@ -67,6 +67,8 @@ class Cos(QueryResourceManager):
             return json.dumps(resp)
         return json.dumps(resp)
 
+
+
 # @Cos.filter_registry.register('global-grants')
 # class GlobalGrantsFilter(Filter):
 #     """Filters :example:
