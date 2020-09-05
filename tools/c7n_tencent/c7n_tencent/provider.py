@@ -16,6 +16,7 @@ import copy
 import logging
 import operator
 import os
+import sys
 
 from c7n.provider import Provider, clouds
 from c7n.registry import PluginRegistry

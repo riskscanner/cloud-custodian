@@ -33,6 +33,7 @@ class Cvm(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'cvm_client.cvm'
+        namespace = 'QCE/CVM'
         enum_spec = (None, 'InstanceSet', None)
         id = 'InstanceId'
         dimension = 'InstanceId'
@@ -62,13 +63,8 @@ class CvmMetricsFilter(MetricsFilter):
 
     def get_request(self):
         from tencentcloud.monitor.v20180724 import models
-        service = 'monitor_client.cvm'
-        req = models.DescribeBaseMetricsRequest()
-        params = '{"Namespace" :"' + self.namespace  + '",' + '"MetricName":"' + self.metric + '"}'
-        req.from_json_string(params)
-        resp = Session.client(self, service).DescribeBaseMetrics(req)
-        print("resp", resp)
-        return resp['MetricSet'].to_json_string().replace('null', 'None')
+        req = models.GetMonitorDataRequest()
+        return req
 
 @Cvm.filter_registry.register('instance-age')
 class CvmAgeFilter(TencentAgeFilter):
