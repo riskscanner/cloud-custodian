@@ -523,7 +523,7 @@ class MetricsFilter(Filter):
             dimension = {}
             dimension['Dimensions'] = Dimensions
             Instances = []
-            Instances.insert(0, self.get_dimensions(r))
+            Instances.insert(0, dimension)
             requestJson['Namespace'] = self.namespace
             requestJson['MetricName'] = self.metric
             requestJson['Period'] = self.period
