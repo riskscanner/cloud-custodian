@@ -273,6 +273,8 @@ class SGPermission(Filter):
         else:
             poms = perm['IpPermissions']['Egress']
         for ingress in poms:
+            if ingress['Action'] != 'ACCEPT':
+                return False
             if ingress['Port']:
                 FromPort = ingress['Port']
                 for port in self.ports:

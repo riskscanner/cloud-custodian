@@ -268,6 +268,8 @@ class SGPermission(Filter):
 
     def process_ports(self, perm):
         found = None
+        if perm['Policy'] != 'Accept':
+            return False
         if perm['PortRange']:
             FromPort = int(perm['PortRange'].split('/', 1)[0])
             ToPort = int(perm['PortRange'].split('/', 1)[1])
