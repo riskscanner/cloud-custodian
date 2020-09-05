@@ -472,14 +472,14 @@ class MetricsFilter(Filter):
         days = self.data.get('days', 1)
         duration = timedelta(days)
         self.metric = self.data['name']
-        self.end = datetime.datetime.utcnow()
-        self.start = self.end - duration
+        self.end = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.start = (datetime.datetime.now() - duration).strftime("%Y-%m-%d %H:%M:%S")
         self.period = int(self.data.get('period', duration.total_seconds()))
         self.statistics = self.data.get('statistics', 'Average')
         self.model = self.manager.get_model()
         self.op = OPERATORS[self.data.get('op', 'less-than')]
         self.value = self.data['value']
-        self.namespace = self.DEFAULT_NAMESPACE[self.model.service[self.model.service.rfind('.') + 1:]]
+        self.namespace = self.model.namespace
         self.log.debug("Querying metrics for %d", len(resources))
         matched = []
         with self.executor_factory(max_workers=3) as w:
@@ -507,41 +507,36 @@ class MetricsFilter(Filter):
             dims.append({'Name': k, 'Value': v})
         return dims
 
-    def process_resource_set(self, resource_set):
+        def process_resource_set(self, resource_set):
+        service = []
+        service.append("monitor_client")
         client = local_session(
-            self.manager.session_factory).client(self.manager.get_model().service)
+            self.manager.session_factory).client(service)
 
         matched = []
         for r in resource_set:
-            # if we overload dimensions with multiple resources we get
-            # the statistics/average over those resources.
-            dimensions = self.get_dimensions(r)
-            # Merge in any filter specified metrics, get_dimensions is
-            # commonly overridden so we can't do it there.
-            # dimensions.extend(self.get_user_dimensions())
-
             request = self.get_request()
-            request.set_accept_format('json')
-            request.set_StartTime(self.start)
-            request.set_Dimensions(dimensions)
-            request.set_Period(self.period)
-            request.set_Namespace(self.namespace)
-            request.set_MetricName(self.metric)
+            requestJson = {}
+            instance = {'Name': self.model.dimension, 'Value': r[self.model.dimension]}
+            Dimensions = []
+            Dimensions.append(instance)
+            dimension = {}
+            dimension['Dimensions'] = Dimensions
+            Instances = []
+            Instances.insert(0, self.get_dimensions(r))
+            requestJson['Namespace'] = self.namespace
+            requestJson['MetricName'] = self.metric
+            requestJson['Period'] = self.period
+            requestJson['Instances'] = Instances
+            request.from_json_string(json.dumps(requestJson))
+
             collected_metrics = r.setdefault('c7n_tencent.metrics', {})
-            # Note this annotation cache is policy scoped, not across
-            # policies, still the lack of full qualification on the key
-            # means multiple filters within a policy using the same metric
-            # across different periods or dimensions would be problematic.
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
 
+            # print(client.do_action(request))
             if key not in collected_metrics:
-                collected_metrics[key] = json.loads(json.loads(client.do_action(request))['Datapoints'])
 
-            # In certain cases CloudWatch reports no data for a metric.
-            # If the policy specifies a fill value for missing data, add
-            # that here before testing for matches. Otherwise, skip
-            # matching entirely.
-            # for m in collected_metrics[key]:
+                collected_metrics[key] = json.loads(client.GetMonitorData(request).to_json_string())["DataPoints"]
 
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' not in self.data:
@@ -551,11 +546,11 @@ class MetricsFilter(Filter):
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):
                     rvalue = rvalue * self.data['attr-multiplier']
-                percent = (collected_metrics[key][0][self.statistics] /
+                percent = (collected_metrics[key][0]['Values'][0] /
                            rvalue * 100)
                 if self.op(percent, self.value):
                     matched.append(r)
-            elif self.op(collected_metrics[key][0][self.statistics], self.value):
+            elif self.op(collected_metrics[key][0]['Values'][0], self.value):
                 matched.append(r)
 
         return matched
