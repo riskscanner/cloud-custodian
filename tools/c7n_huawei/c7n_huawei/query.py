@@ -43,6 +43,8 @@ class ResourceQuery:
         if m.service == 'obs':
             result = resource_manager.get_request()
             buckets = []
+            if result is None:
+                return buckets
             for b in result.body.buckets:
                 buckets.append(b)
             return buckets

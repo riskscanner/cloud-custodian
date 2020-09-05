@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import os
 
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
@@ -20,6 +21,7 @@ from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
 service = 'network.eip'
+project_id=os.getenv('HUAWEI_PROJECT')
 
 @resources.register('eip')
 class Eip(QueryResourceManager):
@@ -31,7 +33,8 @@ class Eip(QueryResourceManager):
 
     def get_request(self):
         query = {
-            "limit": 10000
+            "limit": 10000,
+            "project_id": project_id
         }
         try:
             ips = Session.client(self, service).ips(**query)

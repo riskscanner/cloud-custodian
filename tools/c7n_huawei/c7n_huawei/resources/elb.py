@@ -11,13 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import logging
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import HuaweiElbFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
-from c7n_huawei.filters.filter import HuaweiElbFilter
 
 service = 'network.elb'
 
@@ -34,7 +33,6 @@ class Elb(QueryResourceManager):
             lbs = Session.client(self, service).loadbalancers()
             arr = list()  # 创建 []
             if lbs is not None:
-                print("lllfadads", len(list(lbs)))
                 for lb in lbs:
                     json = dict()  # 创建 {}
                     for name in dir(lb):
@@ -66,6 +64,9 @@ class HuaweiElbFilter(HuaweiElbFilter):
     # InUse：已分配。
     # Available：可用。
     schema = type_schema('Available')
+
+    def get_request(self, i):
+        return i
 
 @Elb.action_registry.register('delete')
 class ElbDelete(MethodAction):

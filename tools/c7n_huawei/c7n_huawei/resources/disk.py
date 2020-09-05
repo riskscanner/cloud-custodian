@@ -31,7 +31,7 @@ class Disk(QueryResourceManager):
 
     def get_request(self):
         try:
-            volumes = Session.client(self, service).volumes(details=False)
+            volumes = Session.client(self, service).volumes(details=True)
             arr = list()  # 创建 []
             if volumes is not None:
                 for volume in volumes:
@@ -59,7 +59,22 @@ class HuaweiDiskFilter(HuaweiDiskFilter):
                  - type: unused
 
     """
-    # “available”，“error”，“restoring”，“creating”，“deleting”，“error_restoring”
+    # creating:云硬盘处于正在创建的过程中。
+    # available:云硬盘创建成功，还未挂载给任何云服务器，可以进行挂载。
+    # in -use:云硬盘已挂载给云服务器，正在使用中。
+    # error:云硬盘在创建过程中出现错误。
+    # attaching:云硬盘处于正在挂载的过程中。
+    # detaching:云硬盘处于正在卸载的过程中。
+    # restoring - backup:云硬盘处于正在从备份恢复的过程中。
+    # backing - up: 云硬盘处于通过备份创建的过程中。
+    # error_restoring:云硬盘从备份恢复过程中出现错误。
+    # uploading:云硬盘数据正在被上传到镜像中。此状态出现在从云服务器创建镜像的操作过程中。
+    # downloading:正在从镜像下载数据到云硬盘。此状态出现在创建云服务器的操作过程中。
+    # extending:云硬盘处于正在扩容的过程中。
+    # error_extending:云硬盘在扩容过程中出现错误。
+    # deleting:云硬盘处于正在删除的过程中。
+    # error_deleting:云硬盘在删除过程中出现错误。
+    # rollbacking:云硬盘处于正在从快照回滚数据的过程中。
     schema = type_schema('available')
 
 @Disk.action_registry.register('delete')

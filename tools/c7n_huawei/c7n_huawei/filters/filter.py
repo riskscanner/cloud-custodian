@@ -33,7 +33,8 @@ class HuaweiDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        if not(i['status'] is None) and self.schema['properties']['type']['enum'][0] == "available":
+        print(i)
+        if i['status'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
 
@@ -43,10 +44,9 @@ class HuaweiElbFilter(Filter):
     def validate(self):
         return self
 
-    def __call__(self, i, data):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
 
 class HuaweiVpcFilter(Filter):
     schema = None

@@ -64,6 +64,7 @@ class Obs(QueryResourceManager):
             # ObsClient在调用ObsClient.close方法关闭后不能再次使用
             Session.client(self, service).close()
 
+
 @Obs.filter_registry.register('global-grants')
 class GlobalGrantsFilter(Filter):
     """Filters :example:
