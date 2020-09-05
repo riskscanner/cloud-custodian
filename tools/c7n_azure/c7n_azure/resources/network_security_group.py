@@ -214,7 +214,7 @@ class NetworkSecurityGroupPortsAction(BaseAction):
     def process(self, network_security_groups):
 
         ip_protocol = self.data.get(IP_PROTOCOL, '*')
-        direction = self.data[DIRECTION]
+        direction = self.data.get(DIRECTION, '')
         prefix = self.data.get(PREFIX, 'c7n-policy-')
         # Build a list of ports described in the action.
         ports = PortsRangeHelper.get_ports_set_from_string(self.data.get(PORTS, '0-65535'))
@@ -248,7 +248,7 @@ class NetworkSecurityGroupPortsAction(BaseAction):
                     'access': self.access_action,
                     'destinationAddressPrefix': '*',
                     'destinationPortRanges': ports,
-                    'direction': self.data[DIRECTION],
+                    'direction': self.data.get(DIRECTION,''),
                     'priority': lowest_priority - PRIORITY_STEP,
                     'protocol': ip_protocol,
                     'sourceAddressPrefix': '*',

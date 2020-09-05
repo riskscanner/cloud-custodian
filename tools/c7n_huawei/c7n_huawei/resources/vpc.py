@@ -19,6 +19,9 @@ from c7n_huawei.filters.filter import HuaweiVpcFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
+from c7n_huawei.resources.ecs import Ecs
+from c7n_huawei.resources.elb import Elb
+
 service = 'vpcv1.vpc'
 
 @resources.register('vpc')
@@ -49,6 +52,7 @@ class Vpc(QueryResourceManager):
             pass
         return arr
 
+
 @Vpc.filter_registry.register('unused')
 class HuaweiVpcFilter(HuaweiVpcFilter):
     """Filters:Example:
@@ -64,6 +68,29 @@ class HuaweiVpcFilter(HuaweiVpcFilter):
     # CREATING：创建中
     # OK：创建成功
     schema = type_schema('OK')
+    def get_request(self, i):
+        VpcId = i['name']
+        #vpc 查询vpc下是否有ECS资源
+        # ecs_request = Ecs.get_request(self)
+        # print(ecs_request)
+        # ecs_request.set_accept_format('json')
+        # ecs_response_str = Session.client(self, service='ecs').do_action(ecs_request)
+        # ecs_response_detail = json.loads(ecs_response_str)
+        # if ecs_response_detail['Instances']['Instance']:
+        #     for ecs in ecs_response_detail['Instances']['Instance']:
+        #         if VpcId == ecs['VpcAttributes']['VpcId']:
+        #             return None
+        # vpc 查询vpc下是否有Elb资源
+        elb_request = Elb.get_request(self)
+        print(elb_request)
+        # rds_request.set_accept_format('json')
+        # rds_response_str = Session.client(self, service='ecs').do_action(rds_request)
+        # rds_response_detail = json.loads(rds_response_str)
+        # if rds_response_detail['Items']['DBInstance']:
+        #     for rds in rds_response_detail['Items']['DBInstance']:
+        #         if VpcId == rds['VpcId']:
+        #             return None
+        return i
 
 @Vpc.action_registry.register('delete')
 class Delete(MethodAction):
