@@ -57,6 +57,16 @@ class HuaweiVpcFilter(Filter):
         request = self.get_request(i)
         return request
 
+class HuaweiRdsFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
+
 class HuaweiAgeFilter(Filter):
     """Automatically filter resources older than a given date.
 

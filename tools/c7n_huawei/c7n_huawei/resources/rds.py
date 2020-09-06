@@ -17,6 +17,7 @@ from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
+from c7n_huawei.filters.filter import HuaweiRdsFilter
 
 service = 'rdsv3.rds'
 
@@ -49,6 +50,26 @@ class Rds(QueryResourceManager):
             pass
         return arr
 
+@Rds.filter_registry.register('Internet')
+class HuaweiRdsFilter(HuaweiRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            - name: huawei-rds
+              resource: huawei.rds
+              filters:
+                - type: Internet
+    """
+
+    schema = type_schema('Internet')
+
+    def get_request(self, i):
+        public_ips = i['public_ips']
+        if len(public_ips) > 0:
+            return None
+        return i
 
 @Rds.action_registry.register('delete')
 class RdsDelete(MethodAction):

@@ -11,15 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 import logging
 import os
 
 from aliyunsdkrds.request.v20140815.DeleteDBInstanceRequest import DeleteDBInstanceRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
-from aliyunsdkrds.request.v20140815.DescribeRegionsRequest import DescribeRegionsRequest
 from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.client import Session
 from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo

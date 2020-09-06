@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
@@ -19,10 +19,8 @@ from c7n_huawei.filters.filter import HuaweiVpcFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-from c7n_huawei.resources.ecs import Ecs
-from c7n_huawei.resources.elb import Elb
-
 service = 'vpcv1.vpc'
+project_id = os.getenv('HUAWEI_PROJECT')
 
 @resources.register('vpc')
 class Vpc(QueryResourceManager):
@@ -68,27 +66,30 @@ class HuaweiVpcFilter(HuaweiVpcFilter):
     # CREATING：创建中
     # OK：创建成功
     schema = type_schema('OK')
+
     def get_request(self, i):
         VpcId = i['name']
-        #vpc 查询vpc下是否有ECS资源
-        # ecs_request = Ecs.get_request(self)
-        # print(ecs_request)
-        # ecs_request.set_accept_format('json')
-        # ecs_response_str = Session.client(self, service='ecs').do_action(ecs_request)
-        # ecs_response_detail = json.loads(ecs_response_str)
-        # if ecs_response_detail['Instances']['Instance']:
-        #     for ecs in ecs_response_detail['Instances']['Instance']:
-        #         if VpcId == ecs['VpcAttributes']['VpcId']:
-        #             return None
-        # vpc 查询vpc下是否有Elb资源
-        elb_request = Elb.get_request(self)
-        print(elb_request)
-        # rds_request.set_accept_format('json')
-        # rds_response_str = Session.client(self, service='ecs').do_action(rds_request)
-        # rds_response_detail = json.loads(rds_response_str)
-        # if rds_response_detail['Items']['DBInstance']:
-        #     for rds in rds_response_detail['Items']['DBInstance']:
-        #         if VpcId == rds['VpcId']:
+        #vpc 查询vpc配额，used：已创建的资源个数
+        # query = {
+        #     "limit": 100,
+        #     "project_id": project_id,
+        #     "vpc_id": VpcId
+        # }
+        # objs = Session.client(self, service).quotas(**query)
+        # arr = list()  # 创建 []
+        # if objs is not None:
+        #     for obj in objs:
+        #         json = dict()  # 创建 {}
+        #         for name in dir(obj):
+        #             if not name.startswith('_'):
+        #                 value = getattr(obj, name)
+        #                 if not callable(value):
+        #                     json[name] = value
+        #         arr.append(json)
+        # for object in arr:
+        #     # 资源：弹性云服务器、裸金属服务、弹性负载均衡器
+        #     if object['type'] in ['loadbalancer', 'listener', 'physicalConnect']:
+        #         if object['used'] > 0:
         #             return None
         return i
 

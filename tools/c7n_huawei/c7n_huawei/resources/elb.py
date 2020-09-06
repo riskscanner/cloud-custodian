@@ -63,9 +63,13 @@ class HuaweiElbFilter(HuaweiElbFilter):
     # Unassociating：解绑中。
     # InUse：已分配。
     # Available：可用。
-    schema = type_schema('Available')
+    schema = type_schema('unused')
 
     def get_request(self, i):
+        listeners = i['listeners']
+        # elb 查询elb下是否有监听
+        if len(listeners) > 0:
+            return None
         return i
 
 @Elb.action_registry.register('delete')
