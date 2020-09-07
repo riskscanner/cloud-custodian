@@ -521,33 +521,26 @@ class MetricsFilter(Filter):
         matched = []
         for r in resource_set:
             request = self.get_request()
-            requestJson = {}
-            instance = {'Name': self.model.dimension, 'Value': r[self.model.dimension]}
-            Dimensions = []
-            Dimensions.append(instance)
-            dimension = {}
-            dimension['Dimensions'] = Dimensions
-            Instances = []
-            Instances.insert(0, dimension)
-            requestJson['Namespace'] = self.namespace
-            requestJson['MetricName'] = self.metric
-            requestJson['Period'] = self.period
-            requestJson['Instances'] = Instances
-            request.from_json_string(json.dumps(requestJson))
+
+            instance = '{"Name": "' + self.model.dimension + '", "Value": "' + r[self.model.dimension] + '"}'
+            Dimensions = '[{"Dimensions": [' + instance + ']}]'
+            params = '{"Namespace": "QCE/CVM", "MetricName": "' + self.metric + '", "Instances": ' + Dimensions + '}'
+            request.from_json_string(params)
+            resp = client.GetMonitorData(request)
+            reponse = resp.to_json_string()
 
             collected_metrics = r.setdefault('c7n_tencent.metrics', {})
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
-
             # print(client.do_action(request))
             if key not in collected_metrics:
 
-                collected_metrics[key] = json.loads(client.GetMonitorData(request).to_json_string())["DataPoints"]
-
+                collected_metrics[key] = json.loads(reponse)["DataPoints"]
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' not in self.data:
                     continue
                 collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_tencent:detail': 'Fill value for missing data'})
-            if self.data.get('percent-attr'):
+            print(collected_metrics[key][0]['Values'])
+            if self.data.get('percent-attr', None) != None:
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):
                     rvalue = rvalue * self.data['attr-multiplier']
@@ -557,7 +550,6 @@ class MetricsFilter(Filter):
                     matched.append(r)
             elif self.op(collected_metrics[key][0]['Values'][0], self.value):
                 matched.append(r)
-
         return matched
 
 SGPermissionSchema = {
