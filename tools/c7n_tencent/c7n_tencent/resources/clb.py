@@ -17,7 +17,6 @@ from tencentcloud.clb.v20180317 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n.utils import type_schema
-from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
 from c7n_tencent.filters.filter import TencentClbFilter
 from c7n_tencent.provider import resources
@@ -66,7 +65,7 @@ class TencentClbFilter(TencentClbFilter):
     """
     # 负载均衡实例的状态，包括0：创建中，1：正常运行。
     # 注意：此字段可能返回null，表示取不到有效值。
-    schema = type_schema('1')
+    schema = type_schema('unused')
 
     def get_request(self, i):
         LoadBalancerId = i['LoadBalancerId']
@@ -98,4 +97,4 @@ class TencentClbFilter(TencentClbFilter):
 #         req = models.DeleteLoadBalancerRequest()
 #         params = '{"LoadBalancerId" :"' + clb["LoadBalancerId"] + '"}'
 #         req.from_json_string(params)
-#         Session.client(self, service).DeleteLoadBalancer(req)
+#         Session.client(self, service).DeleteLoadBalancer

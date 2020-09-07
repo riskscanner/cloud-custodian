@@ -16,17 +16,17 @@
 import logging
 import os
 
+from qcloud_cos import CosConfig
+from qcloud_cos import CosS3Client
+from tencentcloud.cbs.v20170312 import cbs_client
+from tencentcloud.cdb.v20170320 import cdb_client
+from tencentcloud.clb.v20180317 import clb_client
 from tencentcloud.common import credential
 # 导入可选配置类
 # 导入对应产品模块的 client models。
 from tencentcloud.cvm.v20170312 import cvm_client
-from tencentcloud.cbs.v20170312 import cbs_client
-from tencentcloud.vpc.v20170312 import vpc_client
-from tencentcloud.clb.v20180317 import clb_client
-from tencentcloud.cdb.v20170320 import cdb_client
 from tencentcloud.monitor.v20180724 import monitor_client
-from qcloud_cos import CosConfig
-from qcloud_cos import CosS3Client
+from tencentcloud.vpc.v20170312 import vpc_client
 
 log = logging.getLogger('c7n_tencent.client')
 

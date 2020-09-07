@@ -13,7 +13,7 @@
 # limitations under the License.
 import logging
 import operator
-import os
+
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 # 导入对应产品模块的client models。
 from tencentcloud.cvm.v20170312 import models
@@ -27,9 +27,6 @@ from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
 service = 'cvm_client.cvm'
-secretId = os.getenv('TENCENT_SECRETID')
-secretKey = os.getenv('TENCENT_SECRETKEY')
-regionId = os.getenv('TENCENT_DEFAULT_REGION')
 
 @resources.register('cvm')
 class Cvm(QueryResourceManager):
@@ -65,7 +62,7 @@ class Cvm(QueryResourceManager):
 class CvmMetricsFilter(MetricsFilter):
 
     def get_request(self):
-        from tencentcloud.monitor.v20180724 import monitor_client, models
+        from tencentcloud.monitor.v20180724 import models
         try:
             req = models.GetMonitorDataRequest()
             return req

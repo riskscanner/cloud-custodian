@@ -13,11 +13,10 @@
 # limitations under the License.
 import logging
 
-from tencentcloud.dcdb.v20180411 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
+from tencentcloud.dcdb.v20180411 import models
 
 from c7n.utils import type_schema
-from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
 from c7n_tencent.filters.filter import TencentCdbFilter
 from c7n_tencent.provider import resources

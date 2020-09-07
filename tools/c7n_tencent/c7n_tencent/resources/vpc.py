@@ -11,14 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import json
 import logging
 
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 from tencentcloud.vpc.v20170312 import models
 
 from c7n.utils import type_schema
-from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
 from c7n_tencent.filters.filter import TencentVpcFilter
 from c7n_tencent.provider import resources

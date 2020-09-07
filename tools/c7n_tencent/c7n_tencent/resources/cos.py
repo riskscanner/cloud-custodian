@@ -15,15 +15,11 @@ import json
 import logging
 import os
 
-from qcloud_cos import CosClientError
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n_tencent.client import Session
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
-from c7n.filters import Filter
-from c7n.utils import set_annotation
-from c7n.utils import type_schema
 
 service = 'coss3_client.cos'
 regionId = os.getenv('TENCENT_DEFAULT_REGION')
