@@ -39,14 +39,14 @@ class AliyunDiskFilter(Filter):
 
 class AliyunRdsFilter(Filter):
     schema = None
+    filter = None
 
     def validate(self):
         return self
 
     def __call__(self, i):
-        if i['DBInstanceNetType'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
+        request = self.get_request(i)
+        return request
 
 class AliyunSlbFilter(Filter):
 

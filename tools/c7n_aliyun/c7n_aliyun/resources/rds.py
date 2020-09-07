@@ -15,8 +15,10 @@ import logging
 import os
 
 from aliyunsdkrds.request.v20140815.DeleteDBInstanceRequest import DeleteDBInstanceRequest
+from aliyunsdkrds.request.v20140815.DescribeDBInstanceAttributeRequest import DescribeDBInstanceAttributeRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
 from c7n_aliyun.actions import MethodAction
+from c7n_aliyun.client import Session
 from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
@@ -69,7 +71,7 @@ class Rds(QueryResourceManager):
             logging.warn("RDS service in %s is not supported!", regionId)
             return flag
 
-@Rds.filter_registry.register('Internet')
+@Rds.filter_registry.register('normal')
 class AliyunRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -79,13 +81,65 @@ class AliyunRdsFilter(AliyunRdsFilter):
             - name: aliyun-rds
               resource: aliyun.rds
               filters:
-                - type: Internet
+                - type: normal
     """
-    # 实例是内网或外网，取值：
+    # 白名单模式。取值：
     #
-    # Internet：外网
-    # Intranet：内网
-    schema = type_schema('Internet')
+    # normal：通用模式
+    # safety：高安全模式
+    schema = type_schema('normal')
+    filter = 'SecurityIPMode'
+
+    def get_request(self, i):
+        request = DescribeDBInstanceAttributeRequest()
+        request.set_accept_format('json')
+
+        request.set_DBInstanceId(i['DBInstanceId'])
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        DBInstanceAttributes = data['Items']['DBInstanceAttribute']
+        for obj in DBInstanceAttributes:
+            if obj[self.filter] != self.schema['properties']['type']['enum'][0]:
+                return False
+        i['DBInstanceAttributes'] = DBInstanceAttributes
+        return i
+
+@Rds.filter_registry.register('Basic')
+class AliyunRds2Filter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            - name: aliyun-rds
+              resource: aliyun.rds
+              filters:
+                - type: Basic
+    """
+    # 实例系列，取值：
+    #
+    # Basic：基础版
+    # HighAvailability：高可用版
+    # AlwaysOn：集群版
+    # Finance：三节点企业版
+    schema = type_schema('Basic')
+    filter = 'Category'
+
+    def get_request(self, i):
+        request = DescribeDBInstanceAttributeRequest()
+        request.set_accept_format('json')
+
+        request.set_DBInstanceId(i['DBInstanceId'])
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        DBInstanceAttributes = data['Items']['DBInstanceAttribute']
+        for obj in DBInstanceAttributes:
+            if obj[self.filter] != self.schema['properties']['type']['enum'][0]:
+                return False
+        i['DBInstanceAttributes'] = DBInstanceAttributes
+        return i
 
 @Rds.action_registry.register('delete')
 class RdsDelete(MethodAction):
