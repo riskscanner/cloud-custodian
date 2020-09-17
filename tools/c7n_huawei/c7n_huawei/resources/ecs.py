@@ -38,11 +38,7 @@ class Ecs(QueryResourceManager):
         if servers is not None:
             for server in servers:
                 json = dict()  # 创建 {}
-                for name in dir(server):
-                    if not name.startswith('_'):
-                        value = getattr(server, name)
-                        if not callable(value):
-                            json[name] = value
+                json = Session._loads_(json, server)
                 arr.append(json)
         return arr
 
@@ -56,11 +52,7 @@ class EcsMetricsFilter(MetricsFilter):
             if servers is not None:
                 for server in servers:
                     json = dict()  # 创建 {}
-                    for name in dir(server):
-                        if not name.startswith('_'):
-                            value = getattr(server, name)
-                            if not callable(value):
-                                json[name] = value
+                    json = Session._loads_(json, server)
                     arr.append(json)
         except Exception as err:
             pass

@@ -40,11 +40,7 @@ class SecurityGroup(QueryResourceManager):
             if sgs is not None:
                 for sg in sgs:
                     json = dict() # 创建 {}
-                    for name in dir(sg):
-                        if not name.startswith('_'):
-                            value = getattr(sg, name)
-                            if not callable(value):
-                                json[name] = value
+                    json = Session._loads_(json, sg)
                     arr.append(json)
         except Exception as err:
             pass
@@ -108,12 +104,7 @@ class IPPermission(SGPermission):
         self.direction = 'ingress'
         obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
-        if obj is not None:
-            for name in dir(obj):
-                if not name.startswith('_'):
-                    value = getattr(obj, name)
-                    if not callable(value):
-                        json[name] = value
+        json = Session._loads_(json, obj)
         return json
 
 @SecurityGroup.filter_registry.register('egress')
@@ -130,12 +121,7 @@ class IPPermission(SGPermission):
         self.direction = 'egress'
         obj = Session.client(self, service).find_security_group(sg['id'])
         json = dict()  # 创建 {}
-        if obj is not None:
-            for name in dir(obj):
-                if not name.startswith('_'):
-                    value = getattr(obj, name)
-                    if not callable(value):
-                        json[name] = value
+        json = Session._loads_(json, obj)
         return json
 
     def process_self_cidrs(self, perm):

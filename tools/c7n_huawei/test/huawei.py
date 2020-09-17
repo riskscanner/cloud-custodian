@@ -40,13 +40,13 @@ def _loadFile_():
 
 params = _loadFile_()
 
-conn = connection.Connection(
-    project_id=params['project_id'],
-    region=params['region'],
-    cloud=params['cloud'],
-    ak = params['ak'],
-    sk = params['sk']
-)
+# conn = connection.Connection(
+#     project_id=params['project_id'],
+#     region=params['region'],
+#     cloud=params['cloud'],
+#     ak = params['ak'],
+#     sk = params['sk']
+# )
 
 # 创建ObsClient实例
 obsClient = ObsClient(
@@ -199,10 +199,18 @@ def get_all_lb():
 def _print_(json, item):
     for name in dir(item):
         if not name.startswith('_'):
-            value = getattr(item, name)
-            if not callable(value):
-                json[name] = value
+            if name not in API_EXPRESS:
+                value = getattr(item, name)
+                if not callable(value):
+                    json[name] = value
     return json
+
+API_EXPRESS = [
+    'allow_create', 'allow_delete', 'allow_get', 'allow_head',
+    'allow_list', 'allow_update', 'put_create', 'query_limit_key',
+    'query_marker_key', 'next_marker_path', 'patch_update', 'resource_key'
+    'resources_key', 'base_path', 'location'
+]
 
 
 def listBuckets():

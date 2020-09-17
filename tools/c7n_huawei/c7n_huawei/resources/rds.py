@@ -40,11 +40,7 @@ class Rds(QueryResourceManager):
             if rds is not None:
                 for rd in rds:
                     json = dict()  # 创建 {}
-                    for name in dir(rd):
-                        if not name.startswith('_'):
-                            value = getattr(rd, name)
-                            if not callable(value):
-                                json[name] = value
+                    json = Session._loads_(json, rd)
                     arr.append(json)
         except Exception as err:
             pass

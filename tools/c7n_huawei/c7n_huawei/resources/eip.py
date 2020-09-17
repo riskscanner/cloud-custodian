@@ -42,11 +42,7 @@ class Eip(QueryResourceManager):
             if ips is not None:
                 for ip in ips:
                     json = dict()  # 创建 {}
-                    for name in dir(ip):
-                        if not name.startswith('_'):
-                            value = getattr(ip, name)
-                            if not callable(value):
-                                json[name] = value
+                    json = Session._loads_(json, ip)
                     arr.append(json)
         except Exception as err:
             pass

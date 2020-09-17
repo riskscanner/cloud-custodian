@@ -40,11 +40,7 @@ class Vpc(QueryResourceManager):
             if vpcs is not None:
                 for vpc in vpcs:
                     json = dict() # 创建 {}
-                    for name in dir(vpc):
-                        if not name.startswith('_'):
-                            value = getattr(vpc, name)
-                            if not callable(value):
-                                json[name] = value
+                    json = Session._loads_(json, vpc)
                     arr.append(json)
         except Exception as err:
             pass
@@ -80,11 +76,7 @@ class HuaweiVpcFilter(HuaweiVpcFilter):
         # if objs is not None:
         #     for obj in objs:
         #         json = dict()  # 创建 {}
-        #         for name in dir(obj):
-        #             if not name.startswith('_'):
-        #                 value = getattr(obj, name)
-        #                 if not callable(value):
-        #                     json[name] = value
+        #         json = Session._loads_(json, obj)
         #         arr.append(json)
         # for object in arr:
         #     # 资源：弹性云服务器、裸金属服务、弹性负载均衡器

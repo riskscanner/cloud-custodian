@@ -35,11 +35,7 @@ class Elb(QueryResourceManager):
             if lbs is not None:
                 for lb in lbs:
                     json = dict()  # 创建 {}
-                    for name in dir(lb):
-                        if not name.startswith('_'):
-                            value = getattr(lb, name)
-                            if not callable(value):
-                                json[name] = value
+                    json = Session._loads_(json, lb)
                     arr.append(json)
         except Exception as err:
             pass

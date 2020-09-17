@@ -29,14 +29,14 @@ class Session:
     # password = os.getenv('HUAWEI_PASSWORD')  # 用户密码
     # projectId = os.getenv('HUAWEI_PROJECTID')  # 项目ID
     # userDomainId = os.getenv('HUAWEI_USERDOMAINID')  # 账户ID
-    # auth_url = os.getenv('HUAWEI_ENDPOINT')  # endpoint url
-    # cloud = os.getenv('HUAWEI_CLOUD')
+    # auth_url = 'https://iam.myhuaweicloud.com/v3'  # endpoint url
+    # cloud = 'myhuaweicloud.com'
     # ak = os.getenv('HUAWEI_AK')
     # sk = os.getenv('HUAWEI_SK')
     # region = os.getenv('HUAWEI_DEFAULT_REGION')
     # project_id = os.getenv('HUAWEI_PROJECT')
 
-    def __init__(self, ak=None, sk=None, regionId=None, projectId=None, cloud=None, server=None):
+    def __init__(self, ak=None, sk=None, regionId=None, projectId=None):
         if not ak:
             ak = os.getenv('HUAWEI_AK')
         if not sk:
@@ -45,16 +45,10 @@ class Session:
             regionId = os.getenv('HUAWEI_DEFAULT_REGION')
         if not projectId:
             projectId = os.getenv('HUAWEI_PROJECT')
-        if not cloud:
-            cloud = os.getenv('HUAWEI_CLOUD')
-        if not server:
-            server = os.getenv('HUAWEI_ENDPOINT')
         self.ak = ak
         self.sk = sk
         self.region = regionId
         self.project_id = projectId
-        self.cloud = cloud
-        self.server = server
 
     def get_default_region(self):
         if os.getenv('HUAWEI_DEFAULT_REGION'):
@@ -73,11 +67,11 @@ class Session:
             clt = obsClient
         else:
             conn = connection.Connection(
-                cloud=os.getenv('HUAWEI_CLOUD'),
-                ak=os.getenv('HUAWEI_AK'),
-                sk=os.getenv('HUAWEI_SK'),
-                region=os.getenv('HUAWEI_DEFAULT_REGION'),
-                project_id=os.getenv('HUAWEI_PROJECT')
+                project_id=os.getenv('HUAWEI_PROJECT'),
+                user_domain_id=os.getenv('HUAWEI_USER_DOMAIN'),
+                auth_url='https://iam.myhuaweicloud.com/v3',
+                username=os.getenv('HUAWEI_USERNAME'),
+                password=os.getenv('HUAWEI_PASSWORD')
             )
             if 'compute' in service:
                 clt = conn.compute
@@ -93,6 +87,16 @@ class Session:
                 clt = conn.compute
         return clt
 
+    def _loads_(json, item):
+        if item is not None:
+            for name in dir(item):
+                if not name.startswith('_'):
+                    if name not in API_EXPRESS:
+                        value = getattr(item, name)
+                        if not callable(value):
+                            json[name] = value
+        return json
+
 REGION_ENDPOINT = {
         'af-south-1': '非洲-约翰内斯堡',
         'cn-north-4': '华北-北京四',
@@ -106,4 +110,11 @@ REGION_ENDPOINT = {
         'ap-southeast-1': '亚太-香港',
         'ap-southeast-3': '亚太-新加坡'
     }
+
+API_EXPRESS = [
+    'allow_create', 'allow_delete', 'allow_get', 'allow_head',
+    'allow_list', 'allow_update', 'put_create', 'query_limit_key',
+    'query_marker_key', 'next_marker_path', 'patch_update', 'resource_key'
+    'resources_key', 'base_path', 'location'
+]
 
