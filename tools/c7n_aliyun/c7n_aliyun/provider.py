@@ -16,6 +16,7 @@ import copy
 import logging
 import operator
 import os
+import sys
 
 from c7n_aliyun.resources.resource_map import ResourceMap
 

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import datetime
 import operator
 
 from c7n.utils import type_schema
@@ -45,9 +46,26 @@ class Ecs(QueryResourceManager):
 @Ecs.filter_registry.register('metrics')
 class EcsMetricsFilter(MetricsFilter):
 
-    def get_request(self):
+    def get_request(self, dimensions):
+        service = 'cloud_eye.ecs'
+        new_dimensions = []
+        for dimension in dimensions:
+            new_dimensions.append(
+                {
+                    "name": "instance_id",
+                    "value": str(dimension['id'])
+                })
         try:
-            servers = Session.client(self, service).servers(limit=10000)
+            query = {
+                "namespace": self.namespace,
+                "metric_name": self.metric,
+                "from": self.start,
+                "to": self.end,
+                "period": self.period,
+                "filter": "average",
+                "dimensions": new_dimensions
+            }
+            servers = Session.client(self, service).metric_aggregations(**query)
             arr = list()  # 创建 []
             if servers is not None:
                 for server in servers:

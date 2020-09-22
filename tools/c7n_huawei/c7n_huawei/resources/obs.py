@@ -143,7 +143,6 @@ class ObsCreateBucket(MethodAction):
             resp = Session.client(self, service).createBucket(bucket['bucketname'])
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:
@@ -170,7 +169,6 @@ class ObsPutContent(MethodAction):
             resp = Session.client(self, service).putContent(bucket['bucketname'], bucket['objectname'], bucket['obj'])
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:
@@ -196,7 +194,6 @@ class ObsGetObject(MethodAction):
             resp = Session.client(self, service).getObject(bucket['bucketname'], bucket['objectname'])
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:
@@ -222,7 +219,6 @@ class ObsDeleteObject(MethodAction):
             resp = Session.client(self, service).deleteObject(bucket['bucketname'], bucket['objectname'])
             if resp.status < 300:
                 # 操作成功
-                print('requestId:', resp.requestId)
                 # 处理操作成功后业务逻辑
                 return resp
             else:

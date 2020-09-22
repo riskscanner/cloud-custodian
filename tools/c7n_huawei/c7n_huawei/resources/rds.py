@@ -18,6 +18,7 @@ from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 from c7n_huawei.filters.filter import HuaweiRdsFilter
+from c7n_huawei.filters.filter import MetricsFilter
 
 service = 'rdsv3.rds'
 
@@ -28,6 +29,7 @@ class Rds(QueryResourceManager):
         service = 'rdsv3.rds'
         enum_spec = (None, None, None)
         id = 'id'
+        dimension = 'id'
 
     def get_request(self):
         query = {
@@ -66,6 +68,39 @@ class HuaweiRdsFilter(HuaweiRdsFilter):
         if len(public_ips) > 0:
             return None
         return i
+
+@Rds.filter_registry.register('metrics')
+class EcsMetricsFilter(MetricsFilter):
+
+    def get_request(self, dimensions):
+        service = 'cloud_eye.rds'
+        new_dimensions = []
+        for dimension in dimensions:
+            new_dimensions.append(
+                {
+                    "name": "rds_cluster_id",
+                    "value": str(dimension['id'])
+                })
+        try:
+            query = {
+                "namespace": self.namespace,
+                "metric_name": self.metric,
+                "from": self.start,
+                "to": self.end,
+                "period": self.period,
+                "filter": "average",
+                "dimensions": new_dimensions
+            }
+            servers = Session.client(self, service).metric_aggregations(**query)
+            arr = list()  # 创建 []
+            if servers is not None:
+                for server in servers:
+                    json = dict()  # 创建 {}
+                    json = Session._loads_(json, server)
+                    arr.append(json)
+        except Exception as err:
+            pass
+        return arr
 
 @Rds.action_registry.register('delete')
 class RdsDelete(MethodAction):

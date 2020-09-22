@@ -83,6 +83,8 @@ class Session:
                 clt = conn.block_store
             elif 'rdsv3' in service:
                 clt = conn.rdsv3
+            elif 'cloud_eye' in service:
+                clt = conn.cloud_eye
             else:
                 clt = conn.compute
         return clt

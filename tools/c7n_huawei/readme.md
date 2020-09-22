@@ -20,11 +20,11 @@ pip install -e tools/c7n_huawei
 ```
 ```
 # 弹性云服务ECS
-HUAWEI_AK=xxxxx
-HUAWEI_SK=xxxxx
-HUAWEI_DEFAULT_REGION=cn-southwest-2
+HUAWEI_USER_DOMAIN=xxxxx
+HUAWEI_USERNAME=xxxxx
+HUAWEI_PASSWORD=xxxxx
 HUAWEI_PROJECT=xxxxx
-HUAWEI_CLOUD=xxxx
+HUAWEI_DEFAULT_REGION=xxxxx
 custodian run -s . policy.yml
 ```
 ```

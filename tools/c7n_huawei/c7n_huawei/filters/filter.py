@@ -6,6 +6,7 @@ from datetime import timedelta
 import jmespath
 from dateutil.parser import parse
 from dateutil.tz import tzutc
+from openstack import utils
 
 from c7n.exceptions import PolicyValidationError
 from c7n.filters.core import Filter
@@ -33,7 +34,6 @@ class HuaweiDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        print(i)
         if i['status'] != self.schema['properties']['type']['enum'][0]:
             return False
         return i
@@ -446,7 +446,7 @@ class MetricsFilter(Filter):
                    '^.*$': {'type': 'string'}}},
            # Type choices
            'statistics': {'type': 'string', 'enum': [
-               'Average', 'Sum', 'Maximum', 'Minimum', 'SampleCount']},
+               'average', 'sum', 'maximum', 'minimum', 'samplecount']},
            'days': {'type': 'number'},
            'op': {'type': 'string', 'enum': list(OPERATORS.keys())},
            'value': {'type': 'number'},
@@ -466,17 +466,21 @@ class MetricsFilter(Filter):
 
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
-        'compute.ecs': 'acs_ecs_dashboard',
+        'compute.ecs': 'SYS.ECS',
+        'rdsv3.rds': 'SYS.RDS',
     }
 
     def process(self, resources, event=None):
+        now = datetime.datetime.now()
         days = self.data.get('days', 1)
         duration = timedelta(days)
+        ago = now - duration
+
         self.metric = self.data['name']
-        self.end = datetime.datetime.utcnow()
-        self.start = self.end - duration
+        self.end = utils.get_epoch_time(now)
+        self.start = utils.get_epoch_time(ago)
         self.period = int(self.data.get('period', duration.total_seconds()))
-        self.statistics = self.data.get('statistics', 'Average')
+        self.statistics = self.data.get('statistics', 'average')
         self.model = self.manager.get_model()
         self.op = OPERATORS[self.data.get('op', 'less-than')]
         self.value = self.data['value']
@@ -521,29 +525,21 @@ class MetricsFilter(Filter):
             # commonly overridden so we can't do it there.
             # dimensions.extend(self.get_user_dimensions())
 
-            request = self.get_request()
-            request.set_accept_format('json')
-            request.set_StartTime(self.start)
-            request.set_Dimensions(dimensions)
-            request.set_Period(self.period)
-            request.set_Namespace(self.namespace)
-            request.set_MetricName(self.metric)
+            request = self.get_request(dimensions)
             collected_metrics = r.setdefault('c7n_huawei.metrics', {})
             # Note this annotation cache is policy scoped, not across
             # policies, still the lack of full qualification on the key
             # means multiple filters within a policy using the same metric
             # across different periods or dimensions would be problematic.
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
-
             if key not in collected_metrics:
-                collected_metrics[key] = json.loads(json.loads(client.do_action(request))['Datapoints'])
+                collected_metrics[key] = json.loads(json.dumps(request))
 
             # In certain cases CloudWatch reports no data for a metric.
             # If the policy specifies a fill value for missing data, add
             # that here before testing for matches. Otherwise, skip
             # matching entirely.
             # for m in collected_metrics[key]:
-
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' not in self.data:
                     continue
@@ -558,7 +554,6 @@ class MetricsFilter(Filter):
                     matched.append(r)
             elif self.op(collected_metrics[key][0][self.statistics], self.value):
                 matched.append(r)
-
         return matched
 
 SGPermissionSchema = {
