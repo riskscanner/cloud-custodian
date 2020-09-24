@@ -65,13 +65,13 @@ class HuaweiRdsFilter(HuaweiRdsFilter):
 
     def get_request(self, i):
         public_ips = i['public_ips']
-        if len(public_ips) > 0:
+        if len(public_ips) == 0:
             return None
         return i
 
 @Rds.filter_registry.register('metrics')
 class EcsMetricsFilter(MetricsFilter):
-
+    # 云监控服务 CES https://support.huaweicloud.com/api-ces/ces_03_0033.html
     def get_request(self, dimensions):
         service = 'cloud_eye.rds'
         new_dimensions = []

@@ -467,7 +467,14 @@ class MetricsFilter(Filter):
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
         'compute.ecs': 'SYS.ECS',
-        'rdsv3.rds': 'SYS.RDS',
+        'rdsv3.rds': 'SYS.RDS'
+    }
+
+    DEFAULT_METRIC = {
+        'rds_mem_util': 'rds002_mem_util',
+        'rds_iops': 'rds003_iops',
+        'cpu_util': 'cpu_util',
+        'mem_util': 'mem_util'
     }
 
     def process(self, resources, event=None):
@@ -475,8 +482,10 @@ class MetricsFilter(Filter):
         days = self.data.get('days', 1)
         duration = timedelta(days)
         ago = now - duration
-
-        self.metric = self.data['name']
+        if self.data['name'] in self.DEFAULT_METRIC:
+            self.metric = self.DEFAULT_METRIC[self.data['name']]
+        else:
+            self.metric = self.data['name']
         self.end = utils.get_epoch_time(now)
         self.start = utils.get_epoch_time(ago)
         self.period = int(self.data.get('period', duration.total_seconds()))
