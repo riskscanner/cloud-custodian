@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 from concurrent.futures import as_completed
 from datetime import timedelta
 
@@ -16,6 +17,17 @@ from c7n.utils import type_schema
 
 
 class AliyunEipFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+            return False
+        return i
+
+class AliyunEcsFilter(Filter):
     schema = None
 
     def validate(self):
@@ -56,6 +68,26 @@ class AliyunSlbFilter(Filter):
     def __call__(self, i):
         request = self.get_request(i)
         return request
+
+class AliyunSlbListenerFilter(Filter):
+    schema = None
+    filter = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        client = local_session(
+            self.manager.session_factory).client(self.manager.get_model().service)
+        response = json.loads(client.do_action(request))
+        ListenerPort = response.get('ListenerPorts').get('ListenerPort')
+        ListenerPortsAndProtocal = response.get('ListenerPortsAndProtocal').get('ListenerPortAndProtocal')
+        ListenerPortsAndProtocol = response.get('ListenerPortsAndProtocol').get('ListenerPortAndProtocol')
+        BackendServers = response.get('BackendServers').get('BackendServer')
+        if len(ListenerPort) == 0 and len(ListenerPortsAndProtocal) == 0 and len(ListenerPortsAndProtocol) == 0 and len(BackendServers) == 0:
+            return i
+        return None
 
 class AliyunAgeFilter(Filter):
     """Automatically filter resources older than a given date.
@@ -402,7 +434,6 @@ class SGPermission(Filter):
             resource['Matched%s' % self.ip_permissions_key] = matched
             return True
 
-
 class MetricsFilter(Filter):
     """Supports   metrics filters on resources.
     .. code-block:: yaml
@@ -462,6 +493,8 @@ class MetricsFilter(Filter):
            'op': {'type': 'string', 'enum': list(OPERATORS.keys())},
            'value': {'type': 'number'},
            'period': {'type': 'number'},
+           'startTime': {'type': 'string'},
+           'endTime': {'type': 'string'},
            'attr-multiplier': {'type': 'number'},
            'percent-attr': {'type': 'string'},
            'missing-value': {'type': 'number'},
@@ -478,8 +511,21 @@ class MetricsFilter(Filter):
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
         'ecs': 'acs_ecs_dashboard',
+        'slb': 'acs_slb_dashboard',
+        'eip': 'acs_vpc_eip',
+        'EipMonitorDatas': 'EipMonitorDatas',
+        'disk': 'MonitorData',
+        'rds': 'acs_rds_dashboard',
     }
-
+    # {'RequestId': 'FF938037-3F60-4F7F-93F1-7D87B23E9278', 'EipMonitorDatas': {'EipMonitorData': []}}
+    DEFAULT_DATA = {
+        'acs_ecs_dashboard': 'Datapoints',
+        'acs_slb_dashboard': 'Datapoints',
+        'acs_rds_dashboard': 'Datapoints',
+        'acs_vpc_eip': 'Datapoints',
+        'EipMonitorDatas': 'EipMonitorData',
+        'MonitorData': 'DiskMonitorData',
+    }
     def process(self, resources, event=None):
         days = self.data.get('days', 1)
         duration = timedelta(days)
@@ -487,6 +533,8 @@ class MetricsFilter(Filter):
         self.end = datetime.datetime.utcnow()
         self.start = self.end - duration
         self.period = int(self.data.get('period', duration.total_seconds()))
+        self.startTime = self.data.get('startTime', '')
+        self.endTime = self.data.get('endTime', '')
         self.statistics = self.data.get('statistics', 'Average')
         self.model = self.manager.get_model()
         self.op = OPERATORS[self.data.get('op', 'less-than')]
@@ -526,18 +574,10 @@ class MetricsFilter(Filter):
         for r in resource_set:
             # if we overload dimensions with multiple resources we get
             # the statistics/average over those resources.
-            dimensions = self.get_dimensions(r)
             # Merge in any filter specified metrics, get_dimensions is
             # commonly overridden so we can't do it there.
             # dimensions.extend(self.get_user_dimensions())
-
-            request = self.get_request()
-            request.set_accept_format('json')
-            request.set_StartTime(self.start)
-            request.set_Dimensions(dimensions)
-            request.set_Period(self.period)
-            request.set_Namespace(self.namespace)
-            request.set_MetricName(self.metric)
+            request = self.get_request(r)
             collected_metrics = r.setdefault('c7n_aliyun.metrics', {})
             # Note this annotation cache is policy scoped, not across
             # policies, still the lack of full qualification on the key
@@ -545,8 +585,25 @@ class MetricsFilter(Filter):
             # across different periods or dimensions would be problematic.
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
 
+            data_usage = ''
             if key not in collected_metrics:
-                collected_metrics[key] = json.loads(json.loads(client.do_action(request))['Datapoints'])
+                if self.model.service == "eip":
+                    data_usage = self.statistics
+                    if self.metric != 'EipMonitorDatas':
+                        data_usage = self.statistics
+                        collected_metrics[key] = json.loads(
+                            json.loads(client.do_action(request))[self.DEFAULT_DATA[self.namespace]])
+                    else:
+                        collected_metrics[key] = json.loads(
+                            client.do_action(request))[self.metric][self.DEFAULT_DATA[self.metric]]
+                elif self.model.service == "disk":
+                    data_usage = self.metric
+                    collected_metrics[key] = json.loads(
+                        client.do_action(request))[self.namespace][self.DEFAULT_DATA[self.namespace]]
+                elif self.model.service == "ecs" or self.model.service == "slb" or self.model.service == "rds":
+                    data_usage = self.statistics
+                    collected_metrics[key] = json.loads(
+                        json.loads(client.do_action(request))[self.DEFAULT_DATA[self.namespace]])
 
             # In certain cases CloudWatch reports no data for a metric.
             # If the policy specifies a fill value for missing data, add
@@ -555,18 +612,20 @@ class MetricsFilter(Filter):
             # for m in collected_metrics[key]:
 
             if len(collected_metrics[key]) == 0:
-                if 'missing-value' not in self.data:
-                    continue
-                collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_aliyun:detail': 'Fill value for missing data'})
+                if 'missing-value' in self.data:
+                    collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_aliyun:detail': 'Fill value for missing data'})
+                else:
+                    collected_metrics[key].append({'startTime': self.startTime, 'endTime': self.endTime, self.statistics: 0,
+                                                   'detail': 'The read and write monitoring value within the specified time range is 0 (or no data)'})
             if self.data.get('percent-attr'):
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):
                     rvalue = rvalue * self.data['attr-multiplier']
-                percent = (collected_metrics[key][0][self.statistics] /
+                percent = (collected_metrics[key][0][data_usage] /
                            rvalue * 100)
                 if self.op(percent, self.value):
                     matched.append(r)
-            elif self.op(collected_metrics[key][0][self.statistics], self.value):
+            elif self.op(collected_metrics[key][0][data_usage], self.value):
                 matched.append(r)
 
         return matched

@@ -14,16 +14,16 @@
 import logging
 import os
 
-from aliyunsdkrds.request.v20140815.DeleteDBInstanceRequest import DeleteDBInstanceRequest
+from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
+from aliyunsdkrds.request.v20140815.DescribeDBInstancePerformanceRequest import DescribeDBInstancePerformanceRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstanceAttributeRequest import DescribeDBInstanceAttributeRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
-from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.client import Session
-from c7n_aliyun.filters.filter import AliyunRdsFilter
-from c7n_aliyun.provider import resources
-from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 from c7n.utils import type_schema
+from c7n_aliyun.client import Session
+from c7n_aliyun.filters.filter import AliyunRdsFilter, MetricsFilter
+from c7n_aliyun.provider import resources
+from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 
@@ -141,15 +141,32 @@ class AliyunRds2Filter(AliyunRdsFilter):
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i
 
-@Rds.action_registry.register('delete')
-class RdsDelete(MethodAction):
+@Rds.filter_registry.register('metrics')
+class RdsMetricsFilter(MetricsFilter):
 
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
+    """
+          1 policies:
+          2   - name: aliyun-rds
+          3     resource: aliyun.rds
+          4     filters:
+          6       - type: metrics
+          7         name: IOPSUsage
+          9         startTime: '2020-11-02T08:00Z'
+         10         endTime: '2020-11-08T08:00Z'
+         11         statistics: Average
+         12         value: 30000
+         13         op: less-than
+    """
 
-
+    # IOPS使用率:IOPSUsage
+    # 连接数使用率: ConnectionUsage
+    # 内存使用率: MemoryUsage
+    # CPU使用率: CpuUsage
     def get_request(self, rds):
-        request = DeleteDBInstanceRequest()
-        request.set_DBInstanceId(rds['DBInstanceId'])
+        request = DescribeMetricListRequest()
         request.set_accept_format('json')
+        request.set_StartTime(self.start)
+        request.set_Period(self.period)
+        request.set_Namespace(self.namespace)
+        request.set_MetricName(self.metric)
         return request

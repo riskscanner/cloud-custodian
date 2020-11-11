@@ -16,12 +16,12 @@ import operator
 
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
 from aliyunsdkecs.request.v20140526.DeleteInstanceRequest import DeleteInstanceRequest
+from aliyunsdkecs.request.v20140526.DescribeInstanceMonitorDataRequest import DescribeInstanceMonitorDataRequest
 from aliyunsdkecs.request.v20140526.DescribeInstancesRequest import DescribeInstancesRequest
 from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceRequest
 from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
 from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.filters.filter import AliyunAgeFilter
-from c7n_aliyun.filters.filter import MetricsFilter
+from c7n_aliyun.filters.filter import AliyunAgeFilter, AliyunEcsFilter, MetricsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
@@ -41,6 +41,28 @@ class Ecs(QueryResourceManager):
         request = DescribeInstancesRequest()
         return request
 
+@Ecs.filter_registry.register('stopped')
+class AliyunEcsFilter(AliyunEcsFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-ecs
+               resource: aliyun.ecs
+               filters:
+                 - type: stopped
+    """
+    # 实例状态。取值范围：
+    #
+    # Pending：创建中
+    # Running：运行中
+    # Starting：启动中
+    # Stopping：停止中
+    # Stopped：已停止
+    schema = type_schema('Stopped')
 
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(AliyunAgeFilter):
@@ -75,9 +97,15 @@ class EcsAgeFilter(AliyunAgeFilter):
 @Ecs.filter_registry.register('metrics')
 class EcsMetricsFilter(MetricsFilter):
 
-    def get_request(self):
+    def get_request(self, r):
         request = DescribeMetricListRequest()
         request.set_accept_format('json')
+        request.set_StartTime(self.start)
+        dimensions = self.get_dimensions(r)
+        request.set_Dimensions(dimensions)
+        request.set_Period(self.period)
+        request.set_Namespace(self.namespace)
+        request.set_MetricName(self.metric)
         return request
 
 

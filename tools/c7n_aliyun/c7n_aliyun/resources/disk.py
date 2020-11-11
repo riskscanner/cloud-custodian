@@ -14,8 +14,9 @@
 
 from aliyunsdkecs.request.v20140526.DeleteDiskRequest import DeleteDiskRequest
 from aliyunsdkecs.request.v20140526.DescribeDisksRequest import DescribeDisksRequest
+from aliyunsdkecs.request.v20140526.DescribeDiskMonitorDataRequest import DescribeDiskMonitorDataRequest
 from c7n_aliyun.actions import MethodAction
-from c7n_aliyun.filters.filter import AliyunDiskFilter
+from c7n_aliyun.filters.filter import AliyunDiskFilter, MetricsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
@@ -53,6 +54,35 @@ class AliyunDiskFilter(AliyunDiskFilter):
     # InUse：已分配。
     # Available：可用。
     schema = type_schema('Available')
+
+@Disk.filter_registry.register('metrics')
+class MetricsDiskFilter(MetricsFilter):
+
+    """
+          policies:
+            - name: aliyun-disk
+              resource: aliyun.disk
+              filters:
+                - type: unused
+                - type: metrics
+                  name: IOPSTotal
+                  period: 600
+                  startTime: '2020-11-02T08:00:00Z'
+                  endTime: '2020-11-04T08:00:00Z'
+                  statistics: Average
+                  value: 0
+                  op: eq
+    """
+    # 系统盘I/O读写总操作，单位：次/s。IOPSTotal
+    # 系统盘读写总带宽，单位：Byte/s。BPSTotal
+    def get_request(self, disk):
+        request = DescribeDiskMonitorDataRequest()
+        request.set_StartTime(self.data.get('startTime'))
+        request.set_EndTime(self.data.get('endTime'))
+        request.set_DiskId(disk["DiskId"])
+        request.set_Period(self.data.get('period'))
+        request.set_accept_format('json')
+        return request
 
 @Disk.action_registry.register('delete')
 class DiskDelete(MethodAction):

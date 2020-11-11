@@ -24,8 +24,9 @@ aliyun-python-sdk-cms = "^7.0.13"
 aliyun-python-sdk-ecs = "^4.19.8"
 pycryptodome = "^3.9.8"
 
+
 [tool.poetry.dev-dependencies]
 
 [build-system]
-requires = ["poetry>=0.12"]
+requires = ["poetry>=0.12", "setuptools>=40.8.0"]
 build-backend = "poetry.masonry.api"
