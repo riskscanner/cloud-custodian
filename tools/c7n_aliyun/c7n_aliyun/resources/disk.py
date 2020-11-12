@@ -77,10 +77,10 @@ class MetricsDiskFilter(MetricsFilter):
     # 系统盘读写总带宽，单位：Byte/s。BPSTotal
     def get_request(self, disk):
         request = DescribeDiskMonitorDataRequest()
-        request.set_StartTime(self.data.get('startTime'))
-        request.set_EndTime(self.data.get('endTime'))
+        request.set_StartTime(self.start)
+        request.set_EndTime(self.end)
         request.set_DiskId(disk["DiskId"])
-        request.set_Period(self.data.get('period'))
+        request.set_Period(self.period)
         request.set_accept_format('json')
         return request
 

@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
 from aliyunsdkecs.request.v20140526.DescribeEipAddressesRequest import DescribeEipAddressesRequest
-from aliyunsdkecs.request.v20140526.DescribeEipMonitorDataRequest import DescribeEipMonitorDataRequest
 from aliyunsdkecs.request.v20140526.ReleaseEipAddressRequest import ReleaseEipAddressRequest
+
+from c7n.utils import type_schema
 from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.filters.filter import AliyunEipFilter, MetricsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
-from c7n.utils import type_schema
 
 
 @resources.register('eip')
@@ -65,7 +65,7 @@ class EipMetricsFilter(MetricsFilter):
           4     filters:
           5       - type: unused
           6       - type: metrics
-          7         name: EipMonitorData
+          7         name: net_in.rate_percentage
           8         period: 900
           9         startTime: '2020-11-02T08:00:00Z'
          10         endTime: '2020-11-08T08:00:00Z'
@@ -73,14 +73,15 @@ class EipMetricsFilter(MetricsFilter):
          12         value: 0
          13         op: eq
     """
-
+    # 网络流入带宽利用率	: net_in.rate_percentage
+    # 网络流出带宽利用率	: net_out.rate_percentage
     def get_request(self, eip):
-        request = DescribeEipMonitorDataRequest()
-        request.set_StartTime(self.data.get('startTime'))
-        request.set_EndTime(self.data.get('endTime'))
-        request.set_AllocationId(eip["AllocationId"])
-        request.set_Period(self.data.get('period'))
+        request = DescribeMetricListRequest()
         request.set_accept_format('json')
+        request.set_StartTime(self.start)
+        request.set_Period(self.period)
+        request.set_Namespace(self.namespace)
+        request.set_MetricName(self.metric)
         return request
 
 @Eip.action_registry.register('release')

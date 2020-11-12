@@ -512,18 +512,15 @@ class MetricsFilter(Filter):
     DEFAULT_NAMESPACE = {
         'ecs': 'acs_ecs_dashboard',
         'slb': 'acs_slb_dashboard',
-        'eip': 'acs_vpc_eip',
-        'EipMonitorDatas': 'EipMonitorDatas',
-        'disk': 'MonitorData',
         'rds': 'acs_rds_dashboard',
+        'eip': 'acs_vpc_eip',
+        'disk': 'MonitorData',
     }
-    # {'RequestId': 'FF938037-3F60-4F7F-93F1-7D87B23E9278', 'EipMonitorDatas': {'EipMonitorData': []}}
     DEFAULT_DATA = {
         'acs_ecs_dashboard': 'Datapoints',
         'acs_slb_dashboard': 'Datapoints',
         'acs_rds_dashboard': 'Datapoints',
         'acs_vpc_eip': 'Datapoints',
-        'EipMonitorDatas': 'EipMonitorData',
         'MonitorData': 'DiskMonitorData',
     }
     def process(self, resources, event=None):
@@ -585,22 +582,12 @@ class MetricsFilter(Filter):
             # across different periods or dimensions would be problematic.
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
 
-            data_usage = ''
             if key not in collected_metrics:
-                if self.model.service == "eip":
-                    data_usage = self.statistics
-                    if self.metric != 'EipMonitorDatas':
-                        data_usage = self.statistics
-                        collected_metrics[key] = json.loads(
-                            json.loads(client.do_action(request))[self.DEFAULT_DATA[self.namespace]])
-                    else:
-                        collected_metrics[key] = json.loads(
-                            client.do_action(request))[self.metric][self.DEFAULT_DATA[self.metric]]
-                elif self.model.service == "disk":
+                if self.model.service == "disk":
                     data_usage = self.metric
                     collected_metrics[key] = json.loads(
                         client.do_action(request))[self.namespace][self.DEFAULT_DATA[self.namespace]]
-                elif self.model.service == "ecs" or self.model.service == "slb" or self.model.service == "rds":
+                else:
                     data_usage = self.statistics
                     collected_metrics[key] = json.loads(
                         json.loads(client.do_action(request))[self.DEFAULT_DATA[self.namespace]])
