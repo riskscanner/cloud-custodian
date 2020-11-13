@@ -583,7 +583,7 @@ class MetricsFilter(Filter):
             data_usage = ""
             if key not in collected_metrics:
                 if self.model.service == "disk":
-                    data_usage = self.metric
+                    data_usage = self.statistics
                     collected_metrics[key] = json.loads(
                         client.do_action(request))[self.namespace][self.DEFAULT_DATA[self.namespace]]
                 else:
@@ -602,7 +602,6 @@ class MetricsFilter(Filter):
                 else:
                     collected_metrics[key].append({'startTime': self.start, 'endTime': self.end, self.statistics: 0,
                                                'detail': 'The read and write monitoring value within the specified time range is 0 (or no data)'})
-                    continue
             if self.model.service == "disk":
                 for data in collected_metrics[key]:
                     if self.op(data[data_usage], self.value):
