@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import datetime
+from dateutil.parser import parse
 from aliyunsdkecs.request.v20140526.DeleteDiskRequest import DeleteDiskRequest
 from aliyunsdkecs.request.v20140526.DescribeDisksRequest import DescribeDisksRequest
 from aliyunsdkecs.request.v20140526.DescribeDiskMonitorDataRequest import DescribeDiskMonitorDataRequest
@@ -77,8 +78,8 @@ class MetricsDiskFilter(MetricsFilter):
     # 系统盘读写总带宽，单位：Byte/s。BPSTotal
     def get_request(self, disk):
         request = DescribeDiskMonitorDataRequest()
-        request.set_StartTime(self.start)
-        request.set_EndTime(self.end)
+        request.set_StartTime(datetime.datetime.strptime(str(self.start), '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%dT%H:%M:%SZ'))
+        request.set_EndTime(datetime.datetime.strptime(str(self.end), '%Y-%m-%d %H:%M:%S.%f').strftime('%Y-%m-%dT%H:%M:%SZ'))
         request.set_DiskId(disk["DiskId"])
         request.set_Period(self.period)
         request.set_accept_format('json')

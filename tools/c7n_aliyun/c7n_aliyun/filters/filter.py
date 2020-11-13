@@ -530,8 +530,6 @@ class MetricsFilter(Filter):
         self.end = datetime.datetime.utcnow()
         self.start = self.end - duration
         self.period = int(self.data.get('period', duration.total_seconds()))
-        self.startTime = self.data.get('startTime', '')
-        self.endTime = self.data.get('endTime', '')
         self.statistics = self.data.get('statistics', 'Average')
         self.model = self.manager.get_model()
         self.op = OPERATORS[self.data.get('op', 'less-than')]
@@ -582,6 +580,7 @@ class MetricsFilter(Filter):
             # across different periods or dimensions would be problematic.
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
 
+            data_usage = ""
             if key not in collected_metrics:
                 if self.model.service == "disk":
                     data_usage = self.metric
@@ -597,23 +596,29 @@ class MetricsFilter(Filter):
             # that here before testing for matches. Otherwise, skip
             # matching entirely.
             # for m in collected_metrics[key]:
-
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' in self.data:
                     collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_aliyun:detail': 'Fill value for missing data'})
                 else:
-                    collected_metrics[key].append({'startTime': self.startTime, 'endTime': self.endTime, self.statistics: 0,
-                                                   'detail': 'The read and write monitoring value within the specified time range is 0 (or no data)'})
-            if self.data.get('percent-attr'):
-                rvalue = r[self.data.get('percent-attr')]
-                if self.data.get('attr-multiplier'):
-                    rvalue = rvalue * self.data['attr-multiplier']
-                percent = (collected_metrics[key][0][data_usage] /
-                           rvalue * 100)
-                if self.op(percent, self.value):
+                    collected_metrics[key].append({'startTime': self.start, 'endTime': self.end, self.statistics: 0,
+                                               'detail': 'The read and write monitoring value within the specified time range is 0 (or no data)'})
+                    continue
+            if self.model.service == "disk":
+                for data in collected_metrics[key]:
+                    if self.op(data[data_usage], self.value):
+                        matched.append(r)
+                        break
+            else:
+                if self.data.get('percent-attr'):
+                    rvalue = r[self.data.get('percent-attr')]
+                    if self.data.get('attr-multiplier'):
+                        rvalue = rvalue * self.data['attr-multiplier']
+                    percent = (collected_metrics[key][0][data_usage] /
+                               rvalue * 100)
+                    if self.op(percent, self.value):
+                        matched.append(r)
+                elif self.op(collected_metrics[key][0][data_usage], self.value):
                     matched.append(r)
-            elif self.op(collected_metrics[key][0][data_usage], self.value):
-                matched.append(r)
 
         return matched
 
