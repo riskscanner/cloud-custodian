@@ -13,6 +13,7 @@
 # limitations under the License.
 import json
 
+import jmespath
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
 from aliyunsdkslb.request.v20140515.DescribeHealthStatusRequest import DescribeHealthStatusRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancerAttributeRequest import DescribeLoadBalancerAttributeRequest
@@ -24,7 +25,7 @@ from c7n_aliyun.filters.filter import AliyunSlbFilter, MetricsFilter, AliyunSlbL
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
-
+service = 'slb'
 @resources.register('slb')
 class Slb(QueryResourceManager):
 
@@ -36,6 +37,39 @@ class Slb(QueryResourceManager):
     def get_request(self):
         request = DescribeLoadBalancersRequest()
         return request
+
+@Slb.filter_registry.register('listener')
+class AliyunSlbFilter(AliyunSlbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 负载均衡开启HTTPS监听，视为“合规”。
+            - name: aliyun-slb-listener
+              resource: aliyun.slb
+              filters:
+                - type: listener
+                  value: https
+    """
+    schema = type_schema(
+        'listener',
+        **{'value': {'type': 'string'}})
+    # listener_protocal_key = "ListenerPortsAndProtocal.ListenerPortAndProtocal"
+    listener_protocol_key = "ListenerPortsAndProtocol.ListenerPortAndProtocol"
+    filter = None
+
+    def get_request(self, i):
+        request = DescribeLoadBalancerAttributeRequest()
+        request.set_accept_format('json')
+        request.set_LoadBalancerId(i['LoadBalancerId'])
+        response = Session.client(self, service).do_action_with_exception(request)
+
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        if self.data['value'] in jmespath.search(self.listener_protocol_key, data):
+            return False
+        return i
 
 @Slb.filter_registry.register('unused')
 class AliyunSlbFilter(AliyunSlbFilter):

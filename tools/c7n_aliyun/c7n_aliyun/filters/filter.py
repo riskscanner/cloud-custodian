@@ -23,7 +23,7 @@ class AliyunEipFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+        if i['Status'] != self.data['type']:
             return False
         return i
 
@@ -34,7 +34,9 @@ class AliyunEcsFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
+        if self.data['type'] == 'PublicIpAddress':
+            return self.get_request(i)
+        if i['Status'] != self.data['type']:
             return False
         return i
 
@@ -45,9 +47,18 @@ class AliyunDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.schema['properties']['type']['enum'][0]:
-            return False
-        return i
+        type = self.data['type']
+        if type == 'unused':
+            if i['Status'] != type:
+                return False
+            return i
+        elif type == 'encrypted':
+            encrypted = self.data['value']
+            if i['Encrypted'].lower() != str(encrypted).lower():
+                return False
+            return i
+        else:
+            return i
 
 class AliyunRdsFilter(Filter):
     schema = None
@@ -88,6 +99,16 @@ class AliyunSlbListenerFilter(Filter):
         if len(ListenerPort) == 0 and len(ListenerPortsAndProtocal) == 0 and len(ListenerPortsAndProtocol) == 0 and len(BackendServers) == 0:
             return i
         return None
+
+class AliyunRamFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
 
 class AliyunAgeFilter(Filter):
     """Automatically filter resources older than a given date.
@@ -131,6 +152,15 @@ class AliyunAgeFilter(Filter):
         return op(self.threshold_date, v)
 
 class AliyunVpcFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
+
+class AliyunSgFilter(Filter):
 
     def validate(self):
         return self

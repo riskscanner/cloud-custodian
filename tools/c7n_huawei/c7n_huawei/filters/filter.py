@@ -23,7 +23,7 @@ class HuaweiEipFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['status'] != self.schema['properties']['type']['enum'][0]:
+        if i['status'] != self.data['type']:
             return False
         return i
 
@@ -34,7 +34,7 @@ class HuaweiDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['status'] != self.schema['properties']['type']['enum'][0]:
+        if i['status'] != self.data['type']:
             return False
         return i
 

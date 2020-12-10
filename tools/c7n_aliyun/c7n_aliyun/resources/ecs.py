@@ -14,18 +14,17 @@
 
 import operator
 
+import jmespath
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
-from aliyunsdkecs.request.v20140526.DeleteInstanceRequest import DeleteInstanceRequest
-from aliyunsdkecs.request.v20140526.DescribeInstanceMonitorDataRequest import DescribeInstanceMonitorDataRequest
 from aliyunsdkecs.request.v20140526.DescribeInstancesRequest import DescribeInstancesRequest
 from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceRequest
 from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
+
+from c7n.utils import type_schema
 from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.filters.filter import AliyunAgeFilter, AliyunEcsFilter, MetricsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
-
-from c7n.utils import type_schema
 
 
 @resources.register('ecs')
@@ -40,6 +39,29 @@ class Ecs(QueryResourceManager):
     def get_request(self):
         request = DescribeInstancesRequest()
         return request
+
+@Ecs.filter_registry.register('PublicIpAddress')
+class PublicIpAddress(AliyunEcsFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # ECS实例未直接绑定公网IP，视为“合规”。该规则仅适用于 IPv4 协议
+            - name: aliyun-ecs-public-ipaddress
+              resource: aliyun.ecs
+              filters:
+                - type: PublicIpAddress
+    """
+    public_ip_address = "PublicIpAddress.IpAddress"
+    schema = type_schema('PublicIpAddress')
+
+    def get_request(self, i):
+        data = jmespath.search(self.public_ip_address, i)
+        if len(data) == 0:
+            return False
+        return i
 
 @Ecs.filter_registry.register('stopped')
 class AliyunEcsFilter(AliyunEcsFilter):
@@ -137,14 +159,14 @@ class Stop(MethodAction):
         return  request
 
 
-@Ecs.action_registry.register('delete')
-class Delete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, instance):
-        request = DeleteInstanceRequest()
-        request.set_InstanceId(instance['InstanceId'])
-        request.set_accept_format('json')
-        return request
+# @Ecs.action_registry.register('delete')
+# class Delete(MethodAction):
+#
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#
+#     def get_request(self, instance):
+#         request = DeleteInstanceRequest()
+#         request.set_InstanceId(instance['InstanceId'])
+#         request.set_accept_format('json')
+#         return request

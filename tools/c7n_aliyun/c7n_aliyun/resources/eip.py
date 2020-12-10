@@ -13,10 +13,8 @@
 # limitations under the License.
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
 from aliyunsdkecs.request.v20140526.DescribeEipAddressesRequest import DescribeEipAddressesRequest
-from aliyunsdkecs.request.v20140526.ReleaseEipAddressRequest import ReleaseEipAddressRequest
 
 from c7n.utils import type_schema
-from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.filters.filter import AliyunEipFilter, MetricsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
@@ -84,29 +82,29 @@ class EipMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
-@Eip.action_registry.register('release')
-class EipRelease(MethodAction):
-    """Filters:
-
-       :Example:
-
-       .. code-block:: yaml
-
-           policies:
-             #释放未连接的弹性IP
-             - name: aliyun-eip
-               resource: aliyun.eip
-               filters:
-                 - type: unused
-               actions:
-                 - release
-    """
-    # 释放指定的EIP
-    schema = type_schema('release')
-    method_spec = {'op': 'release'}
-
-    def get_request(self, eip):
-        request = ReleaseEipAddressRequest()
-        request.set_AllocationId(eip['AllocationId'])
-        request.set_accept_format('json')
-        return request        
+# @Eip.action_registry.register('release')
+# class EipRelease(MethodAction):
+#     """Filters:
+#
+#        :Example:
+#
+#        .. code-block:: yaml
+#
+#            policies:
+#              #释放未连接的弹性IP
+#              - name: aliyun-eip
+#                resource: aliyun.eip
+#                filters:
+#                  - type: unused
+#                actions:
+#                  - release
+#     """
+#     # 释放指定的EIP
+#     schema = type_schema('release')
+#     method_spec = {'op': 'release'}
+#
+#     def get_request(self, eip):
+#         request = ReleaseEipAddressRequest()
+#         request.set_AllocationId(eip['AllocationId'])
+#         request.set_accept_format('json')
+#         return request

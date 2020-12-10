@@ -36,6 +36,27 @@ class Disk(QueryResourceManager):
         request = DescribeDisksRequest()
         return request
 
+@Disk.filter_registry.register('encrypted')
+class AliyunDiskFilter(AliyunDiskFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-encrypted-disk
+               resource: aliyun.disk
+               filters:
+                 - type: encrypted
+                   value: false
+    """
+    # 云盘是否加密。
+    # 默认值：false
+    schema = type_schema(
+        'encrypted',
+        **{'value': {'type': 'boolean'}})
+
 @Disk.filter_registry.register('unused')
 class AliyunDiskFilter(AliyunDiskFilter):
     """Filters
@@ -85,15 +106,15 @@ class MetricsDiskFilter(MetricsFilter):
         request.set_accept_format('json')
         return request
 
-@Disk.action_registry.register('delete')
-class DiskDelete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-    attr_filter = ('Status', ('Available', ))
-
-    def get_request(self, disk):
-        request = DeleteDiskRequest()
-        request.set_DiskId(disk['DiskId'])
-        request.set_accept_format('json')
-        return request
+# @Disk.action_registry.register('delete')
+# class DiskDelete(MethodAction):
+#
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#     attr_filter = ('Status', ('Available', ))
+#
+#     def get_request(self, disk):
+#         request = DeleteDiskRequest()
+#         request.set_DiskId(disk['DiskId'])
+#         request.set_accept_format('json')
+#         return request

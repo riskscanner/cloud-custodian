@@ -15,7 +15,7 @@ import logging
 import os
 
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
-from aliyunsdkrds.request.v20140815.DescribeDBInstancePerformanceRequest import DescribeDBInstancePerformanceRequest
+from aliyunsdkrds.request.v20140815.DescribeAvailableZonesRequest import DescribeAvailableZonesRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstanceAttributeRequest import DescribeDBInstanceAttributeRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
 
@@ -71,6 +71,48 @@ class Rds(QueryResourceManager):
             logging.warn("RDS service in %s is not supported!", regionId)
             return flag
 
+@Rds.filter_registry.register('AvailableZones')
+class AliyunRdsFilter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下RDS实例支持多可用区，视为“合规”。
+            - name: aliyun-rds-availablezones
+              resource: aliyun.rds
+              filters:
+                - type: AvailableZones
+                  value: false
+    """
+    schema = type_schema(
+        'AvailableZones',
+        **{'value': {'type': 'boolean'}})
+    filter = None
+
+    def get_request(self, i):
+        request = DescribeAvailableZonesRequest()
+        request.set_accept_format('json')
+        # 数据库类型。取值：
+        # MySQL
+        # SQLServer
+        # PostgreSQL
+        # PPAS
+        # MariaDB
+        request.set_Engine(i['Engine'])
+
+        response = Session.client(self, service).do_action_with_exception(request)
+
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        if self.data['value']==True:
+            flag = len(data['AvailableZones']) > 0
+        else:
+            flag = len(data['AvailableZones']) < 0
+        if flag != self.data['value']:
+            return False
+        return i
+
 @Rds.filter_registry.register('normal')
 class AliyunRdsFilter(AliyunRdsFilter):
     """Filters
@@ -100,22 +142,23 @@ class AliyunRdsFilter(AliyunRdsFilter):
         data = eval(string)
         DBInstanceAttributes = data['Items']['DBInstanceAttribute']
         for obj in DBInstanceAttributes:
-            if obj[self.filter] != self.schema['properties']['type']['enum'][0]:
+            if obj[self.filter] != self.data['type']:
                 return False
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i
 
-@Rds.filter_registry.register('Basic')
+@Rds.filter_registry.register('HighAvailability')
 class AliyunRds2Filter(AliyunRdsFilter):
     """Filters
        :Example:
        .. code-block:: yaml
 
         policies:
+            # 账号下RDS实例具备高可用能力，视为“合规”，否则属于“不合规”。
             - name: aliyun-rds
               resource: aliyun.rds
               filters:
-                - type: Basic
+                - type: HighAvailability
     """
     # 实例系列，取值：
     #
@@ -136,7 +179,7 @@ class AliyunRds2Filter(AliyunRdsFilter):
         data = eval(string)
         DBInstanceAttributes = data['Items']['DBInstanceAttribute']
         for obj in DBInstanceAttributes:
-            if obj[self.filter] != self.schema['properties']['type']['enum'][0]:
+            if obj[self.filter] != self.data['type']:
                 return False
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i

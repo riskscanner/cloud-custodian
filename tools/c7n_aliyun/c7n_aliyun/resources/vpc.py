@@ -12,22 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-from aliyunsdkecs.request.v20140526.DeleteSecurityGroupRequest import DeleteSecurityGroupRequest
-from aliyunsdkecs.request.v20140526.DeleteVpcRequest import DeleteVpcRequest
+
+import jmespath
 from aliyunsdkecs.request.v20140526.DescribeSecurityGroupAttributeRequest import DescribeSecurityGroupAttributeRequest
 from aliyunsdkecs.request.v20140526.DescribeSecurityGroupsRequest import DescribeSecurityGroupsRequest
 from aliyunsdkecs.request.v20140526.DescribeVpcsRequest import DescribeVpcsRequest
-from c7n_aliyun.actions import MethodAction
+
+from c7n.utils import type_schema
+from c7n_aliyun.client import Session
+from c7n_aliyun.filters.filter import AliyunSgFilter
 from c7n_aliyun.filters.filter import AliyunVpcFilter
 from c7n_aliyun.filters.filter import SGPermission
 from c7n_aliyun.filters.filter import SGPermissionSchema
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
-
-from c7n.utils import type_schema
 from c7n_aliyun.resources.ecs import Ecs
 from c7n_aliyun.resources.rds import Rds
-from c7n_aliyun.client import Session
+
 
 @resources.register('vpc')
 class Vpc(QueryResourceManager):
@@ -109,6 +110,41 @@ class SecurityGroup(QueryResourceManager):
         request = DescribeSecurityGroupsRequest()
         return request
 
+@SecurityGroup.filter_registry.register('SourceCidrIp')
+class IPPermission(AliyunSgFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下ECS安全组配置不为“0.0.0.0/0”，视为“合规”。
+            - name: aliyun-sg-sourcecidrip
+              resource: aliyun.security-group
+              filters:
+                - type: SourceCidrIp
+                  value: "0.0.0.0/0"
+    """
+
+    ip_permissions_key = "Permissions.Permission"
+    schema = type_schema(
+        'SourceCidrIp',
+        **{'Cidr': {'type': 'string'}})
+
+    def get_request(self, sg):
+        service = 'security-group'
+        request = DescribeSecurityGroupAttributeRequest();
+        request.set_SecurityGroupId(sg["SecurityGroupId"])
+        request.set_Direction("ingress")
+        request.set_accept_format('json')
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        for cidr in jmespath.search(self.ip_permissions_key, data):
+            if cidr['SourceCidrIp'] == self.data['Cidr']:
+                return sg
+        return False
+
 @SecurityGroup.filter_registry.register('ingress')
 class IPPermission(SGPermission):
 
@@ -152,15 +188,15 @@ class IPPermission(SGPermission):
         self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
 
 
-@SecurityGroup.action_registry.register('delete')
-class Delete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, sg):
-        request = DeleteSecurityGroupRequest()
-        request.set_InstanceId(sg['SecurityGroupId'])
-        request.set_accept_format('json')
-        return request
+# @SecurityGroup.action_registry.register('delete')
+# class Delete(MethodAction):
+#
+#     schema = type_schema('delete')
+#     method_spec = {'op': 'delete'}
+#
+#     def get_request(self, sg):
+#         request = DeleteSecurityGroupRequest()
+#         request.set_InstanceId(sg['SecurityGroupId'])
+#         request.set_accept_format('json')
+#         return request
 

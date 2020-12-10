@@ -22,6 +22,7 @@ crcmod = "^1.7"
 oss2 = "^2.12.1"
 aliyun-python-sdk-cms = "^7.0.13"
 aliyun-python-sdk-ecs = "^4.19.8"
+aliyun-python-sdk-ram = "^3.2.0"
 pycryptodome = "^3.9.8"
 
 

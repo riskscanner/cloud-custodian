@@ -22,7 +22,7 @@ class TencentEipFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['AddressStatus'] != self.schema['properties']['type']['enum'][0]:
+        if i['AddressStatus'] != self.data['type']:
             return False
         return i
 
@@ -33,7 +33,7 @@ class TencentDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['DiskState'] != self.schema['properties']['type']['enum'][0]:
+        if i['DiskState'] != self.data['type']:
             return False
         return i
 
@@ -45,7 +45,7 @@ class TencentCdbFilter(Filter):
 
     def __call__(self, i):
         Internet = 0
-        if self.schema['properties']['type']['enum'][0] == 'Internet':
+        if self.data['type'] == 'Internet':
             Internet = 1
         if i['WanStatus'] != Internet:
             return False
