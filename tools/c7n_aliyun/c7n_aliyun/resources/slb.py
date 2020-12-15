@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
+import os
 
 import jmespath
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
 from aliyunsdkslb.request.v20140515.DescribeHealthStatusRequest import DescribeHealthStatusRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancerAttributeRequest import DescribeLoadBalancerAttributeRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import DescribeLoadBalancersRequest
+from aliyunsdkslb.request.v20140515.DescribeAccessControlListsRequest import DescribeAccessControlListsRequest
+from aliyunsdkslb.request.v20140515.DescribeAccessControlListAttributeRequest import DescribeAccessControlListAttributeRequest
+
 
 from c7n.utils import type_schema
 from c7n_aliyun.client import Session
@@ -26,6 +30,7 @@ from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 service = 'slb'
+regionId = os.getenv('ALIYUN_DEFAULT_REGION')
 @resources.register('slb')
 class Slb(QueryResourceManager):
 
@@ -39,7 +44,7 @@ class Slb(QueryResourceManager):
         return request
 
 @Slb.filter_registry.register('listener')
-class AliyunSlbFilter(AliyunSlbFilter):
+class AliyunSlbListener(AliyunSlbFilter):
     """Filters
        :Example:
        .. code-block:: yaml
@@ -72,7 +77,7 @@ class AliyunSlbFilter(AliyunSlbFilter):
         return i
 
 @Slb.filter_registry.register('unused')
-class AliyunSlbFilter(AliyunSlbFilter):
+class AliyunSlbUnused(AliyunSlbFilter):
     """Filters
 
        :Example:
@@ -104,7 +109,7 @@ class AliyunSlbFilter(AliyunSlbFilter):
         return i
 
 @Slb.filter_registry.register('no-listener')
-class AliyunSlbFilter(AliyunSlbListenerFilter):
+class AliyunSlbNoListener(AliyunSlbListenerFilter):
     """Filters
 
        :Example:
@@ -149,4 +154,120 @@ class SlbMetricsFilter(MetricsFilter):
         request.set_Namespace(self.namespace)
         request.set_MetricName(self.metric)
         return request
+
+@Slb.filter_registry.register('AddressType')
+class AddressTypeSlbFilter(AliyunSlbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 负载均衡实例未直接绑定公网IP，视为“合规”。该规则仅适用于 IPv4 协议。
+            - name: aliyun-slb-address-type
+              resource: aliyun.slb
+              filters:
+                - type: AddressType
+                  value: internet
+    """
+    # internet 公网/intranet 内网
+    schema = type_schema(
+        'AddressType',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] != i['AddressType']:
+            return False
+        return i
+
+@Slb.filter_registry.register('NetworkType')
+class NetworkTypeSlbFilter(AliyunSlbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下负载均衡实例已关联到VPC；若您配置阈值，则关联的VpcId需存在您列出的阈值中，视为“合规”。
+            - name: aliyun-slb-network-type
+              resource: aliyun.slb
+              filters:
+                - type: NetworkType
+                  value: vpc
+    """
+    schema = type_schema(
+        'NetworkType',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == i['NetworkType']:
+            return False
+        return i
+
+@Slb.filter_registry.register('Bandwidth')
+class BandwidthSlbFilter(AliyunSlbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的负载均衡实例是否达到最低带宽要求。
+            - name: aliyun-slb-bandwidth
+              resource: aliyun.slb
+              filters:
+                - type: Bandwidth
+                  value: 10
+    """
+    schema = type_schema(
+        'Bandwidth',
+        **{'value': {'type': 'number'}})
+
+    def get_request(self, i):
+        request = DescribeLoadBalancerAttributeRequest()
+        request.set_accept_format('json')
+        request.set_LoadBalancerId(i['LoadBalancerId'])
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        if self.data['value'] < data['Bandwidth']:
+            return False
+        data['F2CId'] = data['LoadBalancerId']
+        return data
+
+@Slb.filter_registry.register('Acls')
+class AclsSlbFilter(AliyunSlbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下SLB不允许任意来源公网访问，视为“合规”
+            - name: aliyun-slb-acls
+              resource: aliyun.slb
+              filters:
+                - type: Acls
+                  value: true
+    """
+    schema = type_schema(
+        'Bandwidth',
+        **{'value': {'type': 'boolean'}})
+
+    def get_request(self, i):
+        request = DescribeAccessControlListsRequest()
+        request.set_accept_format('json')
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False")
+        data = eval(string)
+        if self.data['value']:
+            if len(data) == 0:
+                return False
+            else:
+                for obj in data:
+                    req = DescribeAccessControlListAttributeRequest()
+                    req.set_accept_format('json')
+                    req.set_AclId(obj['AclId'])
+                    res = Session.client(self, service).do_action_with_exception(req)
+                    string = str(res, encoding="utf-8").replace("false", "False")
+                    data2 = eval(string)
+                    if len(data2) == 0:
+                        return False
+        return i
 

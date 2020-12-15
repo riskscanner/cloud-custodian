@@ -71,7 +71,36 @@ class AliyunRdsFilter(Filter):
         request = self.get_request(i)
         return request
 
+class AliyunRedisFilter(Filter):
+    schema = None
+    filter = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
+
 class AliyunSlbFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
+
+class AliyunCdnFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
+
+class AliyunOssFilter(Filter):
 
     def validate(self):
         return self

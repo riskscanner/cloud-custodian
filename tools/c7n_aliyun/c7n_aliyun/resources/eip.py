@@ -82,29 +82,25 @@ class EipMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
-# @Eip.action_registry.register('release')
-# class EipRelease(MethodAction):
-#     """Filters:
-#
-#        :Example:
-#
-#        .. code-block:: yaml
-#
-#            policies:
-#              #释放未连接的弹性IP
-#              - name: aliyun-eip
-#                resource: aliyun.eip
-#                filters:
-#                  - type: unused
-#                actions:
-#                  - release
-#     """
-#     # 释放指定的EIP
-#     schema = type_schema('release')
-#     method_spec = {'op': 'release'}
-#
-#     def get_request(self, eip):
-#         request = ReleaseEipAddressRequest()
-#         request.set_AllocationId(eip['AllocationId'])
-#         request.set_accept_format('json')
-#         return request
+@Eip.filter_registry.register('Bandwidth')
+class BandwidthEipFilter(AliyunEipFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的弹性IP实例是否达到最低带宽要求
+            - name: aliyun-eip-bandwidth
+              resource: aliyun.eip
+              filters:
+                - type: Bandwidth
+                  value: 10
+    """
+    schema = type_schema(
+        'Bandwidth',
+        **{'value': {'type': 'number'}})
+
+    def get_request(self, i):
+        if self.data['value'] < i['Bandwidth']:
+            return False
+        return i

@@ -158,15 +158,29 @@ class Stop(MethodAction):
         request.set_accept_format('json')
         return  request
 
+@Ecs.filter_registry.register('InstanceNetworkType')
+class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
 
-# @Ecs.action_registry.register('delete')
-# class Delete(MethodAction):
-#
-#     schema = type_schema('delete')
-#     method_spec = {'op': 'delete'}
-#
-#     def get_request(self, instance):
-#         request = DeleteInstanceRequest()
-#         request.set_InstanceId(instance['InstanceId'])
-#         request.set_accept_format('json')
-#         return request
+        policies:
+            # 账号下所有ECS实例已关联到VPC；若您配置阈值，则关联的VpcId需存在您列出的阈值中，视为“合规”
+            - name: aliyun-ecs-instance-network-type
+              resource: aliyun.ecs
+              filters:
+                - type: InstanceNetworkType
+                  value: vpc
+    """
+    # 实例的网络类型，取值：
+    #
+    # classic：经典网络
+    # vpc：专有网络VPC
+    schema = type_schema(
+        'InstanceNetworkType',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == i['InstanceNetworkType']:
+            return False
+        return i

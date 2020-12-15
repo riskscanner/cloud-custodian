@@ -14,10 +14,14 @@
 import logging
 import os
 
+import jmespath
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
 from aliyunsdkrds.request.v20140815.DescribeAvailableZonesRequest import DescribeAvailableZonesRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstanceAttributeRequest import DescribeDBInstanceAttributeRequest
 from aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest import DescribeDBInstancesRequest
+from aliyunsdkrds.request.v20140815.DescribeSecurityGroupConfigurationRequest import DescribeSecurityGroupConfigurationRequest
+from aliyunsdkrds.request.v20140815.DescribeDBInstanceIPArrayListRequest import DescribeDBInstanceIPArrayListRequest
+
 
 from c7n.utils import type_schema
 from c7n_aliyun.client import Session
@@ -72,7 +76,7 @@ class Rds(QueryResourceManager):
             return flag
 
 @Rds.filter_registry.register('AvailableZones')
-class AliyunRdsFilter(AliyunRdsFilter):
+class AvailableZonesRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
        .. code-block:: yaml
@@ -113,24 +117,27 @@ class AliyunRdsFilter(AliyunRdsFilter):
             return False
         return i
 
-@Rds.filter_registry.register('normal')
+@Rds.filter_registry.register('SecurityIPMode')
 class AliyunRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
        .. code-block:: yaml
 
         policies:
-            - name: aliyun-rds
+            #检测您账号下RDS数据库实例是否启用安全白名单功能，已开通视为“合规”
+            - name: aliyun-rds-security-ip-mode
               resource: aliyun.rds
               filters:
-                - type: normal
+                - type: SecurityIPMode
+                  value: safety
     """
     # 白名单模式。取值：
     #
     # normal：通用模式
     # safety：高安全模式
-    schema = type_schema('normal')
-    filter = 'SecurityIPMode'
+    schema = type_schema(
+        'SecurityIPMode',
+        **{'value': {'type': 'string'}})
 
     def get_request(self, i):
         request = DescribeDBInstanceAttributeRequest()
@@ -142,20 +149,20 @@ class AliyunRdsFilter(AliyunRdsFilter):
         data = eval(string)
         DBInstanceAttributes = data['Items']['DBInstanceAttribute']
         for obj in DBInstanceAttributes:
-            if obj[self.filter] != self.data['type']:
+            if obj[self.data['type']] == self.data['value']:
                 return False
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i
 
 @Rds.filter_registry.register('HighAvailability')
-class AliyunRds2Filter(AliyunRdsFilter):
+class HighAvailabilityRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
        .. code-block:: yaml
 
         policies:
             # 账号下RDS实例具备高可用能力，视为“合规”，否则属于“不合规”。
-            - name: aliyun-rds
+            - name: aliyun-rds-highavailability
               resource: aliyun.rds
               filters:
                 - type: HighAvailability
@@ -189,7 +196,7 @@ class RdsMetricsFilter(MetricsFilter):
 
     """
           1 policies:
-          2   - name: aliyun-rds
+          2   - name: aliyun-rds-metrics
           3     resource: aliyun.rds
           4     filters:
           6       - type: metrics
@@ -213,3 +220,98 @@ class RdsMetricsFilter(MetricsFilter):
         request.set_Namespace(self.namespace)
         request.set_MetricName(self.metric)
         return request
+
+@Rds.filter_registry.register('ConnectionMode')
+class ConnectionModeRds2Filter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的RDS实例是否启用数据库代理状态链接形式，Safe视为“合规”，Standard属于“不合规”。
+            - name: aliyun-rds-connection-mode
+              resource: aliyun.rds
+              filters:
+                - type: ConnectionMode
+                  value: Safe
+    """
+    # 实例的访问模式，取值：
+    #
+    # Standard：标准访问模式
+    # Safe：数据库代理模式
+    # 默认返回所有访问模式下的实例
+    schema = type_schema(
+        'ConnectionMode',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == i['ConnectionMode']:
+            return False
+        return i
+
+@Rds.filter_registry.register('InstanceNetworkType')
+class InstanceNetworkTypeRdsFilter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的Redis实例是否运行在VPC网络环境下。
+            - name: aliyun-rds-instance-network-type
+              resource: aliyun.rds
+              filters:
+                - type: InstanceNetworkType
+                  value: VPC
+    """
+    # 实例的网络类型，取值：
+    #
+    # Classic：经典网络
+    # VPC：VPC网络
+    schema = type_schema(
+        'InstanceNetworkType',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == i['InstanceNetworkType']:
+            return False
+        return i
+
+@Rds.filter_registry.register('InternetAccess')
+class InternetAccessRdsFilter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下RDS数据库实例是否启用安全白名单功能，已开通视为“合规”
+            - name: aliyun-rds-internet-access
+              resource: aliyun.rds
+              filters:
+                - type: InternetAccess
+                  value: true
+    """
+    schema = type_schema(
+        'InternetAccess',
+        **{'value': {'type': 'boolean'}})
+
+    def get_request(self, i):
+        request1 = DescribeSecurityGroupConfigurationRequest()
+        request1.set_accept_format('json')
+        response1 = Session.client(self, service).do_action_with_exception(request1)
+        string1 = str(response1, encoding="utf-8").replace("false", "False")
+        EcsSecurityGroupRelation = jmespath.search('Items.EcsSecurityGroupRelation', eval(string1))
+
+        request2 = DescribeDBInstanceIPArrayListRequest()
+        request2.set_accept_format('json')
+        response2 = Session.client(self, service).do_action_with_exception(request2)
+        string2 = str(response2, encoding="utf-8").replace("false", "False")
+
+        DBInstanceIPArray = jmespath.search('Items.DBInstanceIPArray', eval(string2))
+        if self.data['value']:
+            if len(EcsSecurityGroupRelation) == 0 and len(DBInstanceIPArray) == 0:
+                return False
+        else:
+            return False
+        i['EcsSecurityGroupRelation'] = EcsSecurityGroupRelation
+        i['DBInstanceIPArray'] = DBInstanceIPArray
+        return i

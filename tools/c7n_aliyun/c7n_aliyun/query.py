@@ -45,6 +45,7 @@ class ResourceQuery:
             buckets = []
             for b in result.buckets:
                 if request in b.__dict__['location']:
+                    b.__dict__['F2CId'] = b.__dict__[m.id]
                     buckets.append(b.__dict__)
             return buckets
         else:
@@ -53,7 +54,10 @@ class ResourceQuery:
                 result = client.do_action_with_exception(request)
                 false = "false"
                 true = "true"
-                return jmespath.search(path, eval(result))
+                res = jmespath.search(path, eval(result))
+                for data in res:
+                    data['F2CId'] = data[m.id]
+                return res
             else:
                 return None
 
