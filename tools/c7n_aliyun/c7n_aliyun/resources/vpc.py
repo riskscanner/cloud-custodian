@@ -129,7 +129,7 @@ class IPPermission(AliyunSgFilter):
     ip_permissions_key = "Permissions.Permission"
     schema = type_schema(
         'SourceCidrIp',
-        **{'Cidr': {'type': 'string'}})
+        **{'value': {'type': 'string'}})
 
     def get_request(self, sg):
         service = 'security-group'
@@ -141,7 +141,7 @@ class IPPermission(AliyunSgFilter):
         string = str(response, encoding="utf-8").replace("false", "False")
         data = eval(string)
         for cidr in jmespath.search(self.ip_permissions_key, data):
-            if cidr['SourceCidrIp'] == self.data['Cidr']:
+            if cidr['SourceCidrIp'] == self.data['value']:
                 return sg
         return False
 
@@ -186,17 +186,3 @@ class IPPermission(SGPermission):
 
     def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
-
-
-# @SecurityGroup.action_registry.register('delete')
-# class Delete(MethodAction):
-#
-#     schema = type_schema('delete')
-#     method_spec = {'op': 'delete'}
-#
-#     def get_request(self, sg):
-#         request = DeleteSecurityGroupRequest()
-#         request.set_InstanceId(sg['SecurityGroupId'])
-#         request.set_accept_format('json')
-#         return request
-
