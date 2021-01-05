@@ -11,74 +11,138 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+
+import jmespath
+import urllib3
+from huaweicloudsdkcore.exceptions import exceptions
+from huaweicloudsdkelb.v2 import *
+
 from c7n.utils import type_schema
-from c7n_huawei.actions import MethodAction
-from c7n_huawei.client import Session
 from c7n_huawei.filters.filter import HuaweiElbFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'network.elb'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+service = 'elb'
 
 @resources.register('elb')
 class Elb(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'network.elb'
+        service = 'elb'
         enum_spec = (None, None, None)
         id = 'id'
 
     def get_request(self):
         try:
-            lbs = Session.client(self, service).loadbalancers()
-            arr = list()  # 创建 []
-            if lbs is not None:
-                for lb in lbs:
-                    json = dict()  # 创建 {}
-                    json = Session._loads_(json, lb)
-                    arr.append(json)
-        except Exception as err:
-            pass
-        return arr
+            request = ListLoadbalancersRequest()
+            response = elb_client.list_loadbalancers(request)
+        except exceptions.ClientRequestException as e:
+            logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
+        return response
+
+@Elb.filter_registry.register('listener')
+class ListenerElbFilter(HuaweiElbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 负载均衡开启HTTPS监听，视为“合规”。
+            - name: huawei-elb-listener
+              resource: huawei.elb
+              filters:
+                - type: listener
+                  value: https
+    """
+    schema = type_schema(
+        'listener',
+        **{'value': {'type': 'string'}})
+    listener_protocol_key = "listeners"
+    filter = None
+
+    def get_request(self, i):
+        for data in jmespath.search(self.listener_protocol_key, i):
+            request = ShowListenerRequest()
+            request.listener_id = data
+            response = elb_client.show_listener(request)
+            if jmespath.search('protocol', response) == self.data['value']:
+                return False
+        return i
 
 
 @Elb.filter_registry.register('unused')
-class HuaweiElbFilter(HuaweiElbFilter):
+class UnusedElbFilter(HuaweiElbFilter):
     # 查询指定地域已创建的EIP
     """Filters:Example:
        .. code-block:: yaml
 
            policies:
-             - name: huawei-elb
+             - name: huawei-elb-unused
                resource: huawei.elb
                filters:
                  - type: unused
 
     """
-    # Associating：绑定中。
-    # Unassociating：解绑中。
-    # InUse：已分配。
-    # Available：可用。
+    # 负载均衡器关联的后端云服务器组ID的列表。。
     schema = type_schema('unused')
 
     def get_request(self, i):
-        listeners = i['listeners']
+        listeners = i['pools']
         # elb 查询elb下是否有监听
         if len(listeners) > 0:
-            return None
+            return False
         return i
 
-@Elb.action_registry.register('delete')
-class ElbDelete(MethodAction):
-    """
-         policies:
-           - name: huawei-elb-delete
-             resource: huawei.elb
-             actions:
-               - delete
-     """
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
+@Elb.filter_registry.register('AddressType')
+class AddressTypeElbFilter(HuaweiElbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
 
-    def get_request(self, elb):
-        Session.client(self, service).delete_loadbalancer(elb['id'])
+        policies:
+            # 负载均衡实例未直接绑定公网IP，视为“合规”。该规则仅适用于 IPv4 协议。
+            - name: huawei-elb-address-type
+              resource: huawei.elb
+              filters:
+                - type: AddressType
+                  value: internet
+    """
+    # internet 公网/intranet 内网
+    schema = type_schema(
+        'AddressType',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == 'internet':
+            if i['vip_address'] is not None:
+                return False
+        else:
+            if i['vip_address'] is None:
+                return False
+        return i
+
+@Elb.filter_registry.register('NetworkType')
+class NetworkTypeElbFilter(HuaweiElbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下负载均衡实例已关联到VPC；若您配置阈值，则关联的VpcId需存在您列出的阈值中，视为“合规”。
+            - name: huawei-elb-network-type
+              resource: huawei.elb
+              filters:
+                - type: NetworkType
+                  value: vpc
+    """
+    schema = type_schema(
+        'NetworkType',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == i['NetworkType']:
+            return False
+        return i

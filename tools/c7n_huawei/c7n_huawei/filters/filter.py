@@ -15,6 +15,14 @@ from c7n.filters.core import ValueFilter
 from c7n.utils import local_session, chunks
 from c7n.utils import type_schema
 
+class HuaweiEcsFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        return self.get_request(i)
 
 class HuaweiEipFilter(Filter):
     schema = None
@@ -23,9 +31,7 @@ class HuaweiEipFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['status'] != self.data['type']:
-            return False
-        return i
+        return self.get_request(i)
 
 class HuaweiDiskFilter(Filter):
     schema = None
@@ -34,9 +40,7 @@ class HuaweiDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['status'] != self.data['type']:
-            return False
-        return i
+        return self.get_request(i)
 
 class HuaweiElbFilter(Filter):
     schema = None

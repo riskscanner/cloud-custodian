@@ -16,8 +16,14 @@
 import logging
 import os
 
-from openstack import connection
 from obs import ObsClient
+from huaweicloudsdkcore.auth.credentials import BasicCredentials
+from huaweicloudsdkcore.http.http_config import HttpConfig
+from huaweicloudsdkecs.v2 import *
+from huaweicloudsdkeip.v2 import *
+from huaweicloudsdkelb.v2 import *
+from huaweicloudsdkevs.v2 import *
+from huaweicloudsdkvpc.v2 import *
 
 log = logging.getLogger('c7n_huawei.client')
 
@@ -57,47 +63,50 @@ class Session:
             return self.region
 
     def client(self, service):
+        config = HttpConfig.get_default_config()
+        config.ignore_ssl_verification = True
+        config.timeout = 3
+        credentials = BasicCredentials(self.ak, self.sk, self.project_id)
+        endpoint = "https://iam.myhuaweicloud.com/v3"
         if service == 'obs':
             # 创建ObsClient实例
-            obsClient = ObsClient(
-                access_key_id=os.getenv('HUAWEI_AK'),
-                secret_access_key=os.getenv('HUAWEI_SK'),
-                server='obs.' + os.getenv('HUAWEI_DEFAULT_REGION') + '.myhuaweicloud.com'
+            clt = ObsClient(
+                access_key_id=self.ak,
+                secret_access_key=self.sk,
+                server='obs.' + self.region + '.myhuaweicloud.com'
             )
-            clt = obsClient
-        else:
-            conn = connection.Connection(
-                project_id=os.getenv('HUAWEI_PROJECT'),
-                user_domain_id=os.getenv('HUAWEI_USER_DOMAIN'),
-                auth_url='https://iam.myhuaweicloud.com/v3',
-                username=os.getenv('HUAWEI_USERNAME'),
-                password=os.getenv('HUAWEI_PASSWORD')
-            )
-            if 'compute' in service:
-                clt = conn.compute
-            elif 'vpcv1' in service:
-                clt = conn.vpcv1
-            elif 'network' in service:
-                clt = conn.network
-            elif 'block_store' in service:
-                clt = conn.block_store
-            elif 'rdsv3' in service:
-                clt = conn.rdsv3
-            elif 'cloud_eye' in service:
-                clt = conn.cloud_eye
-            else:
-                clt = conn.compute
+        elif service == 'ecs':
+            clt = EcsClient.new_builder(EcsClient) \
+                .with_http_config(config) \
+                .with_credentials(credentials) \
+                .with_endpoint("https://ecs." + self.region + ".myhuaweicloud.com") \
+                .build()
+        elif service == 'disk':
+            clt = EvsClient.new_builder(EvsClient) \
+                .with_http_config(config) \
+                .with_credentials(credentials) \
+                .with_endpoint("https://evs." + self.region + ".myhuaweicloud.com") \
+                .build()
+        elif service == 'eip':
+            clt = EipClient.new_builder(EipClient) \
+                .with_http_config(config) \
+                .with_credentials(credentials) \
+                .with_endpoint("https://vpc." + self.region + ".myhuaweicloud.com") \
+                .build()
+        elif service == 'elb':
+            clt = ElbClient.new_builder(ElbClient) \
+                .with_http_config(config) \
+                .with_credentials(credentials) \
+                .with_endpoint("https://elb." + self.region + ".myhuaweicloud.com") \
+                .build()
+        elif service == 'vpc':
+            clt = VpcClient.new_builder(VpcClient) \
+                .with_http_config(config) \
+                .with_credentials(credentials) \
+                .with_endpoint("https://vpc." + self.region + ".myhuaweicloud.com") \
+                .build()
         return clt
 
-    def _loads_(json, item):
-        if item is not None:
-            for name in dir(item):
-                if not name.startswith('_'):
-                    if name not in API_EXPRESS:
-                        value = getattr(item, name)
-                        if not callable(value):
-                            json[name] = value
-        return json
 
 REGION_ENDPOINT = {
         'af-south-1': '非洲-约翰内斯堡',
@@ -112,11 +121,4 @@ REGION_ENDPOINT = {
         'ap-southeast-1': '亚太-香港',
         'ap-southeast-3': '亚太-新加坡'
     }
-
-API_EXPRESS = [
-    'allow_create', 'allow_delete', 'allow_get', 'allow_head',
-    'allow_list', 'allow_update', 'put_create', 'query_limit_key',
-    'query_marker_key', 'next_marker_path', 'patch_update', 'resource_key'
-    'resources_key', 'base_path', 'location'
-]
 

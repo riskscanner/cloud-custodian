@@ -63,29 +63,6 @@ class PublicIpAddress(AliyunEcsFilter):
             return False
         return i
 
-@Ecs.filter_registry.register('stopped')
-class AliyunEcsFilter(AliyunEcsFilter):
-    """Filters
-
-       :Example:
-
-       .. code-block:: yaml
-
-           policies:
-             - name: aliyun-ecs
-               resource: aliyun.ecs
-               filters:
-                 - type: stopped
-    """
-    # 实例状态。取值范围：
-    #
-    # Pending：创建中
-    # Running：运行中
-    # Starting：启动中
-    # Stopping：停止中
-    # Stopped：已停止
-    schema = type_schema('Stopped')
-
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(AliyunAgeFilter):
     """Filters instances based on their age (in days)
@@ -129,34 +106,6 @@ class EcsMetricsFilter(MetricsFilter):
         request.set_Namespace(self.namespace)
         request.set_MetricName(self.metric)
         return request
-
-
-@Ecs.action_registry.register('start')
-class Start(MethodAction):
-
-    schema = type_schema('start')
-    method_spec = {'op': 'start'}
-    attr_filter = ('Status', ('Stopped',))
-
-    def get_request(self, instance):
-        request = StartInstanceRequest()
-        request.set_InstanceId(instance['InstanceId'])
-        request.set_accept_format('json')
-        return request
-
-@Ecs.action_registry.register('stop')
-class Stop(MethodAction):
-
-    schema = type_schema('stop')
-    method_spec = {'op': 'stop'}
-    attr_filter = ('Status', ('Running',))
-
-    def get_request(self, instance):
-        request = StopInstanceRequest()
-        request.set_InstanceId(instance['InstanceId'])
-        request.set_ForceStop(True)
-        request.set_accept_format('json')
-        return  request
 
 @Ecs.filter_registry.register('InstanceNetworkType')
 class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):

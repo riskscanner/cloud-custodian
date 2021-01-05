@@ -30,7 +30,6 @@ from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
 
 service = 'slb'
-regionId = os.getenv('ALIYUN_DEFAULT_REGION')
 @resources.register('slb')
 class Slb(QueryResourceManager):
 
@@ -227,6 +226,7 @@ class BandwidthSlbFilter(AliyunSlbFilter):
         response = Session.client(self, service).do_action_with_exception(request)
         string = str(response, encoding="utf-8").replace("false", "False")
         data = eval(string)
+        print(data, self.data['value'])
         if self.data['value'] < data['Bandwidth']:
             return False
         data['F2CId'] = data['LoadBalancerId']
@@ -247,7 +247,7 @@ class AclsSlbFilter(AliyunSlbFilter):
                   value: true
     """
     schema = type_schema(
-        'Bandwidth',
+        'Acls',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

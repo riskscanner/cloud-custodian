@@ -78,7 +78,7 @@ class InternetAccessPolarDBFilter(AliyunRdsFilter):
             - name: aliyun-polardb-internet-access
               resource: aliyun.polardb
               filters:
-                - type: Security
+                - type: InternetAccess
                   value: true
     """
     schema = type_schema(

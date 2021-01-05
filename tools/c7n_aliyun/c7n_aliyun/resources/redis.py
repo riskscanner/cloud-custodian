@@ -36,7 +36,7 @@ class Redis(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'redis'
-        enum_spec = (None, 'Instances.DBInstanceAttribute', None)
+        enum_spec = (None, 'Instances.KVStoreInstance', None)
         id = 'InstanceId'
 
     def get_request(self):
@@ -50,7 +50,7 @@ class NetworkTypeRedisFilter(AliyunRedisFilter):
 
         policies:
             # 检测您账号下的Redis实例是否运行在VPC网络环境下
-            - name: aliyun-rds-network-type
+            - name: aliyun-redis-network-type
               resource: aliyun.redis
               filters:
                 - type: NetworkType

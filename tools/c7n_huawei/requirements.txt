@@ -1,4 +1,14 @@
 pycryptodome==3.9.8
 crcmod==1.7
-huaweicloud-sdk-python==1.0.24
-esdk-obs-python==3.20.5
+esdk-obs-python==3.20.11
+huaweicloudsdkecs==3.0.25b0
+huaweicloudsdkvpc==3.0.25b0
+huaweicloudsdkcore==3.0.25b0
+huaweicloudsdkiam==3.0.25b0
+huaweicloudsdkces==3.0.25b0
+huaweicloudsdkims==3.0.25b0
+huaweicloudsdkeip==3.0.25b0
+huaweicloudsdkelb==3.0.25b0
+huaweicloudsdkevs==3.0.25b0
+huaweicloudsdkrabbitmq==3.0.25b0
+requests-futures==1.0.0

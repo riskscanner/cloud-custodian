@@ -11,76 +11,82 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import datetime
-import operator
+import logging
+
+import jmespath
+import urllib3
+from huaweicloudsdkcore.exceptions import exceptions
+from huaweicloudsdkecs.v2 import *
 
 from c7n.utils import type_schema
-from c7n_huawei.actions import MethodAction
-from c7n_huawei.client import Session
-from c7n_huawei.filters.filter import HuaweiAgeFilter
-from c7n_huawei.filters.filter import MetricsFilter
+from c7n_huawei.filters.filter import HuaweiAgeFilter, HuaweiEcsFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'compute.ecs'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+service = 'ecs'
 
 @resources.register('ecs')
 class Ecs(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'compute.ecs'
-        enum_spec = (None, None, None)
+        service = 'ecs'
+        enum_spec = (None, 'servers', None)
         id = 'id'
         dimension = 'id'
 
     def get_request(self):
-        servers = Session.client(self, service).servers(limit=10000)
-        arr = list()  # 创建 []
-        if servers is not None:
-            for server in servers:
-                json = dict()  # 创建 {}
-                json = Session._loads_(json, server)
-                arr.append(json)
-        return arr
-
-@Ecs.filter_registry.register('metrics')
-class EcsMetricsFilter(MetricsFilter):
-
-    def get_request(self, dimensions):
-        service = 'cloud_eye.ecs'
-        new_dimensions = []
-        for dimension in dimensions:
-            new_dimensions.append(
-                {
-                    "name": "instance_id",
-                    "value": str(dimension['id'])
-                })
         try:
-            query = {
-                "namespace": self.namespace,
-                "metric_name": self.metric,
-                "from": self.start,
-                "to": self.end,
-                "period": self.period,
-                "filter": "average",
-                "dimensions": new_dimensions
-            }
-            servers = Session.client(self, service).metric_aggregations(**query)
-            arr = list()  # 创建 []
-            if servers is not None:
-                for server in servers:
-                    json = dict()  # 创建 {}
-                    json = Session._loads_(json, server)
-                    arr.append(json)
-        except Exception as err:
-            pass
-        return arr
+            request = ListServersDetailsRequest()
+            response = ecs_client.list_servers_details(request)
+        except exceptions.ClientRequestException as e:
+            logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
+        return response
+
+# @Ecs.filter_registry.register('metrics')
+# class EcsMetricsFilter(MetricsFilter):
+#
+#     def get_request(self, i):
+#         return i
+
+@Ecs.filter_registry.register('PublicIpAddress')
+class PublicIpAddress(HuaweiEcsFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # ECS实例未直接绑定公网IP，视为“合规”。该规则仅适用于 IPv4 协议
+            - name: huawei-ecs-public-ipaddress
+              resource: huawei.ecs
+              filters:
+                - type: PublicIpAddress
+    """
+    # fixed 内网
+    # floating 公网
+
+    public_ip_address = "addresses"
+    schema = type_schema('PublicIpAddress')
+
+    def get_request(self, i):
+        data = jmespath.search(self.public_ip_address, i)
+        if len(data) == 0:
+            return False
+        else:
+            for addrs in data:
+                for addr in addrs:
+                    if addr['os_ext_ip_stype'] == 'floating':
+                        return i
+        return False
+
 
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(HuaweiAgeFilter):
     """Filters instances based on their age (in days)
         policies:
-          - name: huawei-ecs-30-days-plus
+          - name: huawei-ecs-instance-age
             resource: huawei.ecs
             filters:
               - type: instance-age
@@ -88,8 +94,7 @@ class EcsAgeFilter(HuaweiAgeFilter):
                 days: 30
     """
 
-    date_attribute = "LaunchTime"
-    ebs_key_func = operator.itemgetter('AttachTime')
+    date_attribute = "os_srv_us_glaunched_at"
 
     schema = type_schema(
         'instance-age',
@@ -100,53 +105,28 @@ class EcsAgeFilter(HuaweiAgeFilter):
 
     def get_resource_date(self, i):
         # '2020-07-27T05:55:32.000000'
-        return i['launched_at']
+        return i['os_srv_us_glaunched_at']
 
-@Ecs.action_registry.register('start')
-class Start(MethodAction):
-    """
+@Ecs.filter_registry.register('InstanceNetworkType')
+class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
         policies:
-          - name: huawei-ecs-start
-            resource: huawei.ecs
-            actions:
-              - start
+            # 账号下所有ECS实例已关联到VPC；若您配置阈值，则关联的VpcId需存在您列出的阈值中，视为“合规”
+            - name: huawei-ecs-instance-network-type
+              resource: huawei.ecs
+              filters:
+                - type: InstanceNetworkType
+                  value: vpc
     """
+    schema = type_schema(
+        'InstanceNetworkType',
+        **{'value': {'type': 'string'}})
 
-    schema = type_schema('start')
-    method_spec = {'op': 'start'}
-    attr_filter = ('status', ('SHUTOFF',))
-
-    def get_request(self, instance):
-        Session.client(self, service).start_server(instance['id'])
-
-@Ecs.action_registry.register('stop')
-class Stop(MethodAction):
-    """
-        policies:
-          - name: huawei-ecs-stop
-            resource: huawei.ecs
-            actions:
-              - stop
-    """
-    schema = type_schema('stop')
-    method_spec = {'op': 'stop'}
-    attr_filter = ('status', ('ACTIVE',))
-
-    def get_request(self, instance):
-        Session.client().stop_server(instance['id'])
-
-@Ecs.action_registry.register('delete')
-class Delete(MethodAction):
-    """
-        policies:
-          - name: huawei-ecs-delete
-            resource: huawei.ecs
-            actions:
-              - delete
-    """
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-    attr_filter = ('status', ('SHUTOFF',))
-
-    def get_request(self, instance):
-        Session.client(self, service).delete_server(instance['id'])
+    def get_request(self, i):
+        if self.data['value'] == 'vpc':
+            if i['metadata']['vpc_id'] is None:
+                return False
+        return i

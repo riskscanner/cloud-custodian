@@ -12,55 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from c7n.utils import type_schema
-from c7n_huawei.actions import MethodAction
-from c7n_huawei.client import Session
+import logging
+
+import urllib3
+from huaweicloudsdkcore.exceptions import exceptions
+from huaweicloudsdkvpc.v2 import *
+
 from c7n_huawei.filters.filter import SGPermission
 from c7n_huawei.filters.filter import SGPermissionSchema
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'network.security-group'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+service = 'security-group'
 
 @resources.register('security-group')
 class SecurityGroup(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'network.security-group'
+        service = 'security-group'
         enum_spec = (None, None, None)
         id = 'id'
 
     def get_request(self):
-        query = {
-            "limit": 10000
-        }
         try:
-            sgs = Session.client(self, service).security_groups(**query)
-            arr = list() # 创建 []
-            if sgs is not None:
-                for sg in sgs:
-                    json = dict() # 创建 {}
-                    json = Session._loads_(json, sg)
-                    arr.append(json)
-        except Exception as err:
-            pass
-        return arr
-
-@SecurityGroup.action_registry.register('delete')
-class Delete(MethodAction):
-
-    """
-        policies:
-          - name: huawei-security-group-delete
-            resource: huawei.security-group
-            actions:
-              - delete
-    """
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, security_group):
-        Session.client(self, service).delete_security_group(security_group['id'])
+            request = ListVpcsRequest()
+            response = vpc_client.list_vpcs(request)
+        except exceptions.ClientRequestException as e:
+            logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
+        return response
 
 @SecurityGroup.filter_registry.register('ingress')
 class IPPermission(SGPermission):
@@ -102,10 +83,7 @@ class IPPermission(SGPermission):
 
     def securityGroupAttributeRequst(self, sg):
         self.direction = 'ingress'
-        obj = Session.client(self, service).find_security_group(sg['id'])
-        json = dict()  # 创建 {}
-        json = Session._loads_(json, obj)
-        return json
+        return sg
 
 @SecurityGroup.filter_registry.register('egress')
 class IPPermission(SGPermission):
@@ -119,10 +97,7 @@ class IPPermission(SGPermission):
 
     def securityGroupAttributeRequst(self, sg):
         self.direction = 'egress'
-        obj = Session.client(self, service).find_security_group(sg['id'])
-        json = dict()  # 创建 {}
-        json = Session._loads_(json, obj)
-        return json
+        return sg
 
     def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")

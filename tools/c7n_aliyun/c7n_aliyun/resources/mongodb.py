@@ -37,7 +37,7 @@ class MongoDB(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'mongodb'
-        enum_spec = (None, 'DBInstances.DBInstance', None)
+        enum_spec = (None, 'Instances.KVStoreInstance', None)
         id = 'InstanceId'
 
     def get_request(self):
@@ -66,6 +66,7 @@ class NetworkTypeMongoDBFilter(AliyunRdsFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
+        print(i)
         if self.data['value'] == i['NetworkType']:
             return False
         return i

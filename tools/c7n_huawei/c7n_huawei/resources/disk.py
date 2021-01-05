@@ -11,37 +11,65 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+
+import jmespath
+import urllib3
 
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
-from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 from c7n_huawei.filters.filter import HuaweiDiskFilter
+from huaweicloudsdkevs.v2 import *
+from huaweicloudsdkcore.exceptions import exceptions
 
-service = 'block_store.disk'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+service = 'ecs'
 
 @resources.register('disk')
 class Disk(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'block_store.disk'
-        enum_spec = (None, None, None)
+        service = 'disk'
+        enum_spec = (None, 'volumes', None)
         id = 'id'
 
     def get_request(self):
         try:
-            volumes = Session.client(self, service).volumes(details=True)
-            arr = list()  # 创建 []
-            if volumes is not None:
-                for volume in volumes:
-                    json = dict()  # 创建 {}
-                    json = Session._loads_(json, volume)
-                    arr.append(json)
-        except Exception as err:
-            pass
-        return arr
+            request = ListVolumesRequest()
+            response = evs_client.list_volumes(request)
+        except exceptions.ClientRequestException as e:
+            logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
+        return response
 
+@Disk.filter_registry.register('encrypted')
+class EncryptedDiskFilter(HuaweiDiskFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-encrypted-disk
+               resource: aliyun.disk
+               filters:
+                 - type: encrypted
+                   value: false
+    """
+    # 云盘是否加密。
+    # 默认值：false
+    schema = type_schema(
+        'encrypted',
+        **{'value': {'type': 'boolean'}})
+
+    def get_request(self, disk):
+        encrypted = self.data['value']
+        if disk['encrypted'].lower() != str(encrypted).lower():
+            return False
+        return disk
 
 @Disk.filter_registry.register('unused')
 class HuaweiDiskFilter(HuaweiDiskFilter):
@@ -57,7 +85,7 @@ class HuaweiDiskFilter(HuaweiDiskFilter):
     """
     # creating:云硬盘处于正在创建的过程中。
     # available:云硬盘创建成功，还未挂载给任何云服务器，可以进行挂载。
-    # in -use:云硬盘已挂载给云服务器，正在使用中。
+    # in-use:云硬盘已挂载给云服务器，正在使用中。
     # error:云硬盘在创建过程中出现错误。
     # attaching:云硬盘处于正在挂载的过程中。
     # detaching:云硬盘处于正在卸载的过程中。
@@ -73,18 +101,7 @@ class HuaweiDiskFilter(HuaweiDiskFilter):
     # rollbacking:云硬盘处于正在从快照回滚数据的过程中。
     schema = type_schema('available')
 
-@Disk.action_registry.register('delete')
-class DiskDelete(MethodAction):
-    """
-         policies:
-           - name: huawei-disk-delete
-             resource: huawei.disk
-             actions:
-               - delete
-     """
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-    attr_filter = ('status', ('available','error', None, ))
-
     def get_request(self, disk):
-        Session.client(self, service).delete_volume(disk['id'])
+        if disk['status'] != self.data['type']:
+            return False
+        return disk

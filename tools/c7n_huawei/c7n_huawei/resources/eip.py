@@ -11,42 +11,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os
+import logging
+
+import jmespath
+import urllib3
+from huaweicloudsdkcore.exceptions import exceptions
+from huaweicloudsdkeip.v2 import *
 
 from c7n.utils import type_schema
-from c7n_huawei.actions import MethodAction
-from c7n_huawei.client import Session
 from c7n_huawei.filters.filter import HuaweiEipFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
-service = 'network.eip'
-project_id=os.getenv('HUAWEI_PROJECT')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+service = 'eip'
 
 @resources.register('eip')
 class Eip(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'network.eip'
-        enum_spec = (None, None, None)
+        service = 'eip'
+        enum_spec = (None, 'publicips', None)
         id = 'id'
 
     def get_request(self):
-        query = {
-            "limit": 10000,
-            "project_id": project_id
-        }
         try:
-            ips = Session.client(self, service).ips(**query)
-            arr = list()  # 创建 []
-            if ips is not None:
-                for ip in ips:
-                    json = dict()  # 创建 {}
-                    json = Session._loads_(json, ip)
-                    arr.append(json)
-        except Exception as err:
-            pass
-        return arr
+            request = ListPublicipsRequest()
+            response = eip_client.list_publicips(request)
+        except exceptions.ClientRequestException as e:
+            logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
+        return response
 
 
 @Eip.filter_registry.register('unused')
@@ -56,7 +51,7 @@ class HuaweiEipFilter(HuaweiEipFilter):
        .. code-block:: yaml
 
            policies:
-             - name: huawei-eip
+             - name: huawei-eip-unused
                resource: huawei.eip
                filters:
                  - type: unused
@@ -66,11 +61,30 @@ class HuaweiEipFilter(HuaweiEipFilter):
     # DOWN：未绑定
     schema = type_schema('DOWN')
 
-@Eip.action_registry.register('delete')
-class EipRelease(MethodAction):
-    # 释放指定的EIP
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
+    def get_request(self, i):
+        if i['status'] != self.data['type']:
+            return False
+        return i
 
-    def get_request(self, eip):
-        Session.client(self, service).delete_ip(eip['id'])
+@Eip.filter_registry.register('Bandwidth')
+class BandwidthEipFilter(HuaweiEipFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的弹性IP实例是否达到最低带宽要求
+            - name: huawei-eip-bandwidth
+              resource: huawei.eip
+              filters:
+                - type: Bandwidth
+                  value: 10
+    """
+    schema = type_schema(
+        'Bandwidth',
+        **{'value': {'type': 'number'}})
+
+    def get_request(self, i):
+        if self.data['value'] < i['bandwidth_size']:
+            return False
+        return i
