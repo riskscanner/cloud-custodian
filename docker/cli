@@ -39,6 +39,7 @@ RUN rm -R tools/c7n_tencent/test
 ARG providers="azure gcp kube aliyun huawei tencent"
 RUN . /usr/local/bin/activate && \
     for pkg in $providers; do cd tools/c7n_$pkg && \
+    $HOME/.poetry/bin/poetry lock && \
     $HOME/.poetry/bin/poetry install && cd ../../; done
 
 RUN mkdir /output
