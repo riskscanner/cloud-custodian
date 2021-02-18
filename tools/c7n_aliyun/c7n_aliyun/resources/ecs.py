@@ -21,7 +21,6 @@ from aliyunsdkecs.request.v20140526.StartInstanceRequest import StartInstanceReq
 from aliyunsdkecs.request.v20140526.StopInstanceRequest import StopInstanceRequest
 
 from c7n.utils import type_schema
-from c7n_aliyun.actions import MethodAction
 from c7n_aliyun.filters.filter import AliyunAgeFilter, AliyunEcsFilter, MetricsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo

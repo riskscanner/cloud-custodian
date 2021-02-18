@@ -52,7 +52,7 @@ class AliyunVpcFilter(AliyunVpcFilter):
             - name: aliyun-avalible-vpc
               resource: aliyun.vpc
               filters:
-                - type: unused
+                - tyvaluepe: unused
     """
     # Associating：绑定中。
     # Unassociating：解绑中。

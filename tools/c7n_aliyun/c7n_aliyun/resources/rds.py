@@ -186,7 +186,7 @@ class HighAvailabilityRdsFilter(AliyunRdsFilter):
         data = eval(string)
         DBInstanceAttributes = data['Items']['DBInstanceAttribute']
         for obj in DBInstanceAttributes:
-            if obj[self.filter] != self.data['type']:
+            if obj[self.filter] == self.data['type']:
                 return False
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i
@@ -283,7 +283,7 @@ class InternetAccessRdsFilter(AliyunRdsFilter):
        .. code-block:: yaml
 
         policies:
-            # 检测您账号下RDS数据库实例是否启用安全白名单功能，已开通视为“合规”
+            # 检测您账号下RDS实例不允许任意来源公网访问，视为“合规”
             - name: aliyun-rds-internet-access
               resource: aliyun.rds
               filters:
@@ -297,12 +297,15 @@ class InternetAccessRdsFilter(AliyunRdsFilter):
     def get_request(self, i):
         request1 = DescribeSecurityGroupConfigurationRequest()
         request1.set_accept_format('json')
+        request1.set_DBInstanceId(i['DBInstanceId'])
         response1 = Session.client(self, service).do_action_with_exception(request1)
+
         string1 = str(response1, encoding="utf-8").replace("false", "False")
         EcsSecurityGroupRelation = jmespath.search('Items.EcsSecurityGroupRelation', eval(string1))
 
         request2 = DescribeDBInstanceIPArrayListRequest()
         request2.set_accept_format('json')
+        request2.set_DBInstanceId(i['DBInstanceId'])
         response2 = Session.client(self, service).do_action_with_exception(request2)
         string2 = str(response2, encoding="utf-8").replace("false", "False")
 

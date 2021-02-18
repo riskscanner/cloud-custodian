@@ -78,7 +78,8 @@ class GlobalGrantsFilter(Filter):
 
         # 有效值：private、public-read、public-read-write
         acl = bucket.get_bucket_acl().acl
-        if acl != self.data['value']:
+
+        if self.data['value'] not in acl:
             return
 
         results = []
