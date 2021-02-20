@@ -13,12 +13,12 @@
 # limitations under the License.
 import logging
 
-import jmespath
 import urllib3
 from huaweicloudsdkcore.exceptions import exceptions
 from huaweicloudsdkeip.v2 import *
 
 from c7n.utils import type_schema
+from c7n_huawei.client import Session
 from c7n_huawei.filters.filter import HuaweiEipFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
@@ -38,7 +38,7 @@ class Eip(QueryResourceManager):
     def get_request(self):
         try:
             request = ListPublicipsRequest()
-            response = eip_client.list_publicips(request)
+            response = Session.client(self, service).list_publicips(request)
         except exceptions.ClientRequestException as e:
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
@@ -62,7 +62,7 @@ class HuaweiEipFilter(HuaweiEipFilter):
     schema = type_schema('DOWN')
 
     def get_request(self, i):
-        if i['status'] != self.data['type']:
+        if i['status'] != "DOWN":
             return False
         return i
 

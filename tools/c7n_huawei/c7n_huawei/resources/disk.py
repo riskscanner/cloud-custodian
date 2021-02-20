@@ -13,20 +13,19 @@
 # limitations under the License.
 import logging
 
-import jmespath
 import urllib3
+from huaweicloudsdkcore.exceptions import exceptions
+from huaweicloudsdkevs.v2 import *
 
 from c7n.utils import type_schema
-from c7n_huawei.actions import MethodAction
+from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import HuaweiDiskFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
-from c7n_huawei.filters.filter import HuaweiDiskFilter
-from huaweicloudsdkevs.v2 import *
-from huaweicloudsdkcore.exceptions import exceptions
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-service = 'ecs'
+service = 'disk'
 
 @resources.register('disk')
 class Disk(QueryResourceManager):
@@ -39,7 +38,7 @@ class Disk(QueryResourceManager):
     def get_request(self):
         try:
             request = ListVolumesRequest()
-            response = evs_client.list_volumes(request)
+            response = Session.client(self, service).list_volumes(request)
         except exceptions.ClientRequestException as e:
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
@@ -67,7 +66,7 @@ class EncryptedDiskFilter(HuaweiDiskFilter):
 
     def get_request(self, disk):
         encrypted = self.data['value']
-        if disk['encrypted'].lower() != str(encrypted).lower():
+        if disk['encrypted'] != encrypted:
             return False
         return disk
 
@@ -102,6 +101,6 @@ class HuaweiDiskFilter(HuaweiDiskFilter):
     schema = type_schema('available')
 
     def get_request(self, disk):
-        if disk['status'] != self.data['type']:
+        if disk['status'] != 'available':
             return False
         return disk

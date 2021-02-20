@@ -17,6 +17,7 @@ import jmespath
 import urllib3
 from huaweicloudsdkcore.exceptions import exceptions
 from huaweicloudsdkecs.v2 import *
+from c7n_huawei.client import Session
 
 from c7n.utils import type_schema
 from c7n_huawei.filters.filter import HuaweiAgeFilter, HuaweiEcsFilter
@@ -39,7 +40,7 @@ class Ecs(QueryResourceManager):
     def get_request(self):
         try:
             request = ListServersDetailsRequest()
-            response = ecs_client.list_servers_details(request)
+            response = Session.client(self, service).list_servers_details(request)
         except exceptions.ClientRequestException as e:
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
@@ -75,7 +76,7 @@ class PublicIpAddress(HuaweiEcsFilter):
         if len(data) == 0:
             return False
         else:
-            for addrs in data:
+            for addrs in list(data.values()):
                 for addr in addrs:
                     if addr['os_ext_ip_stype'] == 'floating':
                         return i
@@ -127,6 +128,6 @@ class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
 
     def get_request(self, i):
         if self.data['value'] == 'vpc':
-            if i['metadata']['vpc_id'] is None:
+            if i['metadata']['vpc_id'] is not None:
                 return False
         return i

@@ -66,44 +66,43 @@ class Session:
         config = HttpConfig.get_default_config()
         config.ignore_ssl_verification = True
         config.timeout = 3
-        credentials = BasicCredentials(self.ak, self.sk, self.project_id)
-        endpoint = "https://iam.myhuaweicloud.com/v3"
+        credentials = BasicCredentials(os.getenv('HUAWEI_AK'), os.getenv('HUAWEI_SK'), os.getenv('HUAWEI_PROJECT'))
         if service == 'obs':
             # 创建ObsClient实例
             clt = ObsClient(
-                access_key_id=self.ak,
-                secret_access_key=self.sk,
-                server='obs.' + self.region + '.myhuaweicloud.com'
+                access_key_id=os.getenv('HUAWEI_AK'),
+                secret_access_key=os.getenv('HUAWEI_SK'),
+                server='obs.' + os.getenv('HUAWEI_DEFAULT_REGION') + '.myhuaweicloud.com'
             )
         elif service == 'ecs':
             clt = EcsClient.new_builder(EcsClient) \
                 .with_http_config(config) \
                 .with_credentials(credentials) \
-                .with_endpoint("https://ecs." + self.region + ".myhuaweicloud.com") \
+                .with_endpoint("https://ecs." + os.getenv('HUAWEI_DEFAULT_REGION') + ".myhuaweicloud.com") \
                 .build()
         elif service == 'disk':
             clt = EvsClient.new_builder(EvsClient) \
                 .with_http_config(config) \
                 .with_credentials(credentials) \
-                .with_endpoint("https://evs." + self.region + ".myhuaweicloud.com") \
+                .with_endpoint("https://evs." + os.getenv('HUAWEI_DEFAULT_REGION') + ".myhuaweicloud.com") \
                 .build()
         elif service == 'eip':
             clt = EipClient.new_builder(EipClient) \
                 .with_http_config(config) \
                 .with_credentials(credentials) \
-                .with_endpoint("https://vpc." + self.region + ".myhuaweicloud.com") \
+                .with_endpoint("https://vpc." + os.getenv('HUAWEI_DEFAULT_REGION') + ".myhuaweicloud.com") \
                 .build()
         elif service == 'elb':
             clt = ElbClient.new_builder(ElbClient) \
                 .with_http_config(config) \
                 .with_credentials(credentials) \
-                .with_endpoint("https://elb." + self.region + ".myhuaweicloud.com") \
+                .with_endpoint("https://elb." + os.getenv('HUAWEI_DEFAULT_REGION') + ".myhuaweicloud.com") \
                 .build()
         elif service == 'vpc':
             clt = VpcClient.new_builder(VpcClient) \
                 .with_http_config(config) \
                 .with_credentials(credentials) \
-                .with_endpoint("https://vpc." + self.region + ".myhuaweicloud.com") \
+                .with_endpoint("https://vpc." + os.getenv('HUAWEI_DEFAULT_REGION') + ".myhuaweicloud.com") \
                 .build()
         return clt
 

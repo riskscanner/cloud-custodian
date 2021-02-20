@@ -17,6 +17,9 @@ import json
 import logging
 
 import jmespath
+import datetime
+
+from dateutil.tz import tzutc
 
 from c7n.actions import ActionRegistry
 from c7n.filters import FilterRegistry
@@ -55,20 +58,17 @@ class ResourceQuery:
                 result = request
             else:
                 return None
-            false = "false"
-            true = "true"
             if path is None:
                 return result
-            res = jmespath.search(path, eval(result))
-            for data in res:
-                data['F2CId'] = data[m.id]
+            res = jmespath.search(path, eval(str(result)))
+            if res is not None:
+                for data in res:
+                    data['F2CId'] = data[m.id]
             return res
 
     def _invoke_client_enum(self, client, request, params, path):
         result = client.do_action_with_exception(request)
-        false = "false"
-        true = "true"
-        return jmespath.search(path, eval(result))
+        return jmespath.search(path, eval(str(result)))
 
 @sources.register('describe')
 class DescribeSource:
