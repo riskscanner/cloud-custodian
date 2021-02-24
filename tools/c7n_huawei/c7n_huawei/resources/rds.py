@@ -11,42 +11,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import logging
+
+import urllib3
 
 from c7n.utils import type_schema
 from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
-from c7n_huawei.provider import resources
-from c7n_huawei.query import QueryResourceManager, TypeInfo
 from c7n_huawei.filters.filter import HuaweiRdsFilter
 from c7n_huawei.filters.filter import MetricsFilter
+from c7n_huawei.provider import resources
+from c7n_huawei.query import QueryResourceManager, TypeInfo
+from huaweicloudsdkrds.v3 import *
+from huaweicloudsdkcore.exceptions import exceptions
 
-service = 'rdsv3.rds'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+service = 'rds'
 
 @resources.register('rds')
 class Rds(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'rdsv3.rds'
-        enum_spec = (None, None, None)
+        service = 'rds'
+        enum_spec = (None, 'instances', None)
         id = 'id'
-        dimension = 'id'
 
     def get_request(self):
-        query = {
-            'offset': 0,
-            'limit': 100
-        }
         try:
-            rds = Session.client(self, service).instances(**query)
-            arr = list()  # 创建 []
-            if rds is not None:
-                for rd in rds:
-                    json = dict()  # 创建 {}
-                    json = Session._loads_(json, rd)
-                    arr.append(json)
-        except Exception as err:
-            pass
-        return arr
+            request = ListInstancesRequest()
+            response = Session.client(self, service).list_instances(request)
+        except exceptions.ClientRequestException as e:
+            logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
+        return response
 
 @Rds.filter_registry.register('Internet')
 class HuaweiRdsFilter(HuaweiRdsFilter):
@@ -101,18 +98,3 @@ class EcsMetricsFilter(MetricsFilter):
         except Exception as err:
             pass
         return arr
-
-@Rds.action_registry.register('delete')
-class RdsDelete(MethodAction):
-    """
-        policies:
-          - name: huawei-rds-delete
-            resource: huawei.rds
-            actions:
-              - delete
-    """
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, rds):
-        Session.client(self, service).delete_security_group(rds['id'])

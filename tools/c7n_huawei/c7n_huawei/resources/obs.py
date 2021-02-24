@@ -14,9 +14,7 @@
 # limitations under the License.
 
 from c7n.filters import Filter
-from c7n.utils import set_annotation
 from c7n.utils import type_schema
-from c7n_huawei.actions import MethodAction
 from c7n_huawei.client import Session
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
@@ -71,14 +69,17 @@ class GlobalGrantsFilter(Filter):
     .. code-block:: yaml
 
        policies:
-         - name: huawei-global-grants
+         # 查看您的OBS存储桶是否不允许公开读取访问权限。如果某个OBS存储桶策略或存储桶 ACL 允许公开读取访问权限，则该存储桶不合规
+         - name: huawei-obs-global-grants
            resource: huawei.obs
            filters:
             - type: global-grants
+              value: read
     """
 
     schema = type_schema(
         'global-grants',
+        **{'value': {'type': 'string'}},
         allow_website={'type': 'boolean'},
         operator={'type': 'string', 'enum': ['or', 'and']},
         permissions={
@@ -93,40 +94,35 @@ class GlobalGrantsFilter(Filter):
             return results
 
     def process_bucket(self, b):
-        # READ
+        # PRIVATE
         #
-        # 若有桶的读权限，则可以获取该桶内对象列表、桶内多段任务、桶的元数据、桶的多版本。
+        # 私有读写。
         #
-        # 若有对象的读权限，则可以获取该对象内容和元数据。
+        # PUBLIC_READ
         #
-        # WRITE
+        # 公共读。
         #
-        # 若有桶的写权限，则可以上传、覆盖和删除该桶内任何对象和段。
+        # PUBLIC_READ_WRITE
         #
-        # 此权限在对象上不适用。
+        # 公共读写。
         #
-        # READ_ACP
+        # PUBLIC_READ_DELIVERED
         #
-        # 若有读ACP的权限，则可以获取对应的桶或对象的权限控制列表（ACL）。
+        # 桶公共读，桶内对象公共读。
         #
-        # 桶或对象的所有者永远拥有读对应桶或对象ACP的权限。
+        # PUBLIC_READ_WRITE_DELIVERED
         #
-        # WRITE_ACP
+        # 桶公共读写，桶内对象公共读写。
         #
-        # 若有写ACP的权限，则可以更新对应桶或对象的权限控制列表（ACL）。
+        # BUCKET_OWNER_FULL_CONTROL
         #
-        # 桶或对象的所有者永远拥有写对应桶或对象的ACP的权限。
-        #
-        # 拥有了写ACP的权限，由于可以更改权限控制策略，实际上意味着拥有了完全访问的权限。
-        #
-        # FULL_CONTROL
-        #
-        # 若有桶的完全控制权限意味着拥有READ、WRITE、READ_ACP和WRITE_ACP的权限。
-        #
-        # 若有对象的完全控制权限意味着拥有READ、READ_ACP和WRITE_ACP的权限。
+        # 桶或对象所有者拥有完全控制权限。
         acl = Session.client(self, service).getBucketAcl(b.name)
         b['permission'] = acl.body.grants
-        if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
-            return b
-        else:
-            return
+        if self.data['value'] is None or self.data['value'] == 'read':
+            if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
+                return b
+        if self.data['value'] == 'write':
+            if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
+                return b
+        return False

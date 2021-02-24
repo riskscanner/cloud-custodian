@@ -61,6 +61,15 @@ class HuaweiVpcFilter(Filter):
         request = self.get_request(i)
         return request
 
+class HuaweiSgFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        request = self.get_request(i)
+        return request
+
 class HuaweiRdsFilter(Filter):
     schema = None
 
@@ -377,7 +386,7 @@ class SGPermission(Filter):
         result = self.securityGroupAttributeRequst(resource)
         matched = []
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
-        for perm in jmespath.search(self.ip_permissions_key, result):
+        for perm in result[self.ip_permissions_key]:
             if perm['direction'] != self.direction:
                 continue
             perm_matches = {}

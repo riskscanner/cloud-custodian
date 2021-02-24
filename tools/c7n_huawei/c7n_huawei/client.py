@@ -16,14 +16,17 @@
 import logging
 import os
 
-from obs import ObsClient
 from huaweicloudsdkcore.auth.credentials import BasicCredentials
 from huaweicloudsdkcore.http.http_config import HttpConfig
 from huaweicloudsdkecs.v2 import *
 from huaweicloudsdkeip.v2 import *
 from huaweicloudsdkelb.v2 import *
 from huaweicloudsdkevs.v2 import *
+from huaweicloudsdkrds.v3 import *
+from huaweicloudsdkrds.v3.region.rds_region import RdsRegion
 from huaweicloudsdkvpc.v2 import *
+from huaweicloudsdkvpc.v2.region.vpc_region import VpcRegion
+from obs import ObsClient
 
 log = logging.getLogger('c7n_huawei.client')
 
@@ -103,6 +106,16 @@ class Session:
                 .with_http_config(config) \
                 .with_credentials(credentials) \
                 .with_endpoint("https://vpc." + os.getenv('HUAWEI_DEFAULT_REGION') + ".myhuaweicloud.com") \
+                .build()
+        elif service == 'security-group':
+            clt = VpcClient.new_builder() \
+                .with_credentials(credentials) \
+                .with_region(VpcRegion.value_of(os.getenv('HUAWEI_DEFAULT_REGION'))) \
+                .build()
+        elif service == 'rds':
+            clt = RdsClient.new_builder() \
+                .with_credentials(credentials) \
+                .with_region(RdsRegion.value_of(os.getenv('HUAWEI_DEFAULT_REGION'))) \
                 .build()
         return clt
 

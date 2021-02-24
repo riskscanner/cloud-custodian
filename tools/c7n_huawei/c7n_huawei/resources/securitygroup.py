@@ -14,11 +14,14 @@
 
 import logging
 
+import jmespath
 import urllib3
 from huaweicloudsdkcore.exceptions import exceptions
 from huaweicloudsdkvpc.v2 import *
 
-from c7n_huawei.filters.filter import SGPermission
+from c7n.utils import type_schema
+from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import SGPermission, HuaweiSgFilter
 from c7n_huawei.filters.filter import SGPermissionSchema
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
@@ -32,13 +35,13 @@ class SecurityGroup(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'security-group'
-        enum_spec = (None, None, None)
+        enum_spec = (None, 'security_groups', None)
         id = 'id'
 
     def get_request(self):
         try:
-            request = ListVpcsRequest()
-            response = vpc_client.list_vpcs(request)
+            request = ListSecurityGroupsRequest()
+            response = Session.client(self, service).list_security_groups(request)
         except exceptions.ClientRequestException as e:
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
@@ -87,7 +90,7 @@ class IPPermission(SGPermission):
 
 @SecurityGroup.filter_registry.register('egress')
 class IPPermission(SGPermission):
-    ip_permissions_key = "Permissions.Permission"
+    ip_permissions_key = "security_group_rules"
     schema = {
         'type': 'object',
         'additionalProperties': False,
@@ -101,3 +104,30 @@ class IPPermission(SGPermission):
 
     def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
+
+@SecurityGroup.filter_registry.register('SourceCidrIp')
+class HuaweiSgSourceCidrIp(HuaweiSgFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下ECS安全组配置不为“0.0.0.0/0”，视为“合规”。
+            - name: huawei-sg-sourcecidrip
+              resource: huawei.security-group
+              filters:
+                - type: SourceCidrIp
+                  value: "0.0.0.0/0"
+    """
+
+    ip_permissions_key = "security_group_rules"
+    schema = type_schema(
+        'SourceCidrIp',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, sg):
+        for cidr in sg[self.ip_permissions_key]:
+            if cidr['remote_ip_prefix'] == self.data['value']:
+                return sg
+        return False

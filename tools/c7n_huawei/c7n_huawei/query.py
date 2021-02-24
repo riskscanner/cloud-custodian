@@ -49,8 +49,8 @@ class ResourceQuery:
             if result is None:
                 return buckets
             for b in result.body.buckets:
-                    b['F2CId'] = b[m.id]
-                    buckets.append(b)
+                b['F2CId'] = b[m.id]
+                buckets.append(b)
             return buckets
         else:
             request = resource_manager.get_request()

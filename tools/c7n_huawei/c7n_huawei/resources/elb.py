@@ -19,6 +19,7 @@ from huaweicloudsdkcore.exceptions import exceptions
 from huaweicloudsdkelb.v2 import *
 
 from c7n.utils import type_schema
+from c7n_huawei.client import Session
 from c7n_huawei.filters.filter import HuaweiElbFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
@@ -32,13 +33,13 @@ class Elb(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'elb'
-        enum_spec = (None, None, None)
+        enum_spec = (None, 'loadbalancers', None)
         id = 'id'
 
     def get_request(self):
         try:
             request = ListLoadbalancersRequest()
-            response = elb_client.list_loadbalancers(request)
+            response = Session.client(self, service).list_loadbalancers(request)
         except exceptions.ClientRequestException as e:
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
@@ -67,7 +68,7 @@ class ListenerElbFilter(HuaweiElbFilter):
         for data in jmespath.search(self.listener_protocol_key, i):
             request = ShowListenerRequest()
             request.listener_id = data
-            response = elb_client.show_listener(request)
+            response = Session.client(self, service).show_listener(request)
             if jmespath.search('protocol', response) == self.data['value']:
                 return False
         return i
@@ -75,11 +76,11 @@ class ListenerElbFilter(HuaweiElbFilter):
 
 @Elb.filter_registry.register('unused')
 class UnusedElbFilter(HuaweiElbFilter):
-    # 查询指定地域已创建的EIP
     """Filters:Example:
        .. code-block:: yaml
 
            policies:
+             # 账号下负载均衡实例是否已关联到后端云服务器组；若关联，视为“合规”，否则视为不合规。
              - name: huawei-elb-unused
                resource: huawei.elb
                filters:
@@ -122,27 +123,4 @@ class AddressTypeElbFilter(HuaweiElbFilter):
         else:
             if i['vip_address'] is None:
                 return False
-        return i
-
-@Elb.filter_registry.register('NetworkType')
-class NetworkTypeElbFilter(HuaweiElbFilter):
-    """Filters
-       :Example:
-       .. code-block:: yaml
-
-        policies:
-            # 账号下负载均衡实例已关联到VPC；若您配置阈值，则关联的VpcId需存在您列出的阈值中，视为“合规”。
-            - name: huawei-elb-network-type
-              resource: huawei.elb
-              filters:
-                - type: NetworkType
-                  value: vpc
-    """
-    schema = type_schema(
-        'NetworkType',
-        **{'value': {'type': 'string'}})
-
-    def get_request(self, i):
-        if self.data['value'] == i['NetworkType']:
-            return False
         return i
