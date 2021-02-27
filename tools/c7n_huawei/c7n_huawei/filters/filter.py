@@ -70,6 +70,15 @@ class HuaweiSgFilter(Filter):
         request = self.get_request(i)
         return request
 
+class HuaweiIamFilter(Filter):
+    schema = None
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        return self.get_request(i)
+
 class HuaweiRdsFilter(Filter):
     schema = None
 
@@ -479,8 +488,8 @@ class MetricsFilter(Filter):
 
     # ditto for spot fleet
     DEFAULT_NAMESPACE = {
-        'compute.ecs': 'SYS.ECS',
-        'rdsv3.rds': 'SYS.RDS'
+        'ecs': 'SYS.ECS',
+        'rds': 'SYS.RDS'
     }
 
     DEFAULT_METRIC = {
@@ -555,7 +564,7 @@ class MetricsFilter(Filter):
             # across different periods or dimensions would be problematic.
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
             if key not in collected_metrics:
-                collected_metrics[key] = json.loads(json.dumps(request))
+                collected_metrics[key] = request.metrics
 
             # In certain cases CloudWatch reports no data for a metric.
             # If the policy specifies a fill value for missing data, add
@@ -570,12 +579,16 @@ class MetricsFilter(Filter):
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):
                     rvalue = rvalue * self.data['attr-multiplier']
-                percent = (collected_metrics[key][0][self.statistics] /
+                percent = (collected_metrics[key][0].datapoints[0][self.statistics] /
                            rvalue * 100)
                 if self.op(percent, self.value):
                     matched.append(r)
-            elif self.op(collected_metrics[key][0][self.statistics], self.value):
-                matched.append(r)
+            else:
+                datapoints = collected_metrics[key][0].datapoints
+                if len(datapoints) > 0:
+                    for data in datapoints:
+                        if self.op(data[self.statistics], self.value):
+                            matched.append(r)
         return matched
 
 SGPermissionSchema = {

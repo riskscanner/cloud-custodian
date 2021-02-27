@@ -15,12 +15,13 @@ import logging
 
 import jmespath
 import urllib3
+from huaweicloudsdkces.v1 import *
 from huaweicloudsdkcore.exceptions import exceptions
 from huaweicloudsdkecs.v2 import *
-from c7n_huawei.client import Session
 
 from c7n.utils import type_schema
-from c7n_huawei.filters.filter import HuaweiAgeFilter, HuaweiEcsFilter
+from c7n_huawei.client import Session
+from c7n_huawei.filters.filter import HuaweiAgeFilter, HuaweiEcsFilter, MetricsFilter
 from c7n_huawei.provider import resources
 from c7n_huawei.query import QueryResourceManager, TypeInfo
 
@@ -45,11 +46,6 @@ class Ecs(QueryResourceManager):
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
 
-# @Ecs.filter_registry.register('metrics')
-# class EcsMetricsFilter(MetricsFilter):
-#
-#     def get_request(self, i):
-#         return i
 
 @Ecs.filter_registry.register('PublicIpAddress')
 class PublicIpAddress(HuaweiEcsFilter):
@@ -131,3 +127,53 @@ class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
             if i['metadata']['vpc_id'] is not None:
                 return False
         return i
+
+@Ecs.filter_registry.register('metrics')
+class EcsMetricsFilter(MetricsFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+          #Huawei CPU使用率扫描(每86700秒扫描7天内cpu平均值小于30)
+          - name: huawei-ecs-underutilized
+            resource: huawei.ecs
+            filters:
+              - type: metrics
+                name: CPUUtilization
+                days: 7
+                period: 86700
+                statistics: Average
+                value: 30
+                op: less-than
+    """
+
+    def get_request(self, dimensions):
+        request = BatchListMetricDataRequest()
+        listMetricsDimensionDimensionsMetrics= [
+            MetricsDimension(
+                name="instance_id",
+                value=dimensions[0]['id']
+            )
+        ]
+        listMetricInfoMetricsbody = [
+            MetricInfo(
+                namespace=self.namespace,
+                metric_name=self.metric,
+                dimensions=listMetricsDimensionDimensionsMetrics
+            )
+        ]
+        request.body = BatchListMetricDataRequestBody(
+            to=self.end,
+            _from=self.start,
+            filter=self.statistics,
+            period=str(self.period),
+            metrics=listMetricInfoMetricsbody
+        )
+
+        try:
+            response = Session.client(self, "ces").batch_list_metric_data(request)
+        except Exception as err:
+            pass
+        return response
