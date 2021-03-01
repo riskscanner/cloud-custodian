@@ -212,7 +212,7 @@ class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
 
         policies:
            #测您账号下RDS数据库实例计费类型信息，按需视为“合规”，否则视为“不合规”
-            - name: aliyun-rds-charge-info
+            - name: huawei-rds-charge-info
               resource: huawei.rds
               filters:
                 - type: ChargeInfo
