@@ -30,6 +30,10 @@ from huaweicloudsdkces.v1 import *
 from huaweicloudsdkces.v1.region.ces_region import CesRegion
 from huaweicloudsdkiam.v3 import *
 from huaweicloudsdkiam.v3.region.iam_region import IamRegion
+from huaweicloudsdkdcs.v2 import *
+from huaweicloudsdkdcs.v2.region.dcs_region import DcsRegion
+from huaweicloudsdkdds.v3 import *
+from huaweicloudsdkdds.v3.region.dds_region import DdsRegion
 from huaweicloudsdkcore.auth.credentials import GlobalCredentials
 from obs import ObsClient
 
@@ -132,6 +136,16 @@ class Session:
             clt = IamClient.new_builder() \
                 .with_credentials(iam_credentials) \
                 .with_region(IamRegion.value_of(os.getenv('HUAWEI_DEFAULT_REGION'))) \
+                .build()
+        elif service == 'redis':
+            clt = DcsClient.new_builder() \
+                .with_credentials(credentials) \
+                .with_region(DcsRegion.value_of(os.getenv('HUAWEI_DEFAULT_REGION'))) \
+                .build()
+        elif service == 'dds':
+            clt = DdsClient.new_builder() \
+                .with_credentials(credentials) \
+                .with_region(DdsRegion.value_of(os.getenv('HUAWEI_DEFAULT_REGION'))) \
                 .build()
         return clt
 

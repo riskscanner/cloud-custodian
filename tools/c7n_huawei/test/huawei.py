@@ -121,6 +121,14 @@ def ips():
         arr.append(json)
     print(arr)
 
+def list_cdn():
+    try:
+        print("666")
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
 
 def find_available_ip():
     fips = conn.network.find_available_ip()

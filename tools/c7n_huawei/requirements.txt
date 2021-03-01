@@ -11,5 +11,7 @@ huaweicloudsdkeip==3.0.33rc0
 huaweicloudsdkelb==3.0.33rc0
 huaweicloudsdkevs==3.0.33rc0
 huaweicloudsdkrds==3.0.33rc0
+huaweicloudsdkdcs==3.0.33rc0
+huaweicloudsdkdds==3.0.33rc0
 huaweicloudsdkrabbitmq==3.0.33rc0
 requests-futures==1.0.0

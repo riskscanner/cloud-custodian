@@ -49,8 +49,7 @@ class HuaweiElbFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class HuaweiVpcFilter(Filter):
 
@@ -58,8 +57,7 @@ class HuaweiVpcFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class HuaweiSgFilter(Filter):
 
@@ -67,8 +65,7 @@ class HuaweiSgFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class HuaweiIamFilter(Filter):
     schema = None
@@ -79,15 +76,23 @@ class HuaweiIamFilter(Filter):
     def __call__(self, i):
         return self.get_request(i)
 
-class HuaweiRdsFilter(Filter):
+class HuaweiRedisFilter(Filter):
     schema = None
 
     def validate(self):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
+
+class HuaweiRdsFilter(Filter):
+        schema = None
+
+        def validate(self):
+            return self
+
+        def __call__(self, i):
+            return self.get_request(i)
 
 class HuaweiAgeFilter(Filter):
     """Automatically filter resources older than a given date.
