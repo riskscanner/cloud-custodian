@@ -24,6 +24,7 @@ requests = "^2.22.0"
 pyyaml = "^5.3"
 pygit2 = "~1.0"
 boto3 = "^1.12.0"
+cryptography = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "~5.3.5"

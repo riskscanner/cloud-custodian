@@ -16,6 +16,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.6"
 kubernetes = "^10.0.1"
+cryptography = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 c7n = {path = "../..", develop = true}

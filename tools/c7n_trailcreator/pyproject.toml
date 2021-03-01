@@ -20,6 +20,7 @@ c7n-trailcreator = 'c7n_trailcreator.trailcreator:cli'
 [tool.poetry.dependencies]
 python = "^3.6"
 click = "^7.0"
+cryptography = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 c7n_org = {path = "../c7n_org", develop = true}

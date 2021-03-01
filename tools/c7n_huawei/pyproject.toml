@@ -19,6 +19,7 @@ huaweicloud-sdk-python = "^1.0.24"
 esdk-obs-python = "^3.20.5"
 crcmod = "^1.7"
 pycryptodome = "^3.9.8"
+cryptography = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 

@@ -15,6 +15,7 @@ classifiers=[
 
 [tool.poetry.dependencies]
 python = "^3.6"
+cryptography = "^2.9.2"
 
 azure-mgmt-authorization = "^0.60.0"
 azure-mgmt-apimanagement = "^0.1.0"

@@ -28,7 +28,7 @@ aliyun-python-sdk-dds="^3.4.0"
 aliyun-python-sdk-r-kvstore="^2.11.0"
 aliyun-python-sdk-polardb="^1.8.1"
 pycryptodome = "3.9.8"
-
+cryptography = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 

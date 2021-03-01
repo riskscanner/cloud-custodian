@@ -22,6 +22,7 @@ google-auth = "^1.11.0"
 ratelimiter = "^1.2.0"
 google-cloud-monitoring = "^0.34.0"
 google-cloud-storage = "^1.28.1"
+cryptography = "^2.9.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "~5.3.5"
