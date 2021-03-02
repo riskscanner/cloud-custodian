@@ -13,6 +13,7 @@
 # limitations under the License.
 import logging
 
+import jmespath
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 from tencentcloud.vpc.v20170312 import models
 
@@ -20,7 +21,7 @@ from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
 from c7n_tencent.filters.filter import SGPermission
-from c7n_tencent.filters.filter import SGPermissionSchema
+from c7n_tencent.filters.filter import SGPermissionSchema, TencentFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
@@ -157,3 +158,31 @@ class IPPermission(SGPermission):
 
 def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "CidrBlock", "Ipv6CidrBlock")
+
+
+@SecurityGroup.filter_registry.register('source-cidr-ip')
+class SourceCidrIp(TencentFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下CVM安全组配置不为“0.0.0.0/0”，视为“合规”。
+            - name: tencent-sg-source-cidr-ip
+              resource: tencent.security-group
+              filters:
+                - type: source-cidr-ip
+                  value: "0.0.0.0/0"
+    """
+
+    ip_permissions_key = "IpPermissions.Ingress"
+    schema = type_schema(
+        'source-cidr-ip',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, sg):
+        for cidr in jmespath.search(self.ip_permissions_key, sg):
+            if cidr['CidrBlock'] == self.data['value']:
+                return sg
+        return False

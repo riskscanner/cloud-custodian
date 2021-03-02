@@ -13,30 +13,29 @@
 # limitations under the License.
 import logging
 
-from tencentcloud.cbs.v20170312 import models
+from tencentcloud.redis.v20180412 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
 from c7n.utils import type_schema
-from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentDiskFilter, TencentFilter
+from c7n_tencent.filters.filter import TencentFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
-service = 'cbs_client.disk'
+service = 'redis_client.redis'
 
-@resources.register('disk')
-class Disk(QueryResourceManager):
+@resources.register('redis')
+class Redis(QueryResourceManager):
 
     class resource_type(TypeInfo):
-        service = 'cbs_client.disk'
-        enum_spec = (None, 'DiskSet', None)
-        id = 'DiskId'
+        service = 'redis_client.redis'
+        enum_spec = (None, 'Items', None)
+        id = 'InstanceId'
 
     def get_request(self):
         try:
-            req = models.DescribeDisksRequest()
-            resp = Session.client(self, service).DescribeDisks(req)
+            req = models.DescribeInstancesRequest()
+            resp = Session.client(self, service).DescribeInstances(req)
             # 输出json格式的字符串回包
             # print(resp.to_json_string(indent=2))
 
@@ -49,67 +48,59 @@ class Disk(QueryResourceManager):
         # tencent 返回的json里居然不是None，而是java的null，活久见
         return resp.to_json_string().replace('null', 'None')
 
-@Disk.filter_registry.register('unused')
-class TencentDiskFilter(TencentDiskFilter):
-    """Filters
-
-       :Example:
-
-       .. code-block:: yaml
-
-policies:
- - name: tencent-orphaned-disk
-   resource: tencent.disk
-   filters:
-     - type: unused
-    """
-    # 云盘状态。取值范围：
-    # UNATTACHED：未挂载
-    # ATTACHING：挂载中
-    # ATTACHED：已挂载
-    # DETACHING：解挂中
-    # EXPANDING：扩容中
-    # ROLLBACKING：回滚中
-    # TORECYCLE：待回收
-    # DUMPING：拷贝硬盘中。
-    schema = type_schema('UNATTACHED')
-
-@Disk.filter_registry.register('encrypt')
-class encrypt(TencentFilter):
-
+@Redis.filter_registry.register('network-type')
+class NetworkTypeRedisFilter(TencentFilter):
     """Filters
        :Example:
        .. code-block:: yaml
 
         policies:
-            # 账号下所有处于关联状态的磁盘均已加密，视为“合规”，否则视为“不合规”
-            - name: tencent-disk-encrypt
-              resource: tencent.disk
+            # 检测您账号下的Redis实例是否运行在VPC网络环境下
+            - name: tencent-redis-network-type
+              resource: tencent.redis
               filters:
-                - type: encrypt
+                - type: network-type
+                  value: vpc
+    """
+    schema = type_schema(
+        'network-type',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == "vpc":
+            if i['VpcId']:
+                return False
+            return i
+        else:
+            if i['VpcId']:
+                return i
+            return False
+
+@Redis.filter_registry.register('internet-access')
+class InternetAccessRedisFilter(TencentFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下Redis实例不允许任意来源公网访问，视为“合规”
+            - name: tencent-redis-internet-access
+              resource: tencent.redis
+              filters:
+                - type: internet-access
                   value: true
     """
+    # 网络类型，可能的返回值：0-基础网络，1-私有网络
 
-    encrypt = "Encrypt"
     schema = type_schema(
-        'encrypt',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        data = i[self.encrypt]
-        if data == self.data['value']:
-            return False
-        return i
-
-@Disk.action_registry.register('delete')
-class DiskDelete(MethodAction):
-
-    schema = type_schema('delete')
-    method_spec = {'op': 'delete'}
-
-    def get_request(self, disk):
-        req = models.TerminateDisksRequest()
-        params = '{"DiskIds" :["' + disk["DiskId"] + '"]}'
-        req.from_json_string(params)
-        Session.client(self, service).TerminateDisks(req)
-
+        if self.data['value']:
+            if i['NetType'] == 0:
+                return i
+        else:
+            if i['NetType'] != 0:
+                return i
+        return False

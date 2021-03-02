@@ -15,6 +15,14 @@ from c7n.utils import local_session, chunks
 from c7n.utils import type_schema
 
 
+class TencentFilter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        return self.get_request(i)
+
 class TencentEipFilter(Filter):
     schema = None
 
@@ -57,8 +65,7 @@ class TencentClbFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class TencentVpcFilter(Filter):
 
@@ -66,8 +73,7 @@ class TencentVpcFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class TencentAgeFilter(Filter):
     """Automatically filter resources older than a given date.

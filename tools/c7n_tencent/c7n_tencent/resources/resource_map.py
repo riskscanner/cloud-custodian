@@ -7,6 +7,8 @@ ResourceMap = {
     "tencent.clb": "c7n_tencent.resources.clb.Clb",
     "tencent.cdb": "c7n_tencent.resources.cdb.Cdb",
     "tencent.dcdb": "c7n_tencent.resources.dcdb.Dcdb",
+    "tencent.redis": "c7n_tencent.resources.redis.Redis",
+    "tencent.mongodb": "c7n_tencent.resources.mongodb.MongoDB",
     "tencent.security-group": "c7n_tencent.resources.securitygroup.SecurityGroup",
 
 }

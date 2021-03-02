@@ -25,7 +25,9 @@ from tencentcloud.common import credential
 # 导入可选配置类
 # 导入对应产品模块的 client models。
 from tencentcloud.cvm.v20170312 import cvm_client
+from tencentcloud.mongodb.v20190725 import mongodb_client
 from tencentcloud.monitor.v20180724 import monitor_client
+from tencentcloud.redis.v20180412 import redis_client
 from tencentcloud.vpc.v20170312 import vpc_client
 
 log = logging.getLogger('c7n_tencent.client')
@@ -69,6 +71,10 @@ class Session:
             client = clb_client.ClbClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         elif 'cdb_client' in service:
             client = cdb_client.CdbClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        elif 'mongodb_client' in service:
+            client = mongodb_client.MongodbClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
+        elif 'redis_client' in service:
+            client = redis_client.RedisClient(cred, os.getenv('TENCENT_DEFAULT_REGION'))
         elif 'coss3_client' in service:
             # 1. 设置用户配置, 包括 secretId，secretKey 以及 Region
             endpoint = 'cos.' + os.getenv('TENCENT_DEFAULT_REGION') + '.myqcloud.com'

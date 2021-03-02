@@ -19,7 +19,7 @@ from tencentcloud.vpc.v20170312 import models
 from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentEipFilter
+from c7n_tencent.filters.filter import TencentEipFilter, TencentFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
@@ -66,6 +66,31 @@ class TencentEipFilter(TencentEipFilter):
     # EIP状态，包含
     # 'CREATING'(创建中), 'BINDING'(绑定中), 'BIND'(已绑定), 'UNBINDING'(解绑中), 'UNBIND'(已解绑), 'OFFLINING'(释放中), 'BIND_ENI'(绑定悬空弹性网卡)
     schema = type_schema('UNBIND')
+
+
+@Eip.filter_registry.register('bandwidth')
+class BandwidthEipFilter(TencentFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的弹性IP实例是否达到最低带宽要求
+            - name: tencent-eip-bandwidth
+              resource: tencent.eip
+              filters:
+                - type: bandwidth
+                  value: 10
+    """
+    schema = type_schema(
+        'bandwidth',
+        **{'value': {'type': 'number'}})
+
+    def get_request(self, i):
+        if i['Bandwidth'] and self.data['value'] < i['Bandwidth']:
+            return False
+        return i
+
 
 @Eip.action_registry.register('delete')
 class EipDelete(MethodAction):

@@ -22,7 +22,7 @@ from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
 from c7n_tencent.filters.filter import MetricsFilter
-from c7n_tencent.filters.filter import TencentAgeFilter
+from c7n_tencent.filters.filter import TencentAgeFilter, TencentFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
@@ -156,3 +156,59 @@ class Delete(MethodAction):
         params = '{"InstanceId" :"' + instance["InstanceId"] + '"}'
         req.from_json_string(params)
         Session.client(self, service).TerminateInstances(req)
+
+@Cvm.filter_registry.register('public-ip-address')
+class PublicIpAddress(TencentFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # CVM实例未直接绑定公网IP，视为“合规”。该规则仅适用于 IPv4 协议
+            - name: tencent-cvm-public-ip-address
+              resource: tencent.cvm
+              filters:
+                - type: public-ip-address
+    """
+    public_ip_address = "PublicIpAddresses"
+    schema = type_schema('public-ip-address')
+
+    def get_request(self, i):
+        data = i[self.public_ip_address]
+        if len(data) == 0:
+            return False
+        return i
+
+@Cvm.filter_registry.register('stop-charging-mode')
+class StopChargingMode(TencentFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # CVM实例的关机计费模式是否为关机停止收费，是视为“合规”，否则视为“不合规”
+            - name: tencent-cvm-stop-charging-mode
+              resource: tencent.cvm
+              filters:
+                - type: stop-charging-mode
+                  value: STOP_CHARGING
+    """
+
+    # 实例的关机计费模式。
+    # 取值范围：
+    # KEEP_CHARGING：关机继续收费
+    # STOP_CHARGING：关机停止收费
+    # NOT_APPLICABLE：实例处于非关机状态或者不适用关机停止计费的条件
+
+    stop_charging_mode = "StopChargingMode"
+    schema = type_schema(
+        'stop-charging-mode',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        data = i[self.stop_charging_mode]
+        if data == self.data['value']:
+            return False
+        return i

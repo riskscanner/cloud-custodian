@@ -19,7 +19,7 @@ from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentClo
 from c7n.utils import type_schema
 from c7n_tencent.actions import MethodAction
 from c7n_tencent.client import Session
-from c7n_tencent.filters.filter import TencentCdbFilter
+from c7n_tencent.filters.filter import TencentCdbFilter, TencentFilter
 from c7n_tencent.provider import resources
 from c7n_tencent.query import QueryResourceManager, TypeInfo
 
@@ -80,6 +80,117 @@ class TencentCdbFilter(TencentCdbFilter):
     # 外网状态，可能的返回值为：0-未开通外网；1-已开通外网(Internet)；2-已关闭外网
     schema = type_schema('Internet')
 
+
+@Cdb.filter_registry.register('internet-access')
+class InternetAccessCdbFilter(TencentFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下CDB实例不允许任意来源公网访问，视为“合规”
+            - name: tencent-cdb-internet-access
+              resource: tencent.cdb
+              filters:
+                - type: internet-access
+                  value: true
+    """
+    # 外网状态，可能的返回值为：0 - 未开通外网；1 - 已开通外网；2 - 已关闭外网
+
+    schema = type_schema(
+        'internet-access',
+        **{'value': {'type': 'boolean'}})
+
+    def get_request(self, i):
+        if self.data['value']:
+            if i['WanStatus'] == 1:
+                return i
+        else:
+            if i['WanStatus'] != 1:
+                return i
+        return False
+
+@Cdb.filter_registry.register('device-type')
+class DeviceTypeCdbFilter(TencentFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下CDB实例具备高可用能力，视为“合规”，否则属于“不合规”。
+            - name: tencent-cdb-device-type
+              resource: tencent.cdb
+              filters:
+                - type: device-type
+                  value: BASIC
+    """
+
+    schema = type_schema(
+        'device-type',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if i['DeviceType'] == self.data['value']:
+            return i
+        return False
+
+
+@Cdb.filter_registry.register('availablezones')
+class AvailablezonesCdbFilter(TencentFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下CDB实例支持多可用区，视为“合规”。
+            - name: tencent-cdb-availablezones
+              resource: tencent.cdb
+              filters:
+                - type: availablezones
+                  value: true
+    """
+    # 可用区部署方式。可能的值为：0 - 单可用区；1 - 多可用区
+    schema = type_schema(
+        'availablezones',
+        **{'value': {'type': 'boolean'}})
+
+    def get_request(self, i):
+        if self.data['value']:
+            if i['DeployMode'] == 1:
+                return i
+            return False
+        else:
+            if i['DeployMode'] != 1:
+                return i
+            return False
+
+@Cdb.filter_registry.register('network-type')
+class NetworkTypeCdbFilter(TencentFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下CDB实例已关联到VPC；若您配置阈值，则关联的VpcId需存在您列出的阈值中，视为“合规”。
+            - name: tencent-cdb-instance-network-type
+              resource: tencent.cdb
+              filters:
+                - type: network-type
+                  value: vpc
+    """
+    schema = type_schema(
+        'network-type',
+        **{'value': {'type': 'string'}})
+
+    def get_request(self, i):
+        if self.data['value'] == "vpc":
+            if i['VpcId']:
+                return False
+            return i
+        else:
+            if i['VpcId']:
+                return i
+            return False
 
 
 @Cdb.action_registry.register('restart')
