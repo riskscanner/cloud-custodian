@@ -38,7 +38,7 @@ def _loadFile_():
 
 params = _loadFile_()
 
-regionUU = 'ap-shanghai'
+regionUU = 'ap-guangzhou'
 
 # 实例化一个认证对象，入参需要传入腾讯云账户 secretId，secretKey
 cred = credential.Credential(params['secretId'], params['secretKey'])
@@ -156,11 +156,21 @@ def DescribeSecurityGroups():
     print(resp.to_json_string())
 
 def DescribeLoadBalancers():
+    from tencentcloud.clb.v20180317 import models
     req = models.DescribeLoadBalancersRequest()
     params = '{}'
     req.from_json_string(params)
 
     resp = clbClient.DescribeLoadBalancers(req)
+    print(resp.to_json_string())
+
+def DescribeTargetsResponse():
+    from tencentcloud.clb.v20180317 import models
+    req = models.DescribeTargetsRequest()
+    params ='{"LoadBalancerId" :"lb-3k06q7t0"}'
+    req.from_json_string(params)
+
+    resp = clbClient.DescribeTargets(req)
     print(resp.to_json_string())
 
 def DescribeDBInstances():
@@ -181,6 +191,12 @@ def DescribeDCDBInstances():
 
 def list_buckets():
     resp = cosClient.list_buckets()
+    resp_ = []
+    for i in resp['Buckets']['Bucket']:
+        if i['Location'] == regionUU:
+            resp_.append(i)
+    resp['Buckets']['Bucket'] = resp_
+    print("list_buckets", resp)
     for obj in resp['Buckets']['Bucket']:
         print('obj', obj)
         while True:
@@ -218,5 +234,6 @@ if __name__ == '__main__':
     # DescribeLoadBalancers()
     # DescribeDBInstances()
     # DescribeDCDBInstances()
-    list_buckets()
+    # list_buckets()
     # DescribeBaseMetrics()
+    DescribeTargetsResponse()

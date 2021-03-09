@@ -1,9 +1,29 @@
 import logging
-import time
-import datetime
 
-from openstack import connection
+import jmespath
+import urllib3
+from huaweicloudsdkces.v1 import *
+from huaweicloudsdkcore.auth.credentials import BasicCredentials
+from huaweicloudsdkcore.exceptions import exceptions
+from huaweicloudsdkcore.http.http_config import HttpConfig
+from huaweicloudsdkecs.v2 import *
+from huaweicloudsdkeip.v2 import *
+from huaweicloudsdkelb.v2 import *
+from huaweicloudsdkevs.v2 import *
+from huaweicloudsdkvpc.v2 import *
+from huaweicloudsdkrds.v3 import *
+from huaweicloudsdkrds.v3.region.rds_region import RdsRegion
+from huaweicloudsdkvpc.v2.region.vpc_region import VpcRegion
+from huaweicloudsdkces.v1.region.ces_region import CesRegion
+from huaweicloudsdkdds.v3 import *
+from huaweicloudsdkdds.v3.region.dds_region import DdsRegion
+from huaweicloudsdkdcs.v2 import *
+from huaweicloudsdkdcs.v2.region.dcs_region import DcsRegion
+from huaweicloudsdkiam.v3 import *
+from huaweicloudsdkiam.v3.region.iam_region import IamRegion
 from obs import ObsClient
+from huaweicloudsdkcore.auth.credentials import GlobalCredentials
+
 # configuration the log output formatter, if you want to save the output to file,
 # append ",filename='ecs_invoke.log'" after datefmt.
 
@@ -21,105 +41,165 @@ def _loadFile_():
         if "huawei.sk" in line:
             sk = line[line.rfind('=') + 1:]
             json['sk'] = sk
-        if "huawei.cloud" in line:
-            cloud = line[line.rfind('=') + 1:]
-            json['cloud'] = cloud
-        if "huawei.region" in line:
-            region = line[line.rfind('=') + 1:]
-            # json['region'] = region
-            json['region'] = "cn-north-4"
         if "huawei.project_id" in line:
             project_id = line[line.rfind('=') + 1:]
-            # json['project_id'] = project_id
-            json['project_id'] = "07e44aac9c000f8f2faac0158d8e5bc0"
-        if "huawei.auth_url" in line:
-            auth_url = line[line.rfind('=') + 1:]
-            json['auth_url'] = auth_url
+            json['project_id'] = project_id
+        # if "huawei.domain_id" in line:
+        #     domain_id = line[line.rfind('=') + 1:]
+        #     json['domain_id'] = domain_id
     f.close()
     print('认证信息:   ' + str(json))
     return json
 
+
 params = _loadFile_()
 
-# conn = connection.Connection(
-#     project_id=params['project_id'],
-#     region=params['region'],
-#     cloud=params['cloud'],
-#     ak = params['ak'],
-#     sk = params['sk']
-# )
+config = HttpConfig.get_default_config()
+config.ignore_ssl_verification = True
+config.timeout = 3
+credentials = BasicCredentials(params['ak'], params['sk'], params['project_id'])
+endpoint = "https://iam.myhuaweicloud.com/v3"
+
+iam_credentials = GlobalCredentials(params['ak'], params['sk']) \
 
 # 创建ObsClient实例
 obsClient = ObsClient(
     access_key_id=params['ak'],
     secret_access_key=params['sk'],
-    server=params['auth_url']
+    server="obs.cn-north-4.myhuaweicloud.com"
 )
 
 # 关闭obsClient
 def closeObsClient():
     obsClient.close()
 
-def availability_zones():
-    azs = conn.compute.availability_zones()
-    for az in azs:
-        print(az)
+vpc_client = VpcClient.new_builder(VpcClient) \
+        .with_http_config(config) \
+        .with_credentials(credentials) \
+        .with_endpoint(endpoint) \
+        .build()
 
+ecs_client = EcsClient.new_builder(EcsClient) \
+        .with_http_config(config) \
+        .with_credentials(credentials) \
+        .with_endpoint("https://ecs.cn-north-4.myhuaweicloud.com") \
+        .build()
 
-# get list of server
-def list_servers():
-    servers = conn.compute.servers(limit=10000)
-    arr = list()  # 创建 []
-    for server in servers:
-        json = dict()  # 创建 {}
-        json = _print_(json, server)
-        arr.append(json)
-    print(arr)
+ces_client = CesClient.new_builder(CesClient) \
+        .with_http_config(config) \
+        .with_credentials(credentials) \
+        .with_endpoint("https://ces.cn-north-4.myhuaweicloud.com") \
+        .build()
 
-# find server_id or name
-def find_server(server_id):
-    json = dict()  # 创建 {}
-    server = conn.compute.find_server(server_id)
-    json = _print_(json, server)
-    print(json)
+evs_client = EvsClient.new_builder(EvsClient) \
+        .with_http_config(config) \
+        .with_credentials(credentials) \
+        .with_endpoint("https://evs.cn-north-4.myhuaweicloud.com") \
+        .build()
 
+eip_client = EipClient.new_builder(EipClient) \
+        .with_http_config(config) \
+        .with_credentials(credentials) \
+        .with_endpoint("https://vpc.cn-north-4.myhuaweicloud.com") \
+        .build()
 
-# show server detail
-def show_server(server_id):
-    json = dict()  # 创建 {}
-    server = conn.compute.get_server(server_id)
-    json = _print_(json, server)
-    print(json)
+elb_client = ElbClient.new_builder(ElbClient) \
+    .with_http_config(config) \
+    .with_credentials(credentials) \
+    .with_endpoint("https://elb.cn-north-4.myhuaweicloud.com") \
+    .build()
 
-# stop server
-def stop_server(server_id):
-    json = dict()  # 创建 {}
-    conn.compute.stop_server(server_id)
-    time.sleep(5)
-    server = conn.compute.find_server(server_id)
-    json = _print_(json, server)
-    print(json)
+sg_client = VpcClient.new_builder() \
+    .with_credentials(credentials) \
+    .with_region(VpcRegion.value_of("cn-north-4")) \
+    .build()
 
-# start server
-def start_server(server_id):
-    json = dict()  # 创建 {}
-    conn.compute.start_server(server_id)
-    time.sleep(5)
-    server = conn.compute.find_server(server_id)
-    json = _print_(json, server)
-    print(json)
+rds_client = RdsClient.new_builder() \
+        .with_credentials(credentials) \
+        .with_region(RdsRegion.value_of("cn-north-4")) \
+        .build()
 
-def ips():
-    query = {
-        "limit": 10000
-    }
-    fips = conn.network.ips(**query)
-    arr = list()  # 创建 []
-    for fip in fips:
-        json = dict()  # 创建 {}
-        json = _print_(json, fip)
-        arr.append(json)
-    print(arr)
+redis_client = DcsClient.new_builder() \
+        .with_credentials(credentials) \
+        .with_region(DcsRegion.value_of("cn-north-4")) \
+        .build()
+
+iam_client = IamClient.new_builder() \
+        .with_credentials(iam_credentials) \
+        .with_region(IamRegion.value_of("cn-north-4")) \
+        .build()
+
+dds_client = DdsClient.new_builder() \
+        .with_credentials(credentials) \
+        .with_region(DdsRegion.value_of("cn-north-4")) \
+        .build()
+
+def list_obs():
+    try:
+        # 列举桶
+        resp = obsClient.listBuckets(isQueryLocation=True)
+        if resp.status < 300:
+            arrs = list()
+            # 操作成功
+            # 处理操作成功后业务逻辑
+            for bucket in resp.body.buckets:
+                if "cn-north-4" != bucket.location:
+                    arrs.append(bucket)
+                else:
+                    # 列举对象
+                    res = obsClient.listObjects(bucket.name)
+                    if res.status < 300:
+                        bucket['contents'] = res.body.contents
+                    else:
+                        bucket['contents'] = []
+            for arr in arrs:
+                resp.body.buckets.remove(arr)
+            print(resp)
+        else:
+            # 操作失败，获取详细异常信息
+            print(resp.errorMessage)
+    except exceptions.ClientRequestException as e:
+            print(e.status_code)
+            print(e.request_id)
+            print(e.error_code)
+            print(e.error_msg)
+    finally:
+        # 关闭ObsClient，如果是全局ObsClient实例，可以不在每个方法调用完成后关闭
+        # ObsClient在调用ObsClient.close方法关闭后不能再次使用
+        closeObsClient()
+
+def list_iam():
+    try:
+        request = ListUserLoginProtectsRequest()
+        response = iam_client.list_user_login_protects(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_dds():
+    try:
+        request = ListInstancesRequest()
+        response = dds_client.list_instances(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_redis():
+    try:
+        request = ListInstancesRequest()
+        response = redis_client.list_instances(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
 
 def list_cdn():
     try:
@@ -130,143 +210,121 @@ def list_cdn():
         print(e.error_code)
         print(e.error_msg)
 
-def find_available_ip():
-    fips = conn.network.find_available_ip()
-    arr = list()  # 创建 []
-    if fips is not None:
-        for fip in fips:
-            json = dict()  # 创建 {}
-            json = _print_(json, fip)
-            arr.append(json)
-    print(arr)
-
-def vpcs():
-    query = {
-        "limit": 10000
-    }
-    vpcs = conn.vpcv1.vpcs(**query)
-    arr = list()  # 创建 []
-    for vpc in vpcs:
-        json = dict()  # 创建 {}
-        json = _print_(json, vpc)
-        arr.append(json)
-    print(arr)
-
-def delete_vpc():
-    conn.vpcv1.delete_vpc('1069dd2e-db67-4d0a-bd2f-0205af7e6d63')
-
-def security_groups():
-    query = {
-        "limit": 10000
-    }
-    sgs = conn.network.security_groups(**query)
-    arr = list()  # 创建 []
-    for sg in sgs:
-        json = dict()  # 创建 {}
-        json = _print_(json, sg)
-        arr.append(json)
-    print(arr)
-
-def find_security_group(id):
-    sg = conn.network.find_security_group(id)
-    json = dict()  # 创建 {}
-    json = _print_(json, sg)
-    print(json)
-
-def rds_instances():
-    query = {
-        'offset': 0,
-        'limit': 100
-    }
-    rds = conn.rdsv3.instances(**query)
-    arr = list()  # 创建 []
-    for sg in rds:
-        json = dict()  # 创建 {}
-        json = _print_(json, sg)
-        arr.append(json)
-    print(arr)
-
-# volumes
-def volumes():
-    volumes = conn.block_store.volumes(details=False)
-    arr = list()  # 创建 []
-    for volume in volumes:
-        json = dict()  # 创建 {}
-        json = _print_(json, volume)
-        arr.append(json)
-    print(arr)
-
-def get_all_lb():
-    lbs = conn.network.loadbalancers()
-    arr = list()  # 创建 []
-    for lb in lbs:
-        json = dict()  # 创建 {}
-        json = _print_(json, lb)
-        arr.append(json)
-    print(arr)
-
-def _print_(json, item):
-    for name in dir(item):
-        if not name.startswith('_'):
-            if name not in API_EXPRESS:
-                value = getattr(item, name)
-                if not callable(value):
-                    json[name] = value
-    return json
-
-API_EXPRESS = [
-    'allow_create', 'allow_delete', 'allow_get', 'allow_head',
-    'allow_list', 'allow_update', 'put_create', 'query_limit_key',
-    'query_marker_key', 'next_marker_path', 'patch_update', 'resource_key'
-    'resources_key', 'base_path', 'location'
-]
-
-
-def listBuckets():
+def list_rds():
     try:
-        json = list()
-        # 列举桶
-        resp = obsClient.listBuckets(isQueryLocation=True)
-        print(resp)
-        if resp.status < 300:
-            # 操作成功
-            print('requestId:', resp.requestId)
-            # 处理操作成功后业务逻辑
-            for bucket in resp.body.buckets:
-                # 列举对象
-                json.append(bucket)
-                res = obsClient.listObjects(bucket.name)
-                for content in res.body.contents:
-                    json.append(content)
-            print(json)
-        else:
-            # 操作失败，获取详细异常信息
-            print(resp.errorMessage)
-    except Exception as e:
-        import traceback
-        # 发生异常，打印异常堆栈
-        logging.error(e)
-        print(traceback.format_exc())
-    finally:
-        # 关闭ObsClient，如果是全局ObsClient实例，可以不在每个方法调用完成后关闭
-        # ObsClient在调用ObsClient.close方法关闭后不能再次使用
-        closeObsClient()
-    print(json)
+        request = ListInstancesRequest()
+        response = rds_client.list_instances(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_vpc():
+    try:
+        request = ListVpcsRequest()
+        response = vpc_client.list_vpcs(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_sg():
+    try:
+        request = ListSecurityGroupsRequest()
+        response = sg_client.list_security_groups(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_ecs():
+    try:
+        request = ListServersDetailsRequest()
+        response = ecs_client.list_servers_details(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_ces():
+    try:
+        request = ListMetricsRequest()
+        response = ces_client.list_metrics(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_evs():
+    try:
+        request = ListVolumesRequest()
+        response = evs_client.list_volumes(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_eip():
+    try:
+        request = ListPublicipsRequest()
+        response = eip_client.list_publicips(request)
+        # print(response.publicips)
+        print(type(eval(str(response))))
+        print(jmespath.search("publicips", eval(str(response))))
+
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_eip_bandwidths():
+    try:
+        request = ListBandwidthsRequest()
+        response = eip_client.list_bandwidths(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
+
+def list_elb():
+    try:
+        request = ListLoadbalancersRequest()
+        response = elb_client.list_loadbalancers(request)
+        print(response)
+    except exceptions.ClientRequestException as e:
+        print(e.status_code)
+        print(e.request_id)
+        print(e.error_code)
+        print(e.error_msg)
 
 if __name__ == '__main__':
     logging.info("Hello Huawei OpenApi!")
-    # availability_zones()
-    # list_servers()
-    # find_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
-    # show_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
-    # stop_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
-    # start_server('73a55347-ad06-4662-bd06-cc83c7683d2a')
-    # security_groups()
-    # ips()
-    # find_available_ip()
-    vpcs()
-    # # find_security_group('xxxx')
-    # rds_instances()
-    # volumes()
-    # get_all_lb()
-    # listBuckets()
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    # list_vpc()
+    # list_ecs()
+    # list_ces()
+    # list_evs()
+    # list_eip()
+    # list_eip_bandwidths()
+    # list_elb()
+    # list_sg()
+    # list_rds()
+    # list_cdn()
+    # list_iam()
+    # list_obs()
+    list_redis()
