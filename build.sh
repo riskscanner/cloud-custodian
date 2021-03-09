@@ -1,3 +1,4 @@
 echo "构建custodian镜像 ..."
-docker build -t registry.fit2cloud.com/riskscanner/custodian:riskscanner .
-docker push registry.fit2cloud.com/riskscanner/custodian:riskscanner
+
+docker build -t registry.cn-qingdao.aliyuncs.com/x-lab/riskscanner/custodian:master .
+docker push registry.cn-qingdao.aliyuncs.com/x-lab/riskscanner/custodian:master
