@@ -97,7 +97,7 @@ class UnusedElbFilter(HuaweiElbFilter):
             return False
         return i
 
-@Elb.filter_registry.register('AddressType')
+@Elb.filter_registry.register('address-type')
 class AddressTypeElbFilter(HuaweiElbFilter):
     """Filters
        :Example:
@@ -108,12 +108,12 @@ class AddressTypeElbFilter(HuaweiElbFilter):
             - name: huawei-elb-address-type
               resource: huawei.elb
               filters:
-                - type: AddressType
+                - type: address-type
                   value: internet
     """
     # internet 公网/intranet 内网
     schema = type_schema(
-        'AddressType',
+        'address-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):

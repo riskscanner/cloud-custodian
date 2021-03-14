@@ -47,7 +47,7 @@ class Ecs(QueryResourceManager):
         return response
 
 
-@Ecs.filter_registry.register('PublicIpAddress')
+@Ecs.filter_registry.register('public-ip-address')
 class PublicIpAddress(HuaweiEcsFilter):
 
     """Filters
@@ -59,13 +59,13 @@ class PublicIpAddress(HuaweiEcsFilter):
             - name: huawei-ecs-public-ipaddress
               resource: huawei.ecs
               filters:
-                - type: PublicIpAddress
+                - type: public-ip-address
     """
     # fixed 内网
     # floating 公网
 
     public_ip_address = "addresses"
-    schema = type_schema('PublicIpAddress')
+    schema = type_schema('public-ip-address')
 
     def get_request(self, i):
         data = jmespath.search(self.public_ip_address, i)
@@ -104,7 +104,7 @@ class EcsAgeFilter(HuaweiAgeFilter):
         # '2020-07-27T05:55:32.000000'
         return i['os_srv_us_glaunched_at']
 
-@Ecs.filter_registry.register('InstanceNetworkType')
+@Ecs.filter_registry.register('instance-network-type')
 class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
     """Filters
        :Example:
@@ -115,11 +115,11 @@ class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
             - name: huawei-ecs-instance-network-type
               resource: huawei.ecs
               filters:
-                - type: InstanceNetworkType
+                - type: instance-network-type
                   value: vpc
     """
     schema = type_schema(
-        'InstanceNetworkType',
+        'instance-network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):

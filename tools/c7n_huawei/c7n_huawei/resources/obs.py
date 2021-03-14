@@ -94,32 +94,15 @@ class GlobalGrantsFilter(Filter):
             return results
 
     def process_bucket(self, b):
-        # PRIVATE
-        #
-        # 私有读写。
-        #
-        # PUBLIC_READ
-        #
-        # 公共读。
-        #
-        # PUBLIC_READ_WRITE
-        #
-        # 公共读写。
-        #
-        # PUBLIC_READ_DELIVERED
-        #
-        # 桶公共读，桶内对象公共读。
-        #
-        # PUBLIC_READ_WRITE_DELIVERED
-        #
-        # 桶公共读写，桶内对象公共读写。
-        #
-        # BUCKET_OWNER_FULL_CONTROL
-        #
-        # 桶或对象所有者拥有完全控制权限。
+        # PRIVATE 私有读写。
+        # PUBLIC_READ 公共读。
+        # PUBLIC_READ_WRITE 公共读写。
+        # PUBLIC_READ_DELIVERED 桶公共读，桶内对象公共读。
+        # PUBLIC_READ_WRITE_DELIVERED 桶公共读写，桶内对象公共读写。
+        # BUCKET_OWNER_FULL_CONTROL 桶或对象所有者拥有完全控制权限。
         acl = Session.client(self, service).getBucketAcl(b.name)
         b['permission'] = acl.body.grants
-        if self.data['value'] is None or self.data['value'] == 'read':
+        if self.data['value'] == 'read':
             if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
                 return b
         if self.data['value'] == 'write':

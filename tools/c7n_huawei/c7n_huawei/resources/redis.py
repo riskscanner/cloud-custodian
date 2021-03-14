@@ -42,7 +42,7 @@ class Redis(QueryResourceManager):
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
 
-@Redis.filter_registry.register('InternetAccess')
+@Redis.filter_registry.register('internet-access')
 class InternetAccessRedisFilter(HuaweiRedisFilter):
     """Filters
        :Example:
@@ -53,12 +53,12 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
             - name: huawei-redis-internet-access
               resource: huawei.redis
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
 
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
@@ -72,7 +72,7 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
                 return None
             return i
 
-@Redis.filter_registry.register('NoPasswordAccess')
+@Redis.filter_registry.register('no-password-access')
 class NoPasswordAccessRedisFilter(HuaweiRedisFilter):
     """Filters
        :Example:
@@ -83,15 +83,15 @@ class NoPasswordAccessRedisFilter(HuaweiRedisFilter):
             - name: huawei-redis-no-password-access
               resource: huawei.redis
               filters:
-                - type: NoPasswordAccess
+                - type: no-password-access
                   value: true
     """
 
     schema = type_schema(
-        'NoPasswordAccess',
+        'no-password-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
         if i['no_password_access'] == self.data['value']:
             return i
-        return None
+        return False

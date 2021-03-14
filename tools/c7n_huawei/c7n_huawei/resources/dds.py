@@ -42,7 +42,7 @@ class Dds(QueryResourceManager):
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
 
-@Dds.filter_registry.register('InternetAccess')
+@Dds.filter_registry.register('internet-access')
 class InternetAccessRedisFilter(HuaweiRedisFilter):
     """Filters
        :Example:
@@ -53,12 +53,12 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
             - name: huawei-redis-internet-access
               resource: huawei.redis
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
 
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

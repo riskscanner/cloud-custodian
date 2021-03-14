@@ -45,7 +45,7 @@ class Rds(QueryResourceManager):
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
 
-@Rds.filter_registry.register('Internet')
+@Rds.filter_registry.register('internet')
 class HuaweiRdsFilter(HuaweiRdsFilter):
     """Filters
        :Example:
@@ -55,10 +55,10 @@ class HuaweiRdsFilter(HuaweiRdsFilter):
             - name: huawei-rds-internet
               resource: huawei.rds
               filters:
-                - type: Internet
+                - type: internet
     """
 
-    schema = type_schema('Internet')
+    schema = type_schema('internet')
 
     def get_request(self, i):
         public_ips = i['public_ips']
@@ -108,7 +108,7 @@ class EcsMetricsFilter(MetricsFilter):
             pass
         return response
 
-@Rds.filter_registry.register('InternetAccess')
+@Rds.filter_registry.register('internet-access')
 class InternetAccessRdsFilter(HuaweiRdsFilter):
     """Filters
        :Example:
@@ -119,11 +119,11 @@ class InternetAccessRdsFilter(HuaweiRdsFilter):
             - name: huawei-rds-internet-access
               resource: huawei.rds
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
@@ -137,7 +137,7 @@ class InternetAccessRdsFilter(HuaweiRdsFilter):
                 return None
             return i
 
-@Rds.filter_registry.register('HighAvailability')
+@Rds.filter_registry.register('high-availability')
 class HighAvailabilityRdsFilter(HuaweiRdsFilter):
     """Filters
        :Example:
@@ -145,10 +145,10 @@ class HighAvailabilityRdsFilter(HuaweiRdsFilter):
 
         policies:
             # 账号下RDS实例具备高可用能力，视为“合规”，否则属于“不合规”。
-            - name: huawei-rds-highavailability
+            - name: huawei-rds-high-availability
               resource: huawei.rds
               filters:
-                - type: HighAvailability
+                - type: high-availability
     """
     # 实例类型,取值为“Single”,“Ha”或“Replica”,分别对应于单机实例、主备实例、只读实例。
     filter = 'type'
@@ -178,7 +178,7 @@ class HighAvailabilityRdsFilter(HuaweiRdsFilter):
             return i
         return False
 
-@Rds.filter_registry.register('InstanceNetworkType')
+@Rds.filter_registry.register('instance-network-type')
 class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
     """Filters
        :Example:
@@ -189,14 +189,14 @@ class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
             - name: huawei-rds-instance-network-type
               resource: huawei.rds
               filters:
-                - type: InstanceNetworkType
+                - type: instance-network-type
                   value: VPC
     """
     # 实例的网络类型，取值：
     #
     # VPC：VPC网络
     schema = type_schema(
-        'InstanceNetworkType',
+        'instance-network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -204,7 +204,7 @@ class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
             return False
         return i
 
-@Rds.filter_registry.register('ChargeInfo')
+@Rds.filter_registry.register('charge-info')
 class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
     """Filters
        :Example:
@@ -215,13 +215,13 @@ class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
             - name: huawei-rds-charge-info
               resource: huawei.rds
               filters:
-                - type: ChargeInfo
+                - type: charge-info
                   value: postPaid
     """
     # prePaid:预付费,即包年/包月。
     # postPaid:后付费,即按需付费。
     schema = type_schema(
-        'ChargeInfo',
+        'charge-info',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):

@@ -105,7 +105,7 @@ class IPPermission(SGPermission):
     def process_self_cidrs(self, perm):
         self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
 
-@SecurityGroup.filter_registry.register('SourceCidrIp')
+@SecurityGroup.filter_registry.register('source-cidr-ip')
 class HuaweiSgSourceCidrIp(HuaweiSgFilter):
 
     """Filters
@@ -114,16 +114,16 @@ class HuaweiSgSourceCidrIp(HuaweiSgFilter):
 
         policies:
             # 账号下ECS安全组配置不为“0.0.0.0/0”，视为“合规”。
-            - name: huawei-sg-sourcecidrip
+            - name: huawei-sg-source-cidr-ip
               resource: huawei.security-group
               filters:
-                - type: SourceCidrIp
+                - type: source-cidr-ip
                   value: "0.0.0.0/0"
     """
 
     ip_permissions_key = "security_group_rules"
     schema = type_schema(
-        'SourceCidrIp',
+        'source-cidr-ip',
         **{'value': {'type': 'string'}})
 
     def get_request(self, sg):

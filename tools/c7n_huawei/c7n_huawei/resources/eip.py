@@ -66,7 +66,7 @@ class HuaweiEipFilter(HuaweiEipFilter):
             return False
         return i
 
-@Eip.filter_registry.register('Bandwidth')
+@Eip.filter_registry.register('bandwidth')
 class BandwidthEipFilter(HuaweiEipFilter):
     """Filters
        :Example:
@@ -77,11 +77,11 @@ class BandwidthEipFilter(HuaweiEipFilter):
             - name: huawei-eip-bandwidth
               resource: huawei.eip
               filters:
-                - type: Bandwidth
+                - type: bandwidth
                   value: 10
     """
     schema = type_schema(
-        'Bandwidth',
+        'bandwidth',
         **{'value': {'type': 'number'}})
 
     def get_request(self, i):
