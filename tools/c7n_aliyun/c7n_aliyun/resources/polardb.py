@@ -40,7 +40,7 @@ class PolarDB(QueryResourceManager):
     def get_request(self):
         return DescribeDBClustersRequest()
 
-@PolarDB.filter_registry.register('DBClusterNetworkType')
+@PolarDB.filter_registry.register('dbcluster-network-type')
 class DBClusterNetworkTypePolarDBFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -51,7 +51,7 @@ class DBClusterNetworkTypePolarDBFilter(AliyunRdsFilter):
             - name: aliyun-polardb-dbcluster-network-type
               resource: aliyun.polardb
               filters:
-                - type: DBClusterNetworkType
+                - type: dbcluster-network-type
                   value: VPC
     """
     # 实例的网络类型，取值：
@@ -59,7 +59,7 @@ class DBClusterNetworkTypePolarDBFilter(AliyunRdsFilter):
     # CLASSIC：经典网络
     # VPC：VPC网络
     schema = type_schema(
-        'DBClusterNetworkType',
+        'dbcluster-network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -67,7 +67,7 @@ class DBClusterNetworkTypePolarDBFilter(AliyunRdsFilter):
             return False
         return i
 
-@PolarDB.filter_registry.register('InternetAccess')
+@PolarDB.filter_registry.register('internet-access')
 class InternetAccessPolarDBFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -78,11 +78,11 @@ class InternetAccessPolarDBFilter(AliyunRdsFilter):
             - name: aliyun-polardb-internet-access
               resource: aliyun.polardb
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

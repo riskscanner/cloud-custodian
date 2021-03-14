@@ -57,6 +57,11 @@ class AliyunDiskFilter(AliyunDiskFilter):
         'encrypted',
         **{'value': {'type': 'boolean'}})
 
+    def get_request(self, i):
+        if i['Status'] != type:
+            return False
+        return i
+
 @Disk.filter_registry.register('unused')
 class AliyunDiskFilter(AliyunDiskFilter):
     """Filters
@@ -76,6 +81,12 @@ class AliyunDiskFilter(AliyunDiskFilter):
     # InUse：已分配。
     # Available：可用。
     schema = type_schema('Available')
+
+    def get_request(self, i):
+        encrypted = self.data['value']
+        if i['Encrypted'].lower() != str(encrypted).lower():
+            return False
+        return i
 
 @Disk.filter_registry.register('metrics')
 class MetricsDiskFilter(MetricsFilter):

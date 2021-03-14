@@ -23,9 +23,7 @@ class AliyunEipFilter(Filter):
         return self
 
     def __call__(self, i):
-        if i['Status'] != self.data['type']:
-            return False
-        return i
+        return self.get_request(i)
 
 class AliyunEcsFilter(Filter):
     schema = None
@@ -34,11 +32,7 @@ class AliyunEcsFilter(Filter):
         return self
 
     def __call__(self, i):
-        if self.data['type'] == 'PublicIpAddress':
-            return self.get_request(i)
-        if i['Status'] != self.data['type']:
-            return False
-        return i
+        return self.get_request(i)
 
 class AliyunDiskFilter(Filter):
     schema = None
@@ -47,18 +41,7 @@ class AliyunDiskFilter(Filter):
         return self
 
     def __call__(self, i):
-        type = self.data['type']
-        if type == 'unused':
-            if i['Status'] != type:
-                return False
-            return i
-        elif type == 'encrypted':
-            encrypted = self.data['value']
-            if i['Encrypted'].lower() != str(encrypted).lower():
-                return False
-            return i
-        else:
-            return i
+        return self.get_request(i)
 
 class AliyunRdsFilter(Filter):
     schema = None
@@ -68,8 +51,7 @@ class AliyunRdsFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunRedisFilter(Filter):
     schema = None
@@ -79,8 +61,7 @@ class AliyunRedisFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunSlbFilter(Filter):
 
@@ -88,8 +69,7 @@ class AliyunSlbFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunCdnFilter(Filter):
 
@@ -97,8 +77,7 @@ class AliyunCdnFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunOssFilter(Filter):
 
@@ -106,8 +85,7 @@ class AliyunOssFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunSlbListenerFilter(Filter):
     schema = None
@@ -117,17 +95,7 @@ class AliyunSlbListenerFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        client = local_session(
-            self.manager.session_factory).client(self.manager.get_model().service)
-        response = json.loads(client.do_action(request))
-        ListenerPort = response.get('ListenerPorts').get('ListenerPort')
-        ListenerPortsAndProtocal = response.get('ListenerPortsAndProtocal').get('ListenerPortAndProtocal')
-        ListenerPortsAndProtocol = response.get('ListenerPortsAndProtocol').get('ListenerPortAndProtocol')
-        BackendServers = response.get('BackendServers').get('BackendServer')
-        if len(ListenerPort) == 0 and len(ListenerPortsAndProtocal) == 0 and len(ListenerPortsAndProtocol) == 0 and len(BackendServers) == 0:
-            return i
-        return None
+        return self.get_request(i)
 
 class AliyunRamFilter(Filter):
     schema = None
@@ -136,8 +104,7 @@ class AliyunRamFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunAgeFilter(Filter):
     """Automatically filter resources older than a given date.
@@ -186,8 +153,7 @@ class AliyunVpcFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class AliyunSgFilter(Filter):
 
@@ -195,8 +161,7 @@ class AliyunSgFilter(Filter):
         return self
 
     def __call__(self, i):
-        request = self.get_request(i)
-        return request
+        return self.get_request(i)
 
 class SGPermission(Filter):
     """Filter for verifying security group ingress and egress permissions

@@ -12,17 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import os
 
 import jmespath
 from aliyunsdkcms.request.v20190101.DescribeMetricListRequest import DescribeMetricListRequest
+from aliyunsdkslb.request.v20140515.DescribeAccessControlListAttributeRequest import \
+    DescribeAccessControlListAttributeRequest
+from aliyunsdkslb.request.v20140515.DescribeAccessControlListsRequest import DescribeAccessControlListsRequest
 from aliyunsdkslb.request.v20140515.DescribeHealthStatusRequest import DescribeHealthStatusRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancerAttributeRequest import DescribeLoadBalancerAttributeRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import DescribeLoadBalancersRequest
-from aliyunsdkslb.request.v20140515.DescribeAccessControlListsRequest import DescribeAccessControlListsRequest
-from aliyunsdkslb.request.v20140515.DescribeAccessControlListAttributeRequest import DescribeAccessControlListAttributeRequest
 
-
+from c7n.utils import local_session
 from c7n.utils import type_schema
 from c7n_aliyun.client import Session
 from c7n_aliyun.filters.filter import AliyunSlbFilter, MetricsFilter, AliyunSlbListenerFilter
@@ -127,7 +127,16 @@ class AliyunSlbNoListener(AliyunSlbListenerFilter):
         request = DescribeLoadBalancerAttributeRequest()
         request.set_accept_format('json')
         request.set_LoadBalancerId(i['LoadBalancerId'])
-        return request
+        client = local_session(
+            self.manager.session_factory).client(self.manager.get_model().service)
+        response = json.loads(client.do_action(request))
+        ListenerPort = response.get('ListenerPorts').get('ListenerPort')
+        ListenerPortsAndProtocal = response.get('ListenerPortsAndProtocal').get('ListenerPortAndProtocal')
+        ListenerPortsAndProtocol = response.get('ListenerPortsAndProtocol').get('ListenerPortAndProtocol')
+        BackendServers = response.get('BackendServers').get('BackendServer')
+        if len(ListenerPort) == 0 and len(ListenerPortsAndProtocal) == 0 and len(ListenerPortsAndProtocol) == 0 and len(BackendServers) == 0:
+            return i
+        return False
 
 @Slb.filter_registry.register('metrics')
 class SlbMetricsFilter(MetricsFilter):
@@ -154,7 +163,7 @@ class SlbMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
-@Slb.filter_registry.register('AddressType')
+@Slb.filter_registry.register('address-type')
 class AddressTypeSlbFilter(AliyunSlbFilter):
     """Filters
        :Example:
@@ -165,12 +174,12 @@ class AddressTypeSlbFilter(AliyunSlbFilter):
             - name: aliyun-slb-address-type
               resource: aliyun.slb
               filters:
-                - type: AddressType
+                - type: address-type
                   value: internet
     """
     # internet 公网/intranet 内网
     schema = type_schema(
-        'AddressType',
+        'address-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -178,7 +187,7 @@ class AddressTypeSlbFilter(AliyunSlbFilter):
             return False
         return i
 
-@Slb.filter_registry.register('NetworkType')
+@Slb.filter_registry.register('network-type')
 class NetworkTypeSlbFilter(AliyunSlbFilter):
     """Filters
        :Example:
@@ -189,11 +198,11 @@ class NetworkTypeSlbFilter(AliyunSlbFilter):
             - name: aliyun-slb-network-type
               resource: aliyun.slb
               filters:
-                - type: NetworkType
+                - type: network-type
                   value: vpc
     """
     schema = type_schema(
-        'NetworkType',
+        'network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -201,7 +210,7 @@ class NetworkTypeSlbFilter(AliyunSlbFilter):
             return False
         return i
 
-@Slb.filter_registry.register('Bandwidth')
+@Slb.filter_registry.register('bandwidth')
 class BandwidthSlbFilter(AliyunSlbFilter):
     """Filters
        :Example:
@@ -212,11 +221,11 @@ class BandwidthSlbFilter(AliyunSlbFilter):
             - name: aliyun-slb-bandwidth
               resource: aliyun.slb
               filters:
-                - type: Bandwidth
+                - type: bandwidth
                   value: 10
     """
     schema = type_schema(
-        'Bandwidth',
+        'bandwidth',
         **{'value': {'type': 'number'}})
 
     def get_request(self, i):
@@ -232,7 +241,7 @@ class BandwidthSlbFilter(AliyunSlbFilter):
         data['F2CId'] = data['LoadBalancerId']
         return data
 
-@Slb.filter_registry.register('Acls')
+@Slb.filter_registry.register('acls')
 class AclsSlbFilter(AliyunSlbFilter):
     """Filters
        :Example:
@@ -243,11 +252,11 @@ class AclsSlbFilter(AliyunSlbFilter):
             - name: aliyun-slb-acls
               resource: aliyun.slb
               filters:
-                - type: Acls
+                - type: acls
                   value: true
     """
     schema = type_schema(
-        'Acls',
+        'acls',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

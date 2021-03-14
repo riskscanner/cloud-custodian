@@ -124,7 +124,7 @@ class GlobalGrantsFilter(Filter):
             return i
         return False
 
-@Oss.filter_registry.register('DataRedundancyType')
+@Oss.filter_registry.register('data-redundancy-type')
 class DataRedundancyTypeOssFilter(AliyunOssFilter):
     """Filters
        :Example:
@@ -132,17 +132,17 @@ class DataRedundancyTypeOssFilter(AliyunOssFilter):
 
         policies:
             # 检测您账号下的对象存储桶是否启用同城冗余存储，若开启视为“合规”。
-            - name: aliyun-oss-dataredundancy-type
+            - name: aliyun-oss-data-redundancy-type
               resource: aliyun.oss
               filters:
-                - type: DataRedundancyType
+                - type: data-redundancy-type
                   value: ZRS
     """
     # Bucket的数据容灾类型。
     # 有效值：LRS、ZRS
     # 父节点：BucketInfo.Bucket
     schema = type_schema(
-        'DataRedundancyType',
+        'data-redundancy-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -158,7 +158,7 @@ class DataRedundancyTypeOssFilter(AliyunOssFilter):
             return i
         return i
 
-@Oss.filter_registry.register('BucketReferer')
+@Oss.filter_registry.register('bucket-referer')
 class BucketRefererOssFilter(AliyunOssFilter):
     """Filters
        :Example:
@@ -169,11 +169,11 @@ class BucketRefererOssFilter(AliyunOssFilter):
             - name: aliyun-oss-bucket-referer
               resource: aliyun.oss
               filters:
-                - type: BucketReferer
+                - type: bucket-referer
                   value: true
     """
     schema = type_schema(
-        'BucketReferer',
+        'bucket-referer',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

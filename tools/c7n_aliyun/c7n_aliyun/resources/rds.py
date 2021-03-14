@@ -43,39 +43,9 @@ class Rds(QueryResourceManager):
         id = 'DBInstanceId'
 
     def get_request(self):
-        try:
-            # clt = Session.client(self, service)
-            # request = DescribeRegionsRequest()
-            # request.set_accept_format('json')
-            # response_str = clt.do_action_with_exception(request)
-            # response = json.loads(response_str)
-            """
-                aliyunsdkcore.client:ERROR ServerException occurred. Host:location-readonly.aliyuncs.com SDK-Version:2.13.11 
-                ServerException:HTTP Status: 404 Error:InvalidRegionId The specified region does not exist. 
-                RequestID: 4B62B859-1CBD-46E9-9A41-A2F5FD672E2C
-                用DescribeRegionsRequest去查,sdk直接会抛出ERROR异常，虽然不影响返回的数据，但是在安全合规模块遇到ERROR会报错。所以暂时写死region
-            """
-            if regionId == "cn-wulanchabu":
-                flag = False
-            else:
-                flag = True
-            # if response is not None:
-            #     region_list = response.get('Regions').get('RDSRegion')
-            #     for res in region_list:
-            #         if regionId == res['RegionId']:
-            #             flag = True
-            #             break
-        except Exception as error:
-            logging.warn(error)
-            flag = False
-        if flag:
-            # 乌兰察布暂时不支持rds
-            return DescribeDBInstancesRequest()
-        else:
-            logging.warn("RDS service in %s is not supported!", regionId)
-            return flag
+        return DescribeDBInstancesRequest()
 
-@Rds.filter_registry.register('AvailableZones')
+@Rds.filter_registry.register('available-zones')
 class AvailableZonesRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -86,11 +56,11 @@ class AvailableZonesRdsFilter(AliyunRdsFilter):
             - name: aliyun-rds-availablezones
               resource: aliyun.rds
               filters:
-                - type: AvailableZones
+                - type: available-zones
                   value: false
     """
     schema = type_schema(
-        'AvailableZones',
+        'available-zones',
         **{'value': {'type': 'boolean'}})
     filter = None
 
@@ -117,7 +87,7 @@ class AvailableZonesRdsFilter(AliyunRdsFilter):
             return False
         return i
 
-@Rds.filter_registry.register('SecurityIPMode')
+@Rds.filter_registry.register('security-ip-mode')
 class AliyunRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -128,7 +98,7 @@ class AliyunRdsFilter(AliyunRdsFilter):
             - name: aliyun-rds-security-ip-mode
               resource: aliyun.rds
               filters:
-                - type: SecurityIPMode
+                - type: security-ip-mode
                   value: safety
     """
     # 白名单模式。取值：
@@ -136,7 +106,7 @@ class AliyunRdsFilter(AliyunRdsFilter):
     # normal：通用模式
     # safety：高安全模式
     schema = type_schema(
-        'SecurityIPMode',
+        'security-ip-mode',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -154,7 +124,7 @@ class AliyunRdsFilter(AliyunRdsFilter):
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i
 
-@Rds.filter_registry.register('HighAvailability')
+@Rds.filter_registry.register('high-availability')
 class HighAvailabilityRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -162,10 +132,10 @@ class HighAvailabilityRdsFilter(AliyunRdsFilter):
 
         policies:
             # 账号下RDS实例具备高可用能力，视为“合规”，否则属于“不合规”。
-            - name: aliyun-rds-highavailability
+            - name: aliyun-rds-high-availability
               resource: aliyun.rds
               filters:
-                - type: HighAvailability
+                - type: high-availability
     """
     # 实例系列，取值：
     #
@@ -221,7 +191,7 @@ class RdsMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
-@Rds.filter_registry.register('ConnectionMode')
+@Rds.filter_registry.register('connection-mode')
 class ConnectionModeRds2Filter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -232,7 +202,7 @@ class ConnectionModeRds2Filter(AliyunRdsFilter):
             - name: aliyun-rds-connection-mode
               resource: aliyun.rds
               filters:
-                - type: ConnectionMode
+                - type: connection-mode
                   value: Safe
     """
     # 实例的访问模式，取值：
@@ -241,7 +211,7 @@ class ConnectionModeRds2Filter(AliyunRdsFilter):
     # Safe：数据库代理模式
     # 默认返回所有访问模式下的实例
     schema = type_schema(
-        'ConnectionMode',
+        'connection-mode',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -249,7 +219,7 @@ class ConnectionModeRds2Filter(AliyunRdsFilter):
             return False
         return i
 
-@Rds.filter_registry.register('InstanceNetworkType')
+@Rds.filter_registry.register('instance-network-type')
 class InstanceNetworkTypeRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -260,7 +230,7 @@ class InstanceNetworkTypeRdsFilter(AliyunRdsFilter):
             - name: aliyun-rds-instance-network-type
               resource: aliyun.rds
               filters:
-                - type: InstanceNetworkType
+                - type: instance-network-type
                   value: VPC
     """
     # 实例的网络类型，取值：
@@ -268,7 +238,7 @@ class InstanceNetworkTypeRdsFilter(AliyunRdsFilter):
     # Classic：经典网络
     # VPC：VPC网络
     schema = type_schema(
-        'InstanceNetworkType',
+        'instance-network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -276,7 +246,7 @@ class InstanceNetworkTypeRdsFilter(AliyunRdsFilter):
             return False
         return i
 
-@Rds.filter_registry.register('InternetAccess')
+@Rds.filter_registry.register('internet-access')
 class InternetAccessRdsFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -287,11 +257,11 @@ class InternetAccessRdsFilter(AliyunRdsFilter):
             - name: aliyun-rds-internet-access
               resource: aliyun.rds
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

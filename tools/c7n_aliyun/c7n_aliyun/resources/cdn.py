@@ -32,7 +32,7 @@ class Cdn(QueryResourceManager):
         request = DescribeUserDomainsRequest()
         return request
 
-@Cdn.filter_registry.register('SslProtocol')
+@Cdn.filter_registry.register('ssl-protocol')
 class SslProtocolCdnFilter(AliyunCdnFilter):
     """Filters
        :Example:
@@ -43,11 +43,11 @@ class SslProtocolCdnFilter(AliyunCdnFilter):
             - name: aliyun-cdn-ssl-protocol
               resource: aliyun.cdn
               filters:
-                - type: SslProtocol
+                - type: ssl-protocol
                   value: "off"
     """
     schema = type_schema(
-        'SslProtocol',
+        'ssl-protocol',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):

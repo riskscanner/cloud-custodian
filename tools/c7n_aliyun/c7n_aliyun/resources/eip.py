@@ -53,6 +53,11 @@ class AliyunEipFilter(AliyunEipFilter):
     # Available：可用。
     schema = type_schema('Available')
 
+    def get_request(self, i):
+        if i['Status'] != self.data['type']:
+            return False
+        return i
+
 @Eip.filter_registry.register('metrics')
 class EipMetricsFilter(MetricsFilter):
 
@@ -82,7 +87,7 @@ class EipMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
-@Eip.filter_registry.register('Bandwidth')
+@Eip.filter_registry.register('bandwidth')
 class BandwidthEipFilter(AliyunEipFilter):
     """Filters
        :Example:
@@ -97,7 +102,7 @@ class BandwidthEipFilter(AliyunEipFilter):
                   value: 10
     """
     schema = type_schema(
-        'Bandwidth',
+        'bandwidth',
         **{'value': {'type': 'number'}})
 
     def get_request(self, i):

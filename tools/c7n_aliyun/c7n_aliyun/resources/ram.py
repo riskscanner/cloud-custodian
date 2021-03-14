@@ -35,7 +35,7 @@ class Ram(QueryResourceManager):
         request = ListUsersRequest()
         return request
 
-@Ram.filter_registry.register('MFA')
+@Ram.filter_registry.register('mfa')
 class MFA(AliyunRamFilter):
 
     """Filters
@@ -47,12 +47,12 @@ class MFA(AliyunRamFilter):
             - name: aliyun-ram-mfa
               resource: aliyun.ram
               filters:
-                - type: MFA
+                - type: mfa
                   value: false
     """
     mfa_bind_required = 'LoginProfile.MFABindRequired'
     schema = type_schema(
-        'MFA',
+        'mfa',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

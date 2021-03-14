@@ -43,7 +43,7 @@ class MongoDB(QueryResourceManager):
     def get_request(self):
         return DescribeInstancesRequest()
 
-@MongoDB.filter_registry.register('NetworkType')
+@MongoDB.filter_registry.register('network-type')
 class NetworkTypeMongoDBFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -54,7 +54,7 @@ class NetworkTypeMongoDBFilter(AliyunRdsFilter):
             - name: aliyun-mongodb-network-type
               resource: aliyun.mongodb
               filters:
-                - type: NetworkType
+                - type: network-type
                   value: VPC
     """
     # 实例的网络类型，取值：
@@ -62,7 +62,7 @@ class NetworkTypeMongoDBFilter(AliyunRdsFilter):
     # Classic：经典网络
     # VPC：VPC网络
     schema = type_schema(
-        'NetworkType',
+        'network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -71,7 +71,7 @@ class NetworkTypeMongoDBFilter(AliyunRdsFilter):
             return False
         return i
 
-@MongoDB.filter_registry.register('InternetAccess')
+@MongoDB.filter_registry.register('internet-access')
 class InternetAccessMongoDBFilter(AliyunRdsFilter):
     """Filters
        :Example:
@@ -82,11 +82,11 @@ class InternetAccessMongoDBFilter(AliyunRdsFilter):
             - name: aliyun-mongodb-internet-access
               resource: aliyun.mongodb
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):

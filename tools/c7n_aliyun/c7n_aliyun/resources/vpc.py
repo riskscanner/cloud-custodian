@@ -110,7 +110,7 @@ class SecurityGroup(QueryResourceManager):
         request = DescribeSecurityGroupsRequest()
         return request
 
-@SecurityGroup.filter_registry.register('SourceCidrIp')
+@SecurityGroup.filter_registry.register('source-cidr-ip')
 class IPPermission(AliyunSgFilter):
 
     """Filters
@@ -122,13 +122,13 @@ class IPPermission(AliyunSgFilter):
             - name: aliyun-sg-sourcecidrip
               resource: aliyun.security-group
               filters:
-                - type: SourceCidrIp
+                - type: source-cidr-ip
                   value: "0.0.0.0/0"
     """
 
     ip_permissions_key = "Permissions.Permission"
     schema = type_schema(
-        'SourceCidrIp',
+        'source-cidr-ip',
         **{'value': {'type': 'string'}})
 
     def get_request(self, sg):

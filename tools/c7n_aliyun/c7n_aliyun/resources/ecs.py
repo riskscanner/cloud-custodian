@@ -39,7 +39,7 @@ class Ecs(QueryResourceManager):
         request = DescribeInstancesRequest()
         return request
 
-@Ecs.filter_registry.register('PublicIpAddress')
+@Ecs.filter_registry.register('public-ip-address')
 class PublicIpAddress(AliyunEcsFilter):
 
     """Filters
@@ -51,7 +51,7 @@ class PublicIpAddress(AliyunEcsFilter):
             - name: aliyun-ecs-public-ipaddress
               resource: aliyun.ecs
               filters:
-                - type: PublicIpAddress
+                - type: public-ip-address
     """
     public_ip_address = "PublicIpAddress.IpAddress"
     schema = type_schema('PublicIpAddress')
@@ -59,6 +59,10 @@ class PublicIpAddress(AliyunEcsFilter):
     def get_request(self, i):
         data = jmespath.search(self.public_ip_address, i)
         if len(data) == 0:
+            return False
+        if self.data['type'] == 'public-ip-address':
+            return i
+        if i['Status'] != self.data['type']:
             return False
         return i
 
@@ -106,7 +110,7 @@ class EcsMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
-@Ecs.filter_registry.register('InstanceNetworkType')
+@Ecs.filter_registry.register('instance-network-type')
 class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):
     """Filters
        :Example:
@@ -117,7 +121,7 @@ class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):
             - name: aliyun-ecs-instance-network-type
               resource: aliyun.ecs
               filters:
-                - type: InstanceNetworkType
+                - type: instance-network-type
                   value: vpc
     """
     # 实例的网络类型，取值：
@@ -125,7 +129,7 @@ class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):
     # classic：经典网络
     # vpc：专有网络VPC
     schema = type_schema(
-        'InstanceNetworkType',
+        'instance-network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):

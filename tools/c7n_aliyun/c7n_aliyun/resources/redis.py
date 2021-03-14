@@ -42,7 +42,7 @@ class Redis(QueryResourceManager):
     def get_request(self):
         return DescribeInstancesRequest()
 
-@Redis.filter_registry.register('NetworkType')
+@Redis.filter_registry.register('network-type')
 class NetworkTypeRedisFilter(AliyunRedisFilter):
     """Filters
        :Example:
@@ -53,7 +53,7 @@ class NetworkTypeRedisFilter(AliyunRedisFilter):
             - name: aliyun-redis-network-type
               resource: aliyun.redis
               filters:
-                - type: NetworkType
+                - type: network-type
                   value: VPC
     """
     # 实例的网络类型，取值：
@@ -61,7 +61,7 @@ class NetworkTypeRedisFilter(AliyunRedisFilter):
     # CLASSIC：经典网络
     # VPC：VPC网络
     schema = type_schema(
-        'NetworkType',
+        'network-type',
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
@@ -69,7 +69,7 @@ class NetworkTypeRedisFilter(AliyunRedisFilter):
             return False
         return i
 
-@Redis.filter_registry.register('InternetAccess')
+@Redis.filter_registry.register('internet-access')
 class InternetAccessMongoDBFilter(AliyunRedisFilter):
     """Filters
        :Example:
@@ -80,11 +80,11 @@ class InternetAccessMongoDBFilter(AliyunRedisFilter):
             - name: aliyun-redis-internet-access
               resource: aliyun.redis
               filters:
-                - type: InternetAccess
+                - type: internet-access
                   value: true
     """
     schema = type_schema(
-        'InternetAccess',
+        'internet-access',
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
