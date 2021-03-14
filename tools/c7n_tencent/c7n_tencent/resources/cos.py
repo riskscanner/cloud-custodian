@@ -37,7 +37,7 @@ class Cos(QueryResourceManager):
     class resource_type(TypeInfo):
         service = 'coss3_client.cos'
         enum_spec = (None, 'Buckets.Bucket', None)
-        id = 'BucketId'
+        id = 'Name'
 
     def get_request(self):
         try:

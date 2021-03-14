@@ -44,6 +44,7 @@ class ResourceQuery:
             result = client.listBuckets()
             buckets = []
             for b in result.buckets:
+                b.__dict__['F2CId'] = b.__dict__[m.id]
                 buckets.append(b.__dict__)
             return buckets
         else:
@@ -56,7 +57,10 @@ class ResourceQuery:
             true = "true"
             if path is None:
                 return result
-            return jmespath.search(path, eval(result))
+            res = jmespath.search(path, eval(result))
+            for data in res:
+                data['F2CId'] = data[m.id]
+            return res
 
     def _invoke_client_enum(self, client, request, params, path):
         result = client.do_action_with_exception(request)
