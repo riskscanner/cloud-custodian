@@ -29,7 +29,7 @@ class Redis(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'redis_client.redis'
-        enum_spec = (None, 'Items', None)
+        enum_spec = (None, 'InstanceSet', None)
         id = 'InstanceId'
 
     def get_request(self):

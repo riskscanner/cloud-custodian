@@ -29,7 +29,7 @@ class MongoDB(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'mongodb_client.mongodb'
-        enum_spec = (None, 'Items', None)
+        enum_spec = (None, 'InstanceDetails', None)
         id = 'InstanceId'
 
     def get_request(self):
