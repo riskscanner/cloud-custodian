@@ -235,7 +235,6 @@ class BandwidthSlbFilter(AliyunSlbFilter):
         response = Session.client(self, service).do_action_with_exception(request)
         string = str(response, encoding="utf-8").replace("false", "False")
         data = eval(string)
-        print(data, self.data['value'])
         if self.data['value'] < data['Bandwidth']:
             return False
         data['F2CId'] = data['LoadBalancerId']

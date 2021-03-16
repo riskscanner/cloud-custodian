@@ -103,9 +103,10 @@ class GlobalGrantsFilter(Filter):
         acl = Session.client(self, service).getBucketAcl(b.name)
         b['permission'] = acl.body.grants
         if self.data['value'] == 'read':
-            if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
+            if acl.body.grants != 'PRIVATE' and acl.body.grants != 'BUCKET_OWNER_FULL_CONTROL':
                 return b
+            return False
         if self.data['value'] == 'write':
-            if 'READ' not in str(acl.body.grants) and 'WRITE' not in str(acl.body.grants):
-                return b
-        return False
+            if acl.body.grants == 'PUBLIC_READ_WRITE' and acl.body.grants == 'PUBLIC_READ_WRITE_DELIVERED':
+                return False
+            return b

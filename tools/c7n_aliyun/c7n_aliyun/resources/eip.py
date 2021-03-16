@@ -106,6 +106,6 @@ class BandwidthEipFilter(AliyunEipFilter):
         **{'value': {'type': 'number'}})
 
     def get_request(self, i):
-        if self.data['value'] < i['Bandwidth']:
+        if self.data['value'] < int(i['Bandwidth']):
             return False
         return i

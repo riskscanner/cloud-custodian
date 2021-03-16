@@ -32,7 +32,7 @@ class Redis(QueryResourceManager):
     class resource_type(TypeInfo):
         service = 'redis'
         enum_spec = (None, 'instances', None)
-        id = 'id'
+        id = 'instance_id'
 
     def get_request(self):
         try:
@@ -64,13 +64,15 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
     def get_request(self, i):
         public_ips = i['publicip_id']
         if self.data['value']:
-            if len(public_ips) == 0 and i['enable_ssl'] == False:
-                return None
-            return i
+            if public_ips is None or (len(public_ips) == 0 and i['enable_ssl'] == False):
+                return i
+            return False
         else:
+            if public_ips is None:
+                return False
             if len(public_ips) > 0 and i['enable_ssl'] == True:
-                return None
-            return i
+                return i
+            return False
 
 @Redis.filter_registry.register('no-password-access')
 class NoPasswordAccessRedisFilter(HuaweiRedisFilter):
