@@ -167,6 +167,8 @@ class BucketEncryptionCosFilter(TencentFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
+        from qcloud_cos.cos_client import logger
+        logger.setLevel(logging.FATAL)
         try:
             result = Session.client(self, service).get_bucket_encryption(
                 Bucket=i['Name']
@@ -185,6 +187,6 @@ class BucketEncryptionCosFilter(TencentFilter):
                     if result and result.ServerSideEncryptionConfiguration:
                         return i
                 return False
-        except TencentCloudSDKException as err:
+        except Exception as e:
             pass
         return False

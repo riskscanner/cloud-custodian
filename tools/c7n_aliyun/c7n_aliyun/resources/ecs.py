@@ -60,10 +60,6 @@ class PublicIpAddress(AliyunEcsFilter):
         data = jmespath.search(self.public_ip_address, i)
         if len(data) == 0:
             return False
-        if self.data['type'] == 'public-ip-address':
-            return i
-        if i['Status'] != self.data['type']:
-            return False
         return i
 
 @Ecs.filter_registry.register('instance-age')

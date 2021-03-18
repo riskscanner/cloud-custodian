@@ -43,7 +43,9 @@ class Rds(QueryResourceManager):
         id = 'DBInstanceId'
 
     def get_request(self):
-        return DescribeDBInstancesRequest()
+        request = DescribeDBInstancesRequest()
+        request.set_accept_format('json')
+        return request
 
 @Rds.filter_registry.register('available-zones')
 class AvailableZonesRdsFilter(AliyunRdsFilter):
@@ -119,7 +121,7 @@ class AliyunRdsFilter(AliyunRdsFilter):
         data = eval(string)
         DBInstanceAttributes = data['Items']['DBInstanceAttribute']
         for obj in DBInstanceAttributes:
-            if obj[self.data['type']] == self.data['value']:
+            if obj['SecurityIPMode'] == self.data['value']:
                 return False
         i['DBInstanceAttributes'] = DBInstanceAttributes
         return i
