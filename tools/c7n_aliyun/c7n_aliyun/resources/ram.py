@@ -67,5 +67,5 @@ class MFA(AliyunRamFilter):
                 return False
             i['MFABindRequired'] = jmespath.search('LoginProfile', eval(string))
         except Exception as err:
-            return False
+            pass
         return i

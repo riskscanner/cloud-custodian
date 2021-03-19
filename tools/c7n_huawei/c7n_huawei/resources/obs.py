@@ -62,7 +62,6 @@ class Obs(QueryResourceManager):
             # ObsClient在调用ObsClient.close方法关闭后不能再次使用
             Session.client(self, service).close()
 
-
 @Obs.filter_registry.register('global-grants')
 class GlobalGrantsFilter(Filter):
     """Filters :example:
@@ -103,10 +102,13 @@ class GlobalGrantsFilter(Filter):
         acl = Session.client(self, service).getBucketAcl(b.name)
         b['permission'] = acl.body.grants
         if self.data['value'] == 'read':
-            if acl.body.grants != 'PRIVATE' and acl.body.grants != 'BUCKET_OWNER_FULL_CONTROL':
-                return b
-            return False
+            for obj in acl.body.grants:
+                if obj.grantee.group == 'Everyone':
+                    if obj.permission == 'READ' or obj.permission == 'READ_ACP':
+                        return b
         if self.data['value'] == 'write':
-            if acl.body.grants == 'PUBLIC_READ_WRITE' and acl.body.grants == 'PUBLIC_READ_WRITE_DELIVERED':
-                return False
-            return b
+            for obj in acl.body.grants:
+                if obj.grantee.group == 'Everyone':
+                    if obj.permission == 'WRITE' or obj.permission == 'WRITE_ACP':
+                        return b
+        return False

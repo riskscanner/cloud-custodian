@@ -13,6 +13,7 @@
 # limitations under the License.
 import logging
 
+import jmespath
 import urllib3
 from huaweicloudsdkcore.exceptions import exceptions
 from huaweicloudsdkiam.v3 import *
@@ -32,13 +33,14 @@ class Iam(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'iam'
-        enum_spec = (None, 'login_protects', None)
+        enum_spec = (None, 'users', None)
         id = 'id'
 
     def get_request(self):
         try:
-            request = ListUserLoginProtectsRequest()
-            response = Session.client(self, service).list_user_login_protects(request)
+            request = KeystoneListUsersRequest()
+            response = Session.client(self, service).keystone_list_users(request)
+
         except exceptions.ClientRequestException as e:
             logging.error(e.status_code, e.request_id, e.error_code, e.error_msg)
         return response
@@ -64,6 +66,14 @@ class HuaweiIamLoginFilter(HuaweiIamFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        if self.data['value'] == i['enabled']:
-            return False
+        try:
+            request = ShowUserLoginProtectRequest()
+            request.user_id = i['id']
+            response = Session.client(self, service).show_user_login_protect(request)
+            i['login_protect'] = jmespath.search('login_protect', eval(str(response)))
+            if self.data['value'] == i['login_protect']['enabled']:
+                return False
+            return i
+        except Exception as e:
+            pass
         return i

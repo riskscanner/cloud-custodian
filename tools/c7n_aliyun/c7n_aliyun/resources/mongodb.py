@@ -66,7 +66,6 @@ class NetworkTypeMongoDBFilter(AliyunRdsFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        print(i)
         if self.data['value'] == i['NetworkType']:
             return False
         return i
