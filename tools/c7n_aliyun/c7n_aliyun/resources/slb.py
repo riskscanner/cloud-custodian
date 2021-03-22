@@ -268,7 +268,7 @@ class AclsSlbFilter(AliyunSlbFilter):
             if len(data) == 0:
                 return False
             else:
-                for obj in data:
+                for obj in data['Acls']['Acl']:
                     req = DescribeAccessControlListAttributeRequest()
                     req.set_accept_format('json')
                     req.set_AclId(obj['AclId'])
