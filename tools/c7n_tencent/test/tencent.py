@@ -204,7 +204,6 @@ def list_buckets():
                 Bucket=obj['Name']
             )
             print('response',response)
-            print('response```',response['Contents'])
             response2 = cosClient.get_bucket_acl(
                 Bucket=obj['Name']
             )
@@ -234,6 +233,6 @@ if __name__ == '__main__':
     # DescribeLoadBalancers()
     # DescribeDBInstances()
     # DescribeDCDBInstances()
-    # list_buckets()
+    list_buckets()
     # DescribeBaseMetrics()
-    DescribeTargetsResponse()
+    # DescribeTargetsResponse()

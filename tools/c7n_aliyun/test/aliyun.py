@@ -45,7 +45,8 @@ def _loadFile_():
             sk = line[line.rfind('=') + 1:]
             json['sk'] = sk
         if "aliyun.region" in line:
-            region = line[line.rfind('=') + 1:]
+            # region = line[line.rfind('=') + 1:]
+            region = 'cn-qingdao'
             json['region'] = region
         if "aliyun.ossAk" in line:
             ossAk = line[line.rfind('=') + 1:]
@@ -83,6 +84,11 @@ def list_instances():
         result = map(_print_instance_id, instance_list)
         print("current region include instance %s", result)
         logging.info("current region include instance %s", result)
+
+def list_slb():
+    request = DescribeLoadBalancersRequest()
+    response = _send_request(request)
+    print(response)
 
 def delete_ecs(instance_id):
     request = DeleteInstanceRequest()
@@ -284,7 +290,7 @@ if __name__ == '__main__':
     # stop_instance("i-wz9h7lsnk5beaipnvn97")
     # get_eip()
     # list_sgs()
-    get_oss()
+    # get_oss()
     # get_rds()
     # get_object_acl()
     # get_slb()
@@ -297,3 +303,4 @@ if __name__ == '__main__':
     # get_slb_listener()
     # get_instance_monitor()
     # get_disk()
+    list_slb()

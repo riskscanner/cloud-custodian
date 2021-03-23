@@ -325,6 +325,6 @@ if __name__ == '__main__':
     # list_sg()
     # list_rds()
     # list_cdn()
-    # list_iam()
+    list_iam()
     # list_obs()
-    list_redis()
+    # list_redis()
