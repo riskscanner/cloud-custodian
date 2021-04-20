@@ -58,7 +58,7 @@ class ResourceQuery:
             m = resource_type
         return m
 
-    def _invoke_client_enum(self, client, enum_op, params, path, retry=None):
+    def _invoke_client_enum(self, client, enum_op, params, path, resource_manager, retry=None):
         if client.can_paginate(enum_op):
             p = client.get_paginator(enum_op)
             if retry:
@@ -72,7 +72,9 @@ class ResourceQuery:
         if path:
             path = jmespath.compile(path)
             data = path.search(data)
-
+        m = resource_manager.resource_type
+        for obj in data:
+            obj['F2CId'] = obj[m.id]
         return data
 
     def filter(self, resource_manager, **params):
@@ -84,7 +86,7 @@ class ResourceQuery:
         if extra_args:
             params.update(extra_args)
         return self._invoke_client_enum(
-            client, enum_op, params, path,
+            client, enum_op, params, path, resource_manager,
             getattr(resource_manager, 'retry', None)) or []
 
     def get(self, resource_manager, identities):
@@ -153,17 +155,16 @@ class ChildResourceQuery(ResourceQuery):
         existing_param = parent_key in params
         if not existing_param and len(parent_ids) == 0:
             return []
-
         # Handle a query with parent id
         if existing_param:
-            return self._invoke_client_enum(client, enum_op, params, path)
+            return self._invoke_client_enum(client, enum_op, params, path, resource_manager)
 
         # Have to query separately for each parent's children.
         results = []
         for parent_id in parent_ids:
             merged_params = self.get_parent_parameters(params, parent_id, parent_key)
             subset = self._invoke_client_enum(
-                client, enum_op, merged_params, path, retry=self.manager.retry)
+                client, enum_op, merged_params, path, resource_manager, retry=self.manager.retry)
             if annotate_parent:
                 for r in subset:
                     r[self.parent_key] = parent_id

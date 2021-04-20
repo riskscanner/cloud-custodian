@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import jmespath
 try:
     from collections.abc import Iterable
 except ImportError:
@@ -53,6 +54,9 @@ class ResourceQuery(object):
         try:
             op = getattr(getattr(resource_manager.get_client(), enum_op), list_op)
             result = op(**params)
+
+            for obj in result:
+                obj.F2CId = obj.id
 
             if isinstance(result, Iterable):
                 return [r.serialize(True) for r in result]
