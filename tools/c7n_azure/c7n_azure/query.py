@@ -55,9 +55,6 @@ class ResourceQuery(object):
             op = getattr(getattr(resource_manager.get_client(), enum_op), list_op)
             result = op(**params)
 
-            for obj in result:
-                obj.F2CId = obj.id
-
             if isinstance(result, Iterable):
                 return [r.serialize(True) for r in result]
             elif hasattr(result, 'value'):
