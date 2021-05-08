@@ -49,7 +49,7 @@ def should_load_provider(name, provider_types):
     return False
 
 
-PROVIDER_NAMES = ('aws', 'azure', 'gcp', 'k8s', 'aliyun', 'huawei', 'tencent')
+PROVIDER_NAMES = ('aws', 'azure', 'gcp', 'k8s', 'aliyun', 'huawei', 'tencent', 'openstack')
 
 
 def load_available(resources=True):
@@ -107,5 +107,9 @@ def load_providers(provider_types):
     if should_load_provider('tencent', provider_types):
         from c7n_tencent.entry import initialize_tencent
         initialize_tencent()
+
+    if should_load_provider('openstack', provider_types):
+        from c7n_openstack.entry import initialize_openstack
+        initialize_openstack()
 
     LOADED.update(provider_types)
