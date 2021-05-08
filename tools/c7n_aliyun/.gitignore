@@ -2,3 +2,4 @@
 *py~
 __pycache__
 *.egg-info
+aliyun.py
