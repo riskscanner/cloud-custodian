@@ -1,6 +1,5 @@
 import datetime
 import json
-import logging
 from concurrent.futures import as_completed
 from datetime import timedelta
 
@@ -308,7 +307,7 @@ class SGPermission(Filter):
         fattrs = list(sorted(self.perm_attrs.intersection(self.data.keys())))
         self.ports = 'Ports' in self.data and self.data['Ports'] or ()
         self.only_ports = (
-            'OnlyPorts' in self.data and self.data['OnlyPorts'] or ())
+                'OnlyPorts' in self.data and self.data['OnlyPorts'] or ())
         for f in fattrs:
             fv = self.data.get(f)
             if isinstance(fv, dict):
@@ -625,7 +624,7 @@ class MetricsFilter(Filter):
                     collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_aliyun:detail': 'Fill value for missing data'})
                 else:
                     collected_metrics[key].append({'startTime': self.start, 'endTime': self.end, self.statistics: 0,
-                                               'detail': 'The read and write monitoring value within the specified time range is 0 (or no data)'})
+                                                   'detail': 'The read and write monitoring value within the specified time range is 0 (or no data)'})
             if self.model.service == "disk":
                 for data in collected_metrics[key]:
                     if self.op(data[data_usage], self.value):
