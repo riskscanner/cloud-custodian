@@ -1,9 +1,7 @@
 import datetime
-import json
 from concurrent.futures import as_completed
 from datetime import timedelta
 
-import jmespath
 from dateutil.parser import parse
 from dateutil.tz import tzutc
 from openstack import utils
@@ -14,6 +12,7 @@ from c7n.filters.core import OPERATORS
 from c7n.filters.core import ValueFilter
 from c7n.utils import local_session, chunks
 from c7n.utils import type_schema
+
 
 class HuaweiEcsFilter(Filter):
     schema = None

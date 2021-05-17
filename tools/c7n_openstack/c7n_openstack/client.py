@@ -19,7 +19,6 @@ import os
 
 import openstack
 
-
 log = logging.getLogger('custodian.openstack.client')
 
 

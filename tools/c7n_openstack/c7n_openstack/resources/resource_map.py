@@ -6,4 +6,7 @@ ResourceMap = {
     "openstack.flavor": "c7n_openstack.resources.server.Flavor",
     "openstack.user": "c7n_openstack.resources.user.User",
     "openstack.volume": "c7n_openstack.resources.volume.Volume",
+    "openstack.image": "c7n_openstack.resources.image.Image",
+    "openstack.network": "c7n_openstack.resources.network.Network",
+    "openstack.security-groups": "c7n_openstack.resources.security-groups.SecurityGroups",
 }

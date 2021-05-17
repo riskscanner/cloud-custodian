@@ -7,14 +7,14 @@ import os
 import uuid
 
 # Load resource plugins
-from c7n_aliyun.entry import initialize_aliyun
+from c7n_openstack.entry import initialize_openstack
 
 from c7n.config import Config
 from c7n.loader import PolicyLoader
 
-initialize_aliyun()
+initialize_openstack()
 
-log = logging.getLogger('custodian.aliyun.functions')
+log = logging.getLogger('custodian.openstack.functions')
 
 logging.getLogger().setLevel(logging.INFO)
 

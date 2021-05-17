@@ -13,7 +13,7 @@
 # limitations under the License.
 import logging
 
-from c7n_aliyun import mu
+from c7n_openstack import mu
 from dateutil.tz import tz
 
 from c7n.exceptions import PolicyValidationError
@@ -26,7 +26,7 @@ DEFAULT_REGION = 'us-central1'
 class FunctionMode(ServerlessExecutionMode):
 
     schema = type_schema(
-        'aliyun',
+        'openstack',
         **{'execution-options': {'$ref': '#/definitions/basic_dict'},
            'timeout': {'type': 'string'},
            'memory-size': {'type': 'integer'},
@@ -39,7 +39,7 @@ class FunctionMode(ServerlessExecutionMode):
 
     def __init__(self, policy):
         self.policy = policy
-        self.log = logging.getLogger('custodian.aliyun.funcexec')
+        self.log = logging.getLogger('custodian.openstack.funcexec')
         self.region = policy.options.regions[0] if len(policy.options.regions) else DEFAULT_REGION
 
     def run(self):
@@ -61,7 +61,7 @@ class FunctionMode(ServerlessExecutionMode):
         raise NotImplementedError("subclass responsibility")
 
 
-@execution.register('aliyun-periodic')
+@execution.register('openstack-periodic')
 class PeriodicMode(FunctionMode, PullMode):
     """Deploy a policy as a Cloud Functions triggered by Cloud Scheduler
     at user defined cron interval via Pub/Sub.
@@ -71,7 +71,7 @@ class PeriodicMode(FunctionMode, PullMode):
     """
 
     schema = type_schema(
-        'aliyun-periodic',
+        'openstack-periodic',
         rinherit=FunctionMode.schema,
         required=['schedule'],
         **{'trigger-type': {'enum': ['http', 'pubsub']},
@@ -82,10 +82,10 @@ class PeriodicMode(FunctionMode, PullMode):
         mode = self.policy.data['mode']
         if 'tz' in mode:
             error = PolicyValidationError(
-                "policy:%s aliyun-periodic invalid tz:%s" % (
+                "policy:%s openstack-periodic invalid tz:%s" % (
                     self.policy.name, mode['tz']))
             # We can't catch all errors statically, our local tz retrieval
-            # then the form aliyun is using, ie. not all the same aliases are
+            # then the form openstack is using, ie. not all the same aliases are
             # defined.
             tzinfo = tz.gettz(mode['tz'])
             if tzinfo is None:
@@ -103,14 +103,14 @@ class PeriodicMode(FunctionMode, PullMode):
         return PullMode.run(self)
 
 
-@execution.register('aliyun-audit')
+@execution.register('openstack-audit')
 class ApiAuditMode(FunctionMode):
-    """Custodian policy execution on aliyun api audit logs events.
+    """Custodian policy execution on openstack api audit logs events.
 
     Deploys as a Cloud Function triggered by api calls. This allows
     you to apply your policies as soon as an api call occurs. Audit
-    logs creates an event for every api call that occurs in your aliyun
-    account. See `aliyun Audit Logs
+    logs creates an event for every api call that occurs in your openstack
+    account. See `openstack Audit Logs
     <https://cloud.google.com/logging/docs/audit/>`_ for more
     details.
 
@@ -120,13 +120,13 @@ class ApiAuditMode(FunctionMode):
     """
 
     schema = type_schema(
-        'aliyun-audit',
+        'openstack-audit',
         methods={'type': 'array', 'items': {'type': 'string'}},
         required=['methods'],
         rinherit=FunctionMode.schema)
 
     def resolve_resources(self, event):
-        """Resolve a aliyun resource from its audit trail metadata.
+        """Resolve a openstack resource from its audit trail metadata.
         """
         if self.policy.resource_manager.resource_type.get_requires_event:
             return [self.policy.resource_manager.get_resource(event)]
@@ -154,7 +154,7 @@ class ApiAuditMode(FunctionMode):
                     self.policy.resource_type))
 
     def run(self, event, context):
-        """Execute a aliyun serverless model"""
+        """Execute a openstack serverless model"""
         from c7n.actions import EventAction
 
         resources = self.resolve_resources(event)

@@ -17,6 +17,32 @@ class User(QueryResourceManager):
         default_report_fields = ['id', 'name', 'enabled', 'description']
 
 
+@User.filter_registry.register('project')
+class ProjectFilter(Filter):
+    """Filters Users based on their project
+    :example:
+    .. code-block:: yaml
+            policies:
+              - name: demo
+                resource: openstack.user
+                filters:
+                  - type: project
+                    default_project_id: ''
+    """
+    schema = type_schema(
+        'project',
+        default_project_id={'type': 'string'},
+    )
+    def process(self, resources, event=None):
+        results = []
+        default_project_id = self.data.get('default_project_id', None)
+        for user in resources:
+            if default_project_id != '' and user.default_project_id != default_project_id:
+                results.append(user)
+            elif default_project_id == '' and user.default_project_id is None:
+                results.append(user)
+        return results
+
 @User.filter_registry.register('role')
 class RoleFilter(Filter):
     """Filters Users based on their role

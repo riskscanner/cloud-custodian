@@ -31,11 +31,14 @@ class ImageFilter(Filter):
     :example:
     .. code-block:: yaml
             policies:
-              - name: dns-hostname-enabled
-                resource: vpc
+              - name: openstack-image
+                resource: openstack.server
                 filters:
-                  - type: image
-                    image_name: test-image
+                  - not:
+                    - type: image
+                      image_name: centos
+                      visibility: private
+                      status: active
     """
     schema = type_schema(
         'image',
@@ -53,6 +56,7 @@ class ImageFilter(Filter):
         images = client.list_images()
         for r in resources:
             image = find_object_by_property(images, 'id', r.image.id)
+            r.image = image
             matched = True
             if not image:
                 if status == "absent":
@@ -75,11 +79,14 @@ class FlavorFilter(Filter):
     :example:
     .. code-block:: yaml
             policies:
-              - name: dns-hostname-enabled
+              - name: openstack-server-flavor
                 resource: openstack.server
                 filters:
                   - type: flavor
-                    flavor_name: m1.tiny
+                    is_public: true
+                    ram: 512
+                    vcpus: 1
+                    disk: 1
     """
     schema = type_schema(
         'flavor',
@@ -104,11 +111,11 @@ class FlavorFilter(Filter):
             return False
         if flavor_id and flavor.id != flavor_id:
             return False
-        if vcpus and flavor.vcpus != int(vcpus):
+        if vcpus and flavor.vcpus > int(vcpus):
             return False
-        if ram and flavor.ram != int(ram):
+        if ram and flavor.ram > int(ram):
             return False
-        if disk and flavor.disk != int(disk):
+        if disk and flavor.disk > int(disk):
             return False
         if ephemeral and flavor.ephemeral != int(ephemeral):
             return False
@@ -157,7 +164,7 @@ class TagsFilter(Filter):
     :example:
     .. code-block:: yaml
             policies:
-              - name: demo
+              - name: openstack-server-tags
                 resource: openstack.server
                 filters:
                   - type: tags

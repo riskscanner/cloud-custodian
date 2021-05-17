@@ -16,7 +16,7 @@ import hashlib
 import json
 from urllib.parse import urlparse
 
-from c7n_aliyun.provider import resources as aliyun_resources
+from c7n_openstack.provider import resources as openstack_resources
 
 from c7n.exceptions import PolicyExecutionError, PolicyValidationError
 from c7n.utils import local_session, type_schema
@@ -32,8 +32,8 @@ class PostFinding(MethodAction):
     .. code-block:: yaml
 
        policies:
-         - name: aliyun-instances-with-label
-           resource: aliyun.instance
+         - name: openstack-instances-with-label
+           resource: openstack.instance
            filters:
              - "tag:name": "bad-instance"
            actions:
@@ -240,4 +240,4 @@ ResourceNameAdapters = {
     'storage': name_storage,
 }
 
-aliyun_resources.subscribe(PostFinding.register_resource)
+openstack_resources.subscribe(PostFinding.register_resource)
