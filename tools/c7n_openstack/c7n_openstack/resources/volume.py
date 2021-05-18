@@ -40,7 +40,7 @@ class StatusFilter(Filter):
             if is_encrypted != volume.is_encrypted:
                 return True
         if volume_status:
-            if volume_status != volume.volume_status:
+            if volume_status != volume.status:
                 return True
         if system_scope:
             if len(volume.attachments) == 0:

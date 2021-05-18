@@ -89,7 +89,6 @@ class SourceCidrIp(OpenstackFilter):
 
     def get_request(self, sg):
         for cidr in jmespath.search(self.ip_permissions_key, sg):
-            print(cidr['remote_ip_prefix'])
             if cidr['remote_ip_prefix'] == self.data['value']:
                 return sg
         return False
