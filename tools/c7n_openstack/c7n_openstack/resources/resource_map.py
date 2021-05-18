@@ -9,4 +9,5 @@ ResourceMap = {
     "openstack.image": "c7n_openstack.resources.image.Image",
     "openstack.network": "c7n_openstack.resources.network.Network",
     "openstack.security-groups": "c7n_openstack.resources.security-groups.SecurityGroups",
+    "openstack.router": "c7n_openstack.resources.router.Router",
 }

@@ -30,11 +30,11 @@ class IPIngressPermission(SGPermission):
                 filters:
                   - or:
                     - type: ingress
-                      IpProtocol: tcp
+                      IpProtocol: "-1"
                       Ports: [20,21,22,25,80,773,765, 1733,1737,3306,3389,7333,5732,5500]
                       Cidr: "0.0.0.0/0"
                     - type: ingress
-                      IpProtocol: tcp
+                      IpProtocol: "-1"
                       Ports: [20,21,22,25,80,773,765, 1733,1737,3306,3389,7333,5732,5500]
                       Cidr: "::/0"
     """

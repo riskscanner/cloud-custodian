@@ -12,6 +12,14 @@ from c7n.filters.core import ValueFilter
 class PolicyFilter:
     pass
 
+class Filter(Filter):
+
+    def validate(self):
+        return self
+
+    def __call__(self, i):
+        return i
+
 class OpenstackFilter(Filter):
 
     def validate(self):
@@ -180,12 +188,11 @@ class SGPermission(Filter):
         return super(SGPermission, self).process(resources, event)
 
     def process_ports(self, perm):
-        print(perm['remote_ip_prefix'])
         found = None
-        if perm['description'] == '允许所有':
-            return False
+        if perm['remote_ip_prefix'] == '0.0.0.0/0' or perm['remote_ip_prefix'] == '::/0':
+            return True
         if perm['port_range_min'] is None or perm['port_range_max'] is None :
-            return False
+            return True
         FromPort = int(perm['port_range_min'])
         ToPort = int(perm['port_range_max'])
         for port in self.ports:
@@ -306,9 +313,7 @@ class SGPermission(Filter):
             match = match_op(perm_match_values)
             if match:
                 matched.append(perm)
-
         if matched:
-            resource['Matched%s' % self.ip_permissions_key] = matched
             return True
 
 SGPermissionSchema = {
