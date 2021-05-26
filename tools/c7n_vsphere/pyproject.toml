@@ -17,6 +17,10 @@ classifiers = [
 python = "^3.7"
 pyvmomi = "^7.0.2"
 cryptography = "^2.9.2"
+lxml = "^4.6.3"
+vmware-nsx = "17.0.0"
+suds-jurko = "^0.6"
+oslo-vmware = "^3.9.0"
 
 [tool.poetry.dev-dependencies]
 c7n = {path = "../..", develop = true}
