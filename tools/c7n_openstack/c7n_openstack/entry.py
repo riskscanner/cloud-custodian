@@ -7,6 +7,10 @@ from c7n_openstack.resources import (
     flavor,
     server,
     user,
+    volume,
+    image,
+    network,
+    router
 )
 
 log = logging.getLogger('custodian.openstack')
@@ -15,7 +19,12 @@ ALL = [
     flavor,
     project,
     server,
-    user]
+    user,
+    volume,
+    image,
+    network,
+    router
+]
 
 
 def initialize_openstack():

@@ -3,8 +3,7 @@
 import logging
 import os
 
-from c7n.resources import load_resources
-from c7n_openstack.client import Session
+import openstack
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 # 本地测试用例
@@ -34,7 +33,6 @@ def _loadFile_():
     return json
 
 params = _loadFile_()
-load_resources()
 
 OPENSTACK_CONFIG = {
     'OS_USERNAME': params['OS_USERNAME'],
@@ -54,9 +52,13 @@ def init_openstack_config():
     for k, v in OPENSTACK_CONFIG.items():
         os.environ[k] = v
 
-def list_users(self):
+def client():
+    cloud = openstack.connect(cloud=os.getenv('OS_CLOUD_NAME'))
+    return cloud
+
+def list_users(self=None):
     print("List Users:")
-    for user in Session.client(self).list_users(self):
+    for user in client().list_users(self):
         print(user)
 
 if __name__ == '__main__':

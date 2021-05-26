@@ -26,11 +26,13 @@ log = logging.getLogger('custodian.vsphere.client')
 
 
 class Session:
-    def __init__(self):
+    def __init__(self, regionId=None):
         self.username = os.getenv('VSPHERE_USERNAME')
         self.password = os.getenv('VSPHERE_PASSWORD')
         self.server = os.getenv('VSPHERE_ENDPOINT')
-        self.region = os.getenv('VSPHERE_DEFAULT_REGION')
+        if not regionId:
+            regionId = os.getenv('VSPHERE_DEFAULT_REGION')
+        self.regionId = regionId
 
     def client(self):
         vsphere_client = create_vsphere_client(server=os.getenv('VSPHERE_ENDPOINT'), username=os.getenv('VSPHERE_USERNAME'), password=os.getenv('VSPHERE_PASSWORD'), session=session)

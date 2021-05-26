@@ -23,9 +23,12 @@ log = logging.getLogger('custodian.openstack.client')
 
 
 class Session:
-    def __init__(self):
+    def __init__(self, regionId=None):
         self.http_proxy = os.getenv('HTTPS_PROXY')
         self.cloud_name = os.getenv('OS_CLOUD_NAME')
+        if not regionId:
+            regionId = os.getenv('OS_DEFAULT_REGION')
+        self.regionId = regionId
 
     def client(self):
         if self.cloud_name:
