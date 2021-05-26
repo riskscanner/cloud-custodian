@@ -8,7 +8,10 @@
 -r tools/c7n_mailer/requirements.txt
 -r tools/c7n_org/requirements.txt
 -r tools/c7n_aliyun/requirements.txt
+-r tools/c7n_huawei/requirements.txt
+-r tools/c7n_tencent/requirements.txt
 -r tools/c7n_openstack/requirements.txt
+-r tools/c7n_vsphere/requirements.txt
 
 # Setup source directories as editable/development distributions
 -e .
@@ -22,10 +25,16 @@
 -e tools/c7n_kube
 # Local package required for c7n_org tests
 -e tools/c7n_org
-# Local package required for c7n_openstack tests
+# Local package required for c7n_aliyun tests
 -e tools/c7n_aliyun
-# Local package required for c7n_openstack tests
+# Local package required for c7n_huawei tests
+-e tools/c7n_huawei
+# Local package required for c7n_tencent tests
+-e tools/c7n_tencent
+# Local package required for c7n_vsphere tests
 -e tools/c7n_openstack
+# Local package required for c7n_vsphere tests
+-e tools/c7n_vsphere
 
 # we don't export dev requirements of subpackages (due to editable/distribution above)
 # so explicitly list them here..

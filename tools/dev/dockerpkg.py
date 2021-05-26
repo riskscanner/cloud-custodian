@@ -63,17 +63,19 @@ ADD tools/c7n_azure /src/tools/c7n_azure
 RUN rm -R tools/c7n_azure/tests_azure
 ADD tools/c7n_kube /src/tools/c7n_kube
 RUN rm -R tools/c7n_kube/tests
-ADD tools/c7n_openstack /src/tools/c7n_aliyun
+ADD tools/c7n_vsphere /src/tools/c7n_aliyun
 RUN rm -R tools/c7n_aliyun/test
 ADD tools/c7n_huawei /src/tools/c7n_huawei
 RUN rm -R tools/c7n_huawei/test
 ADD tools/c7n_tencent /src/tools/c7n_tencent
 RUN rm -R tools/c7n_tencent/test
-ADD tools/c7n_openstack /src/tools/c7n_openstack
-RUN rm -R tools/c7n_openstack/test
+ADD tools/c7n_vsphere /src/tools/c7n_vsphere
+RUN rm -R tools/c7n_vsphere/test
+ADD tools/c7n_vsphere /src/tools/c7n_vsphere
+RUN rm -R tools/c7n_vsphere/test
 
 # Install requested providers
-ARG providers="azure gcp kube aliyun huawei tencent openstack"
+ARG providers="azure gcp kube aliyun huawei tencent openstack vsphere"
 RUN . /usr/local/bin/activate && \\
     for pkg in $providers; do cd tools/c7n_$pkg && \\
     $HOME/.poetry/bin/poetry install && cd ../../; done

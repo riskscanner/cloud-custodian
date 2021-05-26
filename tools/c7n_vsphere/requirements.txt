@@ -1,0 +1,6 @@
+git+git://github.com/vmware/vsphere-automation-sdk-python.git
+pyvmomi==7.0.2
+lxml==4.6.3
+vmware-nsx==17.0.0
+suds-jurko==0.6
+oslo.vmware==3.9.0

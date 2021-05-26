@@ -553,6 +553,14 @@ def version_cmd(options):
         packages.append('c7n_azure')
     if 'k8s' in found:
         packages.append('c7n_kube')
+    if 'aliyun' in found:
+        packages.append('c7n_aliyun')
+    if 'tencent' in found:
+        packages.append('c7n_tencent')
+    if 'huawei' in found:
+        packages.append('c7n_huawei')
     if 'openstack' in found:
         packages.append('c7n_openstack')
+    if 'vsphere' in found:
+        packages.append('c7n_vsphere')
     print(generate_requirements(packages))
