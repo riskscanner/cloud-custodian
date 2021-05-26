@@ -40,7 +40,7 @@ ADD tools/c7n_vsphere /src/tools/c7n_vsphere
 RUN rm -R tools/c7n_vsphere/test
 
 # Install requested providers
-ARG providers="azure gcp kube aliyun huawei tencent openstack vsphere"
+ARG providers="azure aliyun huawei tencent openstack vsphere"
 RUN . /usr/local/bin/activate && \
     for pkg in $providers; do cd tools/c7n_$pkg && \
     $HOME/.poetry/bin/poetry lock && \
