@@ -2,4 +2,3 @@
 *py~
 __pycache__
 *.egg-info
-vsphere.py
