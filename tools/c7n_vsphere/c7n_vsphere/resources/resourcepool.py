@@ -25,13 +25,16 @@ class ResourcePool(QueryResourceManager):
         res = []
         for item in resource_pools:
             #{name : Resources, resource_pools : set(), cpu_allocation : None, memory_allocation : None}
-            resource_pool = client.vcenter.ResourcePool.get(item.resource_pool)
+            try:
+                resource_pool = client.vcenter.ResourcePool.get(item.resource_pool)
+            except:
+                resource_pool = None
             data= {
                 "F2CId": item.resource_pool,
                 "resource_pool": item.resource_pool,
                 "name": item.name,
-                "cpu_allocation": resource_pool.cpu_allocation,
-                "memory_allocation": resource_pool.memory_allocation
+                "cpu_allocation": str(resource_pool.cpu_allocation) if (resource_pool is not None) else None,
+                "memory_allocation": str(resource_pool.memory_allocation) if (resource_pool is not None) else None,
             }
             res.append(data)
         return json.dumps(res)

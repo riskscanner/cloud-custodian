@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 import json
+import logging
 
 from c7n.filters import Filter
 from c7n.utils import type_schema
@@ -9,6 +10,7 @@ from c7n_vsphere.client import Session
 from c7n_vsphere.provider import resources
 from c7n_vsphere.query import QueryResourceManager, TypeInfo
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 
 @resources.register('vm')
 class VM(QueryResourceManager):
@@ -25,7 +27,10 @@ class VM(QueryResourceManager):
         #{guest_os : CENTOS_7_64, name : FIT2CLOUD-2.0-TRY2, identity : None, power_state : POWERED_ON, instant_clone_frozen : None, hardware : {version : VMX_14, upgrade_policy : NEVER, upgrade_version : None, upgrade_status : NONE, upgrade_error : None}, boot : {type : BIOS, efi_legacy_boot : None, network_protocol : None, delay : 0, retry : False, retry_delay : 10, enter_setup_mode : False}, boot_devices : [], cpu : {count : 4, cores_per_socket : 1, hot_add_enabled : False, hot_remove_enabled : False}, memory : {size_mib : 16384, hot_add_enabled : False, hot_add_increment_size_mib : None, hot_add_limit_mib : None}, disks : {'2000': Info(label='Hard disk 1', type=HostBusAdapterType(string='SCSI'), ide=None, scsi=ScsiAddressInfo(bus=0, unit=0), sata=None, backing=BackingInfo(type=BackingType(string='VMDK_FILE'), vmdk_file='[Local] FIT2CLOUD-2.0-TRY2/FIT2CLOUD-2.0-TRY2-000001.vmdk'), capacity=107374182400)}, nics : {'4000': Info(label='Network adapter 1', type=EmulationType(string='VMXNET3'), upt_compatibility_enabled=True, mac_type=MacAddressType(string='GENERATED'), mac_address='00:0c:29:24:5d:a3', pci_slot_number=192, wake_on_lan_enabled=False, backing=BackingInfo(type=BackingType(string='STANDARD_PORTGROUP'), network='network-12', network_name='VM Network', host_device=None, distributed_switch_uuid=None, distributed_port=None, connection_cookie=None, opaque_network_type=None, opaque_network_id=None), state=ConnectionState(string='CONNECTED'), start_connected=True, allow_guest_control=True)}, cdroms : {'16000': Info(type=HostBusAdapterType(string='SATA'), label='CD/DVD drive 1', ide=None, sata=SataAddressInfo(bus=0, unit=0), backing=BackingInfo(type=BackingType(string='ISO_FILE'), iso_file='[Local] iso/CentOS-7-x86_64-Minimal-1804.iso', host_device=None, auto_detect=None, device_access_type=None), state=ConnectionState(string='NOT_CONNECTED'), start_connected=True, allow_guest_control=True)}, floppies : {}, parallel_ports : {}, serial_ports : {}, sata_adapters : {'15000': Info(label='SATA controller 0', type=Type(string='AHCI'), bus=0, pci_slot_number=35)}, scsi_adapters : {'1000': Info(label='SCSI controller 0', type=Type(string='PVSCSI'), scsi=ScsiAddressInfo(bus=0, unit=7), pci_slot_number=160, sharing=Sharing(string='NONE'))}}
         res = []
         for item in vms:
-            vm = client.vcenter.VM.get(item.vm)
+            try:
+                vm = client.vcenter.VM.get(item.vm)
+            except:
+                vm = None
             data= {
                 "F2CId": item.vm,
                 "vm": item.vm,
@@ -33,15 +38,15 @@ class VM(QueryResourceManager):
                 "power_state": str(item.power_state),
                 "cpu_count": item.cpu_count,
                 "memory_size_mib": item.memory_size_mib,
-                "guest_os": str(vm.guest_os),
-                "identity": vm.identity,
-                "instant_clone_frozen": vm.instant_clone_frozen,
-                "hardware": str(vm.hardware),
-                "boot": str(vm.boot),
-                "boot_devices": vm.boot_devices,
-                "cpu": str(vm.cpu),
-                "memory": str(vm.memory),
-                "disks": str(vm.disks),
+                "guest_os": str(vm.guest_os) if (vm is not None) else None,
+                "identity": str(vm.identity) if (vm is not None) else None,
+                "instant_clone_frozen": vm.instant_clone_frozen if (vm is not None) else None,
+                "hardware": str(vm.hardware) if (vm is not None) else None,
+                "boot": str(vm.boot) if (vm is not None) else None,
+                "boot_devices": vm.boot_devices if (vm is not None) else None,
+                "cpu": str(vm.cpu) if (vm is not None) else None,
+                "memory": str(vm.memory) if (vm is not None) else None,
+                "disks": str(vm.disks) if (vm is not None) else None,
             }
             res.append(data)
         return json.dumps(res)
