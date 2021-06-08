@@ -36,7 +36,7 @@ class IPIngressPermission(SGPermission):
                     - type: ingress
                       IpProtocol: "-1"
                       Ports: [20,21,22,25,80,773,765, 1733,1737,3306,3389,7333,5732,5500]
-                      Cidr: "::/0"
+                      CidrV6: "::/0"
     """
     ip_permissions_key = "security_group_rules"
     schema = {
@@ -47,7 +47,7 @@ class IPIngressPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, 'remote_ip_prefix', 'remote_ip_prefix')
+        return self.process_cidrs(perm, 'remote_ip_prefix', 'remote_ip_prefix')
 
     def securityGroupAttributeRequst(self, sg):
         self.direction = 'Ingress'

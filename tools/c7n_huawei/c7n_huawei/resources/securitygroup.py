@@ -81,7 +81,7 @@ class IPPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, "remote_ip_prefix", "remote_ip_prefix")
+        return self.process_cidrs(perm, "remote_ip_prefix", "remote_ip_prefix")
 
 
     def securityGroupAttributeRequst(self, sg):
@@ -103,7 +103,7 @@ class IPPermission(SGPermission):
         return sg
 
     def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
+        return self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
 
 @SecurityGroup.filter_registry.register('source-cidr-ip')
 class HuaweiSgSourceCidrIp(HuaweiSgFilter):

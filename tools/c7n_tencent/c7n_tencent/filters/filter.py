@@ -329,9 +329,9 @@ class SGPermission(Filter):
         else:
             items = perm.get('IpPermissions').get('Egress')
         for str in items:
-            SourceCidrIp = str.get(SourceCidrIp)
-            if SourceCidrIp:
-                sci = {cidr_type: SourceCidrIp}
+            Cidr = str.get(SourceCidrIp)
+            if Cidr:
+                sci = {cidr_type: Cidr}
                 match_range = self.data[cidr_key]
                 if isinstance(match_range, dict):
                     match_range['key'] = cidr_type
@@ -537,7 +537,6 @@ class MetricsFilter(Filter):
 
             collected_metrics = r.setdefault('c7n_tencent.metrics', {})
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
-            # print(client.do_action(request))
             if key not in collected_metrics:
 
                 collected_metrics[key] = json.loads(reponse)["DataPoints"]
@@ -545,7 +544,6 @@ class MetricsFilter(Filter):
                 if 'missing-value' not in self.data:
                     continue
                 collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_tencent:detail': 'Fill value for missing data'})
-            print(collected_metrics[key][0]['Values'])
             if self.data.get('percent-attr', None) != None:
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):

@@ -157,7 +157,7 @@ class IPPermission(SGPermission):
     schema['properties'].update(SGPermissionSchema)
 
     def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, "SourceCidrIp", "Ipv6SourceCidrIp")
+        return self.process_cidrs(perm, "SourceCidrIp", "Ipv6SourceCidrIp")
 
     def securityGroupAttributeRequst(self, sg):
         requst = DescribeSecurityGroupAttributeRequest();
@@ -185,4 +185,4 @@ class IPPermission(SGPermission):
         return requst
 
     def process_self_cidrs(self, perm):
-        self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
+        return self.process_cidrs(perm, "DestCidrIp", "Ipv6DestCidrIp")
