@@ -285,8 +285,25 @@ class InternetAccessRdsFilter(AliyunRdsFilter):
         if self.data['value']:
             if len(EcsSecurityGroupRelation) == 0 and len(DBInstanceIPArray) == 0:
                 return False
+            elif len(DBInstanceIPArray) > 0:
+                for db in DBInstanceIPArray:
+                    if self.is_internal_ip(db) is not True:
+                        pass
+                return False
         else:
             return False
         i['EcsSecurityGroupRelation'] = EcsSecurityGroupRelation
         i['DBInstanceIPArray'] = DBInstanceIPArray
         return i
+
+    def is_internal_ip(self, ip):
+        ip = self.ip_into_int(ip)
+        net_a = self.ip_into_int('10.255.255.255') >> 24
+        net_b = self.ip_into_int('172.31.255.255') >> 20
+        net_c = self.ip_into_int('192.168.255.255') >> 16
+        return ip >> 24 == net_a or ip >>20 == net_b or ip >> 16 == net_c
+
+    def ip_into_int(self, ip):
+        # 先把 192.168.31.46 用map分割'.'成数组，然后用reduuce+lambda转成10进制的 3232243502
+        # (((((192 * 256) + 168) * 256) + 31) * 256) + 46
+        return self.reduce(lambda x,y:(x<<8)+y,map(int,ip.split('.')))
