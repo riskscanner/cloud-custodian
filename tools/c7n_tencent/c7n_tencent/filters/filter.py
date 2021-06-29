@@ -1,5 +1,6 @@
 import datetime
 import json
+import re
 from concurrent.futures import as_completed
 from datetime import timedelta
 
@@ -283,7 +284,7 @@ class SGPermission(Filter):
             poms = perm['IpPermissions']['Egress']
         for ingress in poms:
             if ingress['Action'] != 'ACCEPT':
-                return False
+                found = False
             if ingress['Port']:
                 FromPort = ingress['Port']
                 for port in self.ports:
@@ -295,19 +296,55 @@ class SGPermission(Filter):
                             strs = FromPort.split(',')
                             for str in strs:
                                 if port == int(str):
-                                    found = True
-                                    break
+                                    return True
                         elif '-' in FromPort:
                             strs = FromPort.split('-')
                             p1 = int(strs[0])
                             p2 = int(strs[1])
                             if port >= p1 and port <= p2:
-                                found = True
-                                break
+                                return True
                         else:
                             if port == int(FromPort):
-                                found = True
-                                break
+                                return True
+                    found = False
+                only_found = False
+                for port in self.only_ports:
+                    if port == FromPort:
+                        only_found = True
+                if self.only_ports and not only_found:
+                    found = found is None or found and True or False
+                if self.only_ports and only_found:
+                    found = False
+            if found:
+                return found
+        return found
+
+    def cidr_process_ports(self, poms):
+        found = None
+        for pom in poms:
+            if pom['Action'] != 'ACCEPT':
+                found = False
+            if pom['Port']:
+                FromPort = pom['Port']
+                for port in self.ports:
+                    if FromPort == "ALL":
+                        found = True
+                        break
+                    else:
+                        if ',' in FromPort:
+                            strs = FromPort.split(',')
+                            for str in strs:
+                                if port == int(str):
+                                    return True
+                        elif '-' in FromPort:
+                            strs = FromPort.split('-')
+                            p1 = int(strs[0])
+                            p2 = int(strs[1])
+                            if port >= p1 and port <= p2:
+                                return True
+                        else:
+                            if port == int(FromPort):
+                                return True
                     found = False
                 only_found = False
                 for port in self.only_ports:
@@ -319,17 +356,30 @@ class SGPermission(Filter):
                     found = False
         return found
 
-
-    def _process_cidr(self, cidr_key, cidr_type, SourceCidrIp, perm):
+    def _process_cidr(self, cidr_key, cidr_type, cidr, perm):
         found = None
-        if not SourceCidrIp:
+        protocol = None
+        if not cidr:
             return False
         if self.ip_permissions_type == 'ingress':
             items = perm.get('IpPermissions').get('Ingress')
         else:
             items = perm.get('IpPermissions').get('Egress')
         for str in items:
-            Cidr = str.get(SourceCidrIp)
+            IpProtocol = self.data['IpProtocol']
+            if IpProtocol in ["-1", -1]:
+                IpProtocol = "ALL"
+            outProtocol = str.get("Protocol")
+            if re.search(IpProtocol, outProtocol, re.IGNORECASE):
+                protocol = True
+            else:
+                if re.search(outProtocol, "ALL", re.IGNORECASE):
+                    protocol = True
+                else:
+                    protocol = False
+            if not protocol:
+                continue
+            Cidr = str.get(cidr)
             if Cidr:
                 sci = {cidr_type: Cidr}
                 match_range = self.data[cidr_key]
@@ -344,7 +394,13 @@ class SGPermission(Filter):
                     pass
                 else:
                     found = False
-        return found
+        if found:
+            found = self.cidr_process_ports(items)
+        if not found:
+            return False
+        if found and protocol:
+            return True
+        return False
 
     def process_cidrs(self, perm, ipv4Cidr, ipv6Cidr):
         found_v6 = found_v4 = None
@@ -415,8 +471,9 @@ class SGPermission(Filter):
             if perm.get('IpPermissions') is None or len(perm.get('IpPermissions').get(self.direction)) == 0:
                 continue
             perm_matches = {}
-            perm_matches['ports'] = self.process_ports(perm)
+            # 将cidrs和ports合并，关联判断
             perm_matches['cidrs'] = self.process_self_cidrs(perm)
+            # perm_matches['ports'] = self.process_ports(perm)
             perm_match_values = list(filter(
                 lambda x: x is not None, perm_matches.values()))
             # account for one python behavior any([]) == False, all([]) == True

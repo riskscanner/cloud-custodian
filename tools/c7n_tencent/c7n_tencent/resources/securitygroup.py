@@ -95,11 +95,11 @@ class IPPermission(SGPermission):
               filters:
                   - or:
                       - type: ingress
-                        IpProtocol: tcp
+                        IpProtocol: TCP
                         Ports: [20,21,22,25,80,443,465,1433,1434,3306,3389,4333,5432,5500]
-                    Cidr: "0.0.0.0/0"
+                        Cidr: "0.0.0.0/0"
                       - type: ingress
-                        IpProtocol: tcp
+                        IpProtocol: TCP
                         Ports: [20,21,22,25,80,443,465,1433,1434,3306,3389,4333,5432,5500]
                         CidrV6: "::/0"
     """
