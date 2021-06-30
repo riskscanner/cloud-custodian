@@ -132,3 +132,27 @@ class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):
         if self.data['value'] == i['InstanceNetworkType']:
             return False
         return i
+
+@Ecs.filter_registry.register('vpc-type')
+class VpcTypeEcsFilter(AliyunEcsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的Ecs实例指定属于哪些VPC, 属于则合规，不属于则"不合规"。
+            - name: aliyun-ecs-vpc-type
+              resource: aliyun.ecs
+              filters:
+                - type: vpc-type
+                  vpcIds: ["111", "222"]
+    """
+    schema = type_schema(
+        'vpc-type',
+        **{'vpcIds': {'type': 'array', 'items': {'type': 'string'}}})
+
+    def get_request(self, i):
+        vpcId = i['VpcAttributes']['VpcId']
+        if vpcId in self.data['vpcIds']:
+            return False
+        return i

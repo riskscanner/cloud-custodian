@@ -40,6 +40,30 @@ class PolarDB(QueryResourceManager):
     def get_request(self):
         return DescribeDBClustersRequest()
 
+@PolarDB.filter_registry.register('vpc-type')
+class VpcTypePolarDBFilter(AliyunRdsFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下的Polardb实例指定属于哪些VPC, 属于则合规，不属于则"不合规"。
+            - name: aliyun-polardb-vpc-type
+              resource: aliyun.polardb
+              filters:
+                - type: vpc-type
+                  vpcIds: ["111", "222"]
+    """
+    schema = type_schema(
+        'vpc-type',
+        **{'vpcIds': {'type': 'array', 'items': {'type': 'string'}}})
+
+    def get_request(self, i):
+        vpcId = i['VpcId']
+        if vpcId in self.data['vpcIds']:
+            return False
+        return i
+
 @PolarDB.filter_registry.register('dbcluster-network-type')
 class DBClusterNetworkTypePolarDBFilter(AliyunRdsFilter):
     """Filters
@@ -90,7 +114,7 @@ class InternetAccessPolarDBFilter(AliyunRdsFilter):
         request.set_accept_format('json')
         request.set_DBClusterId(i['DBClusterId'])
         response = Session.client(self, service).do_action_with_exception(request)
-        string = str(response, encoding="utf-8").replace("false", "False")
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
         data = eval(string)
         DBClusterSecurityGroups = jmespath.search('DBClusterSecurityGroups.DBClusterSecurityGroup', data)
         DBClusterIPArray = jmespath.search('Items.DBClusterIPArray', data)

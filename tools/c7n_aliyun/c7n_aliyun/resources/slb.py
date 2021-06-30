@@ -21,6 +21,7 @@ from aliyunsdkslb.request.v20140515.DescribeAccessControlListsRequest import Des
 from aliyunsdkslb.request.v20140515.DescribeHealthStatusRequest import DescribeHealthStatusRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancerAttributeRequest import DescribeLoadBalancerAttributeRequest
 from aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest import DescribeLoadBalancersRequest
+from aliyunsdkecs.request.v20140526.DescribeVpcsRequest import DescribeVpcsRequest
 
 from c7n.utils import local_session
 from c7n.utils import type_schema
@@ -69,7 +70,7 @@ class AliyunSlbListener(AliyunSlbFilter):
         request.set_LoadBalancerId(i['LoadBalancerId'])
         response = Session.client(self, service).do_action_with_exception(request)
 
-        string = str(response, encoding="utf-8").replace("false", "False")
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
         data = eval(string)
         if self.data['value'] in jmespath.search(self.listener_protocol_key, data):
             return False
@@ -136,6 +137,41 @@ class AliyunSlbNoListener(AliyunSlbListenerFilter):
         BackendServers = response.get('BackendServers').get('BackendServer')
         if len(ListenerPort) == 0 and len(ListenerPortsAndProtocal) == 0 and len(ListenerPortsAndProtocol) == 0 and len(BackendServers) == 0:
             return i
+        return False
+
+@Slb.filter_registry.register('listener-type')
+class AliyunSlbListener(AliyunSlbListenerFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+            # 检测您账号下的SLB负载均衡开启HTTPS或HTTP监听视为合规，否则不合规。
+            - name: aliyun-slb-listener-type
+              resource: aliyun.slb
+              filters:
+                - type: listener-type
+                  value: ["https", "http"]
+    """
+    schema = type_schema(
+        'listener-type',
+        **{'value': {'type': 'array', 'items': {'type': 'string'}}})
+
+    def get_request(self, i):
+        request = DescribeLoadBalancerAttributeRequest()
+        request.set_accept_format('json')
+        request.set_LoadBalancerId(i['LoadBalancerId'])
+        client = local_session(
+            self.manager.session_factory).client(self.manager.get_model().service)
+        response = json.loads(client.do_action(request))
+        ListenerPortAndProtocal = response.get('ListenerPortsAndProtocal').get('ListenerPortAndProtocal')
+        if len(ListenerPortAndProtocal) == 0:
+            return i
+        for ListenerProtocol in ListenerPortAndProtocal:
+            if ListenerProtocol in self.data['value']:
+                return False
         return False
 
 @Slb.filter_registry.register('metrics')
@@ -210,6 +246,30 @@ class NetworkTypeSlbFilter(AliyunSlbFilter):
             return False
         return i
 
+@Slb.filter_registry.register('vpc-type')
+class VpcSlbFilter(AliyunSlbFilter):
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 检测您账号下SLB负载均衡实例指定属于哪些VPC, 属于则合规，不属于则"不合规"。
+            - name: aliyun-slb-vpc-type
+              resource: aliyun.slb
+              filters:
+                - type: vpc-type
+                  vpcIds: ["111", "222"]
+    """
+    schema = type_schema(
+        'vpc-type',
+        **{'vpcIds': {'type': 'array', 'items': {'type': 'string'}}})
+
+    def get_request(self, i):
+        vpcId = i['VpcId']
+        if vpcId in self.data['vpcIds']:
+            return False
+        return i
+
 @Slb.filter_registry.register('bandwidth')
 class BandwidthSlbFilter(AliyunSlbFilter):
     """Filters
@@ -233,7 +293,7 @@ class BandwidthSlbFilter(AliyunSlbFilter):
         request.set_accept_format('json')
         request.set_LoadBalancerId(i['LoadBalancerId'])
         response = Session.client(self, service).do_action_with_exception(request)
-        string = str(response, encoding="utf-8").replace("false", "False")
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
         data = eval(string)
         if self.data['value'] < data['Bandwidth']:
             return False
@@ -262,7 +322,7 @@ class AclsSlbFilter(AliyunSlbFilter):
         request = DescribeAccessControlListsRequest()
         request.set_accept_format('json')
         response = Session.client(self, service).do_action_with_exception(request)
-        string = str(response, encoding="utf-8").replace("false", "False")
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
         data = eval(string)
         if self.data['value']:
             if len(data) == 0:
@@ -273,7 +333,7 @@ class AclsSlbFilter(AliyunSlbFilter):
                     req.set_accept_format('json')
                     req.set_AclId(obj['AclId'])
                     res = Session.client(self, service).do_action_with_exception(req)
-                    string = str(res, encoding="utf-8").replace("false", "False")
+                    string = str(res, encoding="utf-8").replace("false", "False").replace("true", "True")
                     data2 = eval(string)
                     if len(data2) == 0:
                         return False

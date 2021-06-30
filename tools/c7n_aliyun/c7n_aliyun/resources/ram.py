@@ -61,7 +61,7 @@ class MFA(AliyunRamFilter):
             request.set_accept_format('json')
             request.set_UserName(i['UserName'])
             response = Session.client(self, service).do_action_with_exception(request)
-            string = str(response, encoding="utf-8").replace("false", "False")
+            string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
             data = jmespath.search(self.mfa_bind_required, eval(string))
             if data != self.data['value']:
                 return False

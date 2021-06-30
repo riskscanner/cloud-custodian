@@ -133,16 +133,65 @@ class IPPermission(AliyunSgFilter):
 
     def get_request(self, sg):
         service = 'security-group'
+        request = DescribeSecurityGroupAttributeRequest()
+        request.set_SecurityGroupId(sg["SecurityGroupId"])
+        request.set_Direction("ingress")
+        request.set_accept_format('json')
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
+        data = eval(string)
+        for cidr in jmespath.search(self.ip_permissions_key, data):
+            if cidr['SourceCidrIp'] == self.data['value']:
+                return sg
+        return False
+
+@SecurityGroup.filter_registry.register('source-ports')
+class IPPermission(AliyunSgFilter):
+
+    """Filters
+       :Example:
+       .. code-block:: yaml
+
+        policies:
+            # 账号下ECS安全组配置允许所有端口访问视为不合规，否则为合规
+            - name: aliyun-sg-ports
+              resource: aliyun.security-group
+              filters:
+                - type: source-ports
+                  SourceCidrIp: "0.0.0.0/0"
+                  PortRange: -1/-1
+    """
+
+    ip_permissions_key = "Permissions.Permission"
+    schema = type_schema(
+        'source-ports',
+        **{'SourceCidrIp': {'type': 'string'},
+        'PortRange': {'type': 'string'}}
+    )
+
+    def get_request(self, sg):
+        service = 'security-group'
         request = DescribeSecurityGroupAttributeRequest();
         request.set_SecurityGroupId(sg["SecurityGroupId"])
         request.set_Direction("ingress")
         request.set_accept_format('json')
         response = Session.client(self, service).do_action_with_exception(request)
-        string = str(response, encoding="utf-8").replace("false", "False")
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
         data = eval(string)
-        for cidr in jmespath.search(self.ip_permissions_key, data):
-            if cidr['SourceCidrIp'] == self.data['value']:
-                return sg
+        for ports in jmespath.search(self.ip_permissions_key, data):
+            if ports['SourceCidrIp'] == self.data['SourceCidrIp']:
+                if ports['PortRange'] == self.data['PortRange']:
+                    return sg
+                values = self.data['PortRange'].split('/')
+                fromPort = int(values[0])
+                toPort = int(values[1])
+                if '/' in ports['PortRange']:
+                    strs = ports['PortRange'].split('/')
+                    port1 = int(strs[0])
+                    port2 = int(strs[1])
+                    if (fromPort >= port1 and fromPort <= port2) \
+                            or (toPort >= port1 and toPort <= port2):
+                        return sg
         return False
 
 @SecurityGroup.filter_registry.register('ingress')
