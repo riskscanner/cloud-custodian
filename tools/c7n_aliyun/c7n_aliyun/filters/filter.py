@@ -461,13 +461,15 @@ class MetricsFilter(Filter):
     """Supports   metrics filters on resources.
     .. code-block:: yaml
 
-      - name: ecs-underutilized
-        resource: ecs
+    policies:
+      - name:  aliyun-ecs-underutilized
+        resource:  aliyun.ecs
         filters:
           - type: metrics
             name: CPUUtilization
-            days: 4
+            days: 7
             period: 86400
+            statistics: Average
             value: 30
             op: less-than
 
@@ -482,8 +484,9 @@ class MetricsFilter(Filter):
 
     .. code-block:: yaml
 
-      - name: elb-low-request-count
-        resource: elb
+    policies:
+      - name:  aliyun-elb-low-request-count
+        resource: aliyun.elb
         filters:
           - type: metrics
             name: RequestCount

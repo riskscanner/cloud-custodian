@@ -156,3 +156,97 @@ class VpcTypeEcsFilter(AliyunEcsFilter):
         if vpcId in self.data['vpcIds']:
             return False
         return i
+
+@Ecs.filter_registry.register('stopped')
+class AliyunEcsFilter(AliyunEcsFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-ecs
+               resource: aliyun.ecs
+               filters:
+                 - type: stopped
+    """
+    # 实例状态。取值范围：
+    #
+    # Pending：创建中
+    # Running：运行中
+    # Starting：启动中
+    # Stopping：停止中
+    # Stopped：已停止
+    schema = type_schema('Stopped')
+
+@Ecs.filter_registry.register('instance-age')
+class EcsAgeFilter(AliyunAgeFilter):
+    """Filters instances based on their age (in days)
+
+    :Example:
+
+    .. code-block:: yaml
+
+        policies:
+          - name: ecs-30-days-plus
+            resource: aliyun.ecs
+            filters:
+              - type: instance-age
+                op: ge
+                minutes: 1
+    """
+
+    date_attribute = "LaunchTime"
+    ebs_key_func = operator.itemgetter('AttachTime')
+
+    schema = type_schema(
+        'instance-age',
+        op={'$ref': '#/definitions/filters_common/comparison_operators'},
+        days={'type': 'number'},
+        hours={'type': 'number'},
+        minutes={'type': 'number'})
+
+    def get_resource_date(self, i):
+        return i['CreationTime']
+
+@Ecs.filter_registry.register('metrics')
+class EcsMetricsFilter(MetricsFilter):
+
+    def get_request(self, r):
+        request = DescribeMetricListRequest()
+        request.set_accept_format('json')
+        request.set_StartTime(self.start)
+        dimensions = self.get_dimensions(r)
+        request.set_Dimensions(dimensions)
+        request.set_Period(self.period)
+        request.set_Namespace(self.namespace)
+        request.set_MetricName(self.metric)
+        return request
+
+
+@Ecs.filter_registry.register('stopped')
+class AliyunEcsFilter(AliyunEcsFilter):
+    """Filters
+
+       :Example:
+
+       .. code-block:: yaml
+
+           policies:
+             - name: aliyun-ecs
+               resource: aliyun.ecs
+               filters:
+                 - type: stopped
+    """
+    # 实例状态。取值范围：
+    #
+    # Pending：创建中
+    # Running：运行中
+    # Starting：启动中
+    # Stopping：停止中
+    # Stopped：已停止
+    schema = type_schema('Stopped')
+
+    def get_request(self, r):
+        return r

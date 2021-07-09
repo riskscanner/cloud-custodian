@@ -83,7 +83,7 @@ class AliyunDiskFilter(AliyunDiskFilter):
     schema = type_schema('Available')
 
     def get_request(self, i):
-        encrypted = self.data['value']
+        encrypted = self.data['type']
         if i['Encrypted'].lower() != str(encrypted).lower():
             return False
         return i
