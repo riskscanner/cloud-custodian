@@ -176,7 +176,7 @@ class PublicIpAddress(TencentFilter):
 
     def get_request(self, i):
         data = i[self.public_ip_address]
-        if len(data) == 0:
+        if data is None or len(data) == 0:
             return False
         return i
 
