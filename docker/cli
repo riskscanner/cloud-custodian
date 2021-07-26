@@ -1,4 +1,4 @@
-FROM registry.fit2cloud.com/fit2cloud2/fabric8-java-alpine-openjdk8-jre:py37 as build-env
+FROM registry.cn-qingdao.aliyuncs.com/x-lab/fabric8-java-alpine-openjdk8-jre as build-env
 
 USER root
 
