@@ -50,7 +50,7 @@ RUN . /usr/local/bin/activate && \
 
 RUN mkdir /output
 
-FROM registry.fit2cloud.com/fit2cloud2/fabric8-java-alpine-openjdk8-jre:py37
+FROM registry.cn-qingdao.aliyuncs.com/x-lab/fabric8-java-alpine-openjdk8-jre:py37
 
 COPY --from=build-env /src /src
 COPY --from=build-env /usr/local /usr/local
