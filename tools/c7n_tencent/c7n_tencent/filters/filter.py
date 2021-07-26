@@ -402,12 +402,12 @@ class SGPermission(Filter):
             return True
         return False
 
-    def process_cidrs(self, perm, ipv4Cidr, ipv6Cidr):
+    def process_cidrs(self, perm, CidrBlock, Ipv6CidrBlock):
         found_v6 = found_v4 = None
         if 'CidrV6' in self.data:
-            found_v6 = self._process_cidr('CidrV6', 'CidrIpv6', ipv6Cidr, perm)
+            found_v6 = self._process_cidr('CidrV6', 'CidrIpv6', Ipv6CidrBlock, perm)
         if 'Cidr' in self.data:
-            found_v4 = self._process_cidr('Cidr', 'CidrIp', ipv4Cidr, perm)
+            found_v4 = self._process_cidr('Cidr', 'CidrIp', CidrBlock, perm)
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
         cidr_match = [k for k in (found_v6, found_v4) if k is not None]
         if not cidr_match:
