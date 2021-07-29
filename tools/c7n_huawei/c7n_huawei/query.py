@@ -60,7 +60,7 @@ class ResourceQuery:
                 return None
             if path is None:
                 return result
-            res = jmespath.search(path, eval(str(result)))
+            res = jmespath.search(path, eval(str(result).replace('null', 'None')))
             if res is not None:
                 for data in res:
                     data['F2CId'] = data[m.id]
