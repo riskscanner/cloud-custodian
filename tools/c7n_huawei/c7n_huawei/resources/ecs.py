@@ -74,7 +74,7 @@ class PublicIpAddress(HuaweiEcsFilter):
         else:
             for addrs in list(data.values()):
                 for addr in addrs:
-                    if addr['os_ext_ip_stype'] == 'floating':
+                    if addr['os_ext_ip_stype'] is not None and addr['os_ext_ip_stype'] == 'floating':
                         return i
         return False
 

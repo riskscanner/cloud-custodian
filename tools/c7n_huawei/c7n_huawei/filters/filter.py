@@ -295,7 +295,7 @@ class SGPermission(Filter):
 
     def process_ports(self, perm):
         found = None
-        if perm['port_range_max'] and perm['port_range_min']:
+        if perm['port_range_max'] is not None and perm['port_range_min'] is not None:
             FromPort = int(perm['port_range_max'])
             ToPort = int(perm['port_range_min'])
             for port in self.ports:

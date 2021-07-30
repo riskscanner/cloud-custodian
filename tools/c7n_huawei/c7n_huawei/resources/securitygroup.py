@@ -128,6 +128,6 @@ class HuaweiSgSourceCidrIp(HuaweiSgFilter):
 
     def get_request(self, sg):
         for cidr in sg[self.ip_permissions_key]:
-            if cidr['remote_ip_prefix'] == self.data['value']:
+            if cidr['remote_ip_prefix'] is not None and cidr['remote_ip_prefix'] == self.data['value']:
                 return sg
         return False

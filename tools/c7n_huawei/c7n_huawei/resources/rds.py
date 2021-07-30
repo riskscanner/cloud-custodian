@@ -61,6 +61,8 @@ class HuaweiRdsFilter(HuaweiRdsFilter):
     schema = type_schema('internet')
 
     def get_request(self, i):
+        if i['public_ips'] is None:
+            return None
         public_ips = i['public_ips']
         if len(public_ips) == 0:
             return None
