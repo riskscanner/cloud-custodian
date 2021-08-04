@@ -39,27 +39,46 @@ class ResourceQuery:
         if extra_args:
             params.update(extra_args)
 
+        pageNumber = 1
+        pageSize = 100
         if m.service == 'oss':
-            request = resource_manager.get_request()
-            result = client.list_buckets()
             buckets = []
-            for b in result.buckets:
-                if request in b.__dict__['location']:
+            marker_param = ""
+            while 1 <= pageNumber:
+                request = resource_manager.get_request()
+                result = client.list_buckets(marker=marker_param)
+                for b in result.buckets:
                     b.__dict__['F2CId'] = b.__dict__[m.id]
                     buckets.append(b.__dict__)
+                if len(result.buckets) == pageSize:
+                    marker_param = result.next_marker
+                else:
+                    return buckets
             return buckets
         else:
-            request = resource_manager.get_request()
-            if request:
-                result = client.do_action_with_exception(request)
-                false = "false"
-                true = "true"
-                res = jmespath.search(path, eval(result))
-                for data in res:
-                    data['F2CId'] = data[m.id]
-                return res
-            else:
-                return None
+            res = []
+
+            while 1 <= pageNumber:
+                request = resource_manager.get_request()
+                request.set_accept_format('json')
+                request.set_PageSize(pageSize)
+                request.set_PageNumber(pageNumber)
+                if request:
+                    result = client.do_action_with_exception(request)
+                    false = "false"
+                    true = "true"
+                    response = jmespath.search(path, eval(result))
+                    for data in response:
+                        data['F2CId'] = data[m.id]
+                else:
+                    response = []
+                res = res + response
+                if len(response) == pageSize:
+                    pageNumber = pageNumber + 1
+                else:
+                    return res
+            return res
+
 
     def _invoke_client_enum(self, client, request, params, path):
         result = client.do_action_with_exception(request)
