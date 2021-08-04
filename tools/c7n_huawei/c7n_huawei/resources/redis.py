@@ -63,7 +63,7 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
 
     def get_request(self, i):
         public_ips = i['publicip_id']
-        if self.data['value']:
+        if self.data.get('value', ''):
             if public_ips is None or (len(public_ips) == 0 and i['enable_ssl'] == False):
                 return i
             return False
@@ -94,6 +94,6 @@ class NoPasswordAccessRedisFilter(HuaweiRedisFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        if i['no_password_access'] == self.data['value']:
+        if i['no_password_access'] == self.data.get('value', ''):
             return i
         return False

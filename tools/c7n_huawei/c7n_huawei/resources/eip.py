@@ -62,7 +62,7 @@ class HuaweiEipFilter(HuaweiEipFilter):
     schema = type_schema('DOWN')
 
     def get_request(self, i):
-        if i['status'] != "DOWN":
+        if i.get('status', '') != "DOWN":
             return False
         return i
 
@@ -85,6 +85,6 @@ class BandwidthEipFilter(HuaweiEipFilter):
         **{'value': {'type': 'number'}})
 
     def get_request(self, i):
-        if self.data['value'] < i['bandwidth_size']:
+        if self.datai.get('value', 0) < i.get('bandwidth_size', 0):
             return False
         return i

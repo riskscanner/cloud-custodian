@@ -68,10 +68,10 @@ class HuaweiIamLoginFilter(HuaweiIamFilter):
     def get_request(self, i):
         try:
             request = ShowUserLoginProtectRequest()
-            request.user_id = i['id']
+            request.user_id = i.get('id', '')
             response = Session.client(self, service).show_user_login_protect(request)
             i['login_protect'] = jmespath.search('login_protect', eval(str(response)))
-            if self.data['value'] == i['login_protect']['enabled']:
+            if self.data.get('value', '') == i.get('login_protect', {}).get('enabled', ''):
                 return False
             return i
         except Exception as e:

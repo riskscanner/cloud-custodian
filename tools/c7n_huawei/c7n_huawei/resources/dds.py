@@ -62,12 +62,12 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        groups = i['groups']
-        if self.data['value']:
+        groups = i.get('groups', [])
+        if self.data.get('value', ''):
             if len(groups) > 0:
                 for group in groups:
-                    if len(group['nodes']) > 0:
-                        if group['nodes']['public_ip']:
+                    if len(group.get('nodes', [])) > 0:
+                        if group.get('nodes', []).get('public_ip', None):
                             return i
             return None
         else:
@@ -75,8 +75,8 @@ class InternetAccessRedisFilter(HuaweiRedisFilter):
                 return i
             else:
                 for group in groups:
-                    if len(group['nodes']) > 0:
-                        if group['nodes']['public_ip']:
+                    if len(group.get('nodes', [])) > 0:
+                        if group.get('nodes', []).get('public_ip', None):
                             return i
                 return None
 

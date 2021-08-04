@@ -65,8 +65,8 @@ class EncryptedDiskFilter(HuaweiDiskFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, disk):
-        encrypted = self.data['value']
-        if disk['encrypted'] != encrypted:
+        encrypted = self.data.get('value', '')
+        if disk.get('encrypted', '') != encrypted:
             return False
         return disk
 
@@ -101,6 +101,6 @@ class HuaweiDiskFilter(HuaweiDiskFilter):
     schema = type_schema('available')
 
     def get_request(self, disk):
-        if disk['status'] != 'available':
+        if disk.get('status', '') != 'available':
             return False
         return disk

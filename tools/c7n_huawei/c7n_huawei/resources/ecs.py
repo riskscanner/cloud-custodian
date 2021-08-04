@@ -74,7 +74,7 @@ class PublicIpAddress(HuaweiEcsFilter):
         else:
             for addrs in list(data.values()):
                 for addr in addrs:
-                    if addr['os_ext_ip_stype'] is not None and addr['os_ext_ip_stype'] == 'floating':
+                    if addr.get('os_ext_ip_stype', '') is not None and addr.get('os_ext_ip_stype', '') == 'floating':
                         return i
         return False
 
@@ -102,7 +102,7 @@ class EcsAgeFilter(HuaweiAgeFilter):
 
     def get_resource_date(self, i):
         # '2020-07-27T05:55:32.000000'
-        return i['os_srv_us_glaunched_at']
+        return i.get('os_srv_us_glaunched_at', '2021-07-27T05:55:32.000000')
 
 @Ecs.filter_registry.register('instance-network-type')
 class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
@@ -123,8 +123,8 @@ class InstanceNetworkTypeEcsFilter(HuaweiEcsFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        if self.data['value'] == 'vpc':
-            if i['metadata']['vpc_id'] is not None:
+        if self.data.get('value', '') == 'vpc':
+            if i.get('metadata', {}).get('vpc_id', '') is not None:
                 return False
         return i
 
@@ -154,7 +154,7 @@ class EcsMetricsFilter(MetricsFilter):
         listMetricsDimensionDimensionsMetrics= [
             MetricsDimension(
                 name="instance_id",
-                value=dimensions[0]['id']
+                value=dimensions[0].get('id', '')
             )
         ]
         listMetricInfoMetricsbody = [

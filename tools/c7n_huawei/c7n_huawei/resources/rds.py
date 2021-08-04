@@ -61,9 +61,9 @@ class HuaweiRdsFilter(HuaweiRdsFilter):
     schema = type_schema('internet')
 
     def get_request(self, i):
-        if i['public_ips'] is None:
+        if i.get('public_ips', '') is None:
             return None
-        public_ips = i['public_ips']
+        public_ips = i.get('public_ips', '')
         if len(public_ips) == 0:
             return None
         return i
@@ -80,7 +80,7 @@ class EcsMetricsFilter(MetricsFilter):
             new_dimensions.append(
                 {
                     "name": "rds_cluster_id",
-                    "value": str(dimension['id'])
+                    "value": str(dimension.get('id', ''))
                 })
         try:
             listMetricsDimensionDimensionsMetrics = []
@@ -88,7 +88,7 @@ class EcsMetricsFilter(MetricsFilter):
                 listMetricsDimensionDimensionsMetrics.append(
                     MetricsDimension(
                         name="rds_cluster_id",
-                        value=str(dimension['id'])
+                        value=str(dimension.get('id', ''))
                     )
                )
             listMetricInfoMetricsbody = [
@@ -129,8 +129,8 @@ class InternetAccessRdsFilter(HuaweiRdsFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        public_ips = i['public_ips']
-        if self.data['value'] == True:
+        public_ips = i.get('public_ips', '')
+        if self.data.get('value', '') == True:
             if len(public_ips) == 0:
                 return None
             return i
@@ -202,7 +202,7 @@ class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        if i['vpc_id'] is not None:
+        if i.get('vpc_id', '') is not None:
             return False
         return i
 
@@ -227,6 +227,6 @@ class InstanceNetworkTypeRdsFilter(HuaweiRdsFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        if i['charge_info']['charge_mode'] == self.data['value']:
+        if i['charge_info']['charge_mode'] == self.data.get('value', ''):
             return False
         return i

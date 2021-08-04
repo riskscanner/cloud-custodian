@@ -101,12 +101,12 @@ class GlobalGrantsFilter(Filter):
         # BUCKET_OWNER_FULL_CONTROL 桶或对象所有者拥有完全控制权限。
         acl = Session.client(self, service).getBucketAcl(b.name)
         b['permission'] = acl.body.grants
-        if self.data['value'] == 'read':
+        if self.data.get('value', '') == 'read':
             for obj in acl.body.grants:
                 if obj.grantee.group == 'Everyone':
                     if obj.permission == 'READ' or obj.permission == 'READ_ACP':
                         return b
-        if self.data['value'] == 'write':
+        if self.data.get('value', '') == 'write':
             for obj in acl.body.grants:
                 if obj.grantee.group == 'Everyone':
                     if obj.permission == 'WRITE' or obj.permission == 'WRITE_ACP':

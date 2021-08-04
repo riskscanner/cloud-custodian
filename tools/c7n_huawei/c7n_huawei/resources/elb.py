@@ -69,7 +69,7 @@ class ListenerElbFilter(HuaweiElbFilter):
             request = ShowListenerRequest()
             request.listener_id = data
             response = Session.client(self, service).show_listener(request)
-            if jmespath.search('protocol', response) == self.data['value']:
+            if jmespath.search('protocol', response) == self.data.get('value', ''):
                 return False
         return i
 
@@ -91,7 +91,7 @@ class UnusedElbFilter(HuaweiElbFilter):
     schema = type_schema('unused')
 
     def get_request(self, i):
-        listeners = i['pools']
+        listeners = i.get('pools', [])
         # elb 查询elb下是否有监听
         if len(listeners) > 0:
             return False
@@ -117,10 +117,10 @@ class AddressTypeElbFilter(HuaweiElbFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        if self.data['value'] == 'internet':
-            if i['vip_address'] is not None:
+        if self.data.get('value', '') == 'internet':
+            if i.get('vip_address', '')  is not None:
                 return False
         else:
-            if i['vip_address'] is None:
+            if i.get('vip_address', '') is None:
                 return False
         return i
