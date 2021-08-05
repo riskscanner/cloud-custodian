@@ -88,23 +88,16 @@ class InternetAccessMongoDBFilter(AliyunRedisFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        request1 = DescribeSecurityIpsRequest()
-        request1.set_accept_format('json')
-        response1 = Session.client(self, service).do_action_with_exception(request1)
-        string1 = str(response1, encoding="utf-8").replace("false", "False").replace("true", "True")
-        SecurityIpGroups = jmespath.search('SecurityIpGroups.SecurityIpGroup', eval(string1))
 
-        request2 = DescribeSecurityGroupConfigurationRequest()
-        request2.set_accept_format('json')
-        response2 = Session.client(self, service).do_action_with_exception(request2)
-        string2 = str(response2, encoding="utf-8").replace("false", "False").replace("true", "True")
-
-        EcsSecurityGroupRelation = jmespath.search('Items.EcsSecurityGroupRelation', eval(string2))
-        if self.data['value']:
-            if len(SecurityIpGroups) == 0 and len(EcsSecurityGroupRelation) == 0:
-                return False
+        DBInstanceNetType = i.get('DBInstanceNetType', '')
+        if self.data.get('value', ''):
+            if DBInstanceNetType == "Internet":
+                return i
+            else:
+                return None
         else:
-            return False
-        i['SecurityIpGroups'] = SecurityIpGroups
-        i['EcsSecurityGroupRelation'] = EcsSecurityGroupRelation
+            if DBInstanceNetType == "Intranet":
+                return i
+            else:
+                return None
         return i

@@ -179,7 +179,7 @@ class BucketRefererOssFilter(AliyunOssFilter):
     def get_request(self, i):
         try:
             auth = oss2.Auth(accessKeyId, accessSecret)
-            bucket = oss2.Bucket(auth, i['extranet_endpoint'], i['name'])
+            bucket = oss2.Bucket(auth, i.get('extranet_endpoint', ''), i.get('name', ''))
             result = bucket.get_bucket_referer()
             if self.data['value']:
                 if result.referers:

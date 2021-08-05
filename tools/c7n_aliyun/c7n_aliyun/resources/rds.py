@@ -44,7 +44,6 @@ class Rds(QueryResourceManager):
 
     def get_request(self):
         request = DescribeDBInstancesRequest()
-        request.set_accept_format('json')
         return request
 
 @Rds.filter_registry.register('available-zones')
@@ -291,33 +290,17 @@ class InternetAccessRdsFilter(AliyunRdsFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        request1 = DescribeSecurityGroupConfigurationRequest()
-        request1.set_accept_format('json')
-        request1.set_DBInstanceId(i['DBInstanceId'])
-        response1 = Session.client(self, service).do_action_with_exception(request1)
-
-        string1 = str(response1, encoding="utf-8").replace("false", "False").replace("true", "True")
-        EcsSecurityGroupRelation = jmespath.search('Items.EcsSecurityGroupRelation', eval(string1))
-
-        request2 = DescribeDBInstanceIPArrayListRequest()
-        request2.set_accept_format('json')
-        request2.set_DBInstanceId(i['DBInstanceId'])
-        response2 = Session.client(self, service).do_action_with_exception(request2)
-        string2 = str(response2, encoding="utf-8").replace("false", "False").replace("true", "True")
-
-        DBInstanceIPArray = jmespath.search('Items.DBInstanceIPArray', eval(string2))
-        if self.data['value']:
-            if len(EcsSecurityGroupRelation) == 0 and len(DBInstanceIPArray) == 0:
-                return False
-            elif len(DBInstanceIPArray) > 0:
-                for db in DBInstanceIPArray:
-                    if self.is_internal_ip(db) is not True:
-                        pass
-                return False
+        DBInstanceNetType = i.get('DBInstanceNetType', '')
+        if self.data.get('value', ''):
+            if DBInstanceNetType == "Internet":
+                return i
+            else:
+                return None
         else:
-            return False
-        i['EcsSecurityGroupRelation'] = EcsSecurityGroupRelation
-        i['DBInstanceIPArray'] = DBInstanceIPArray
+            if DBInstanceNetType == "Intranet":
+                return i
+            else:
+                return None
         return i
 
     def is_internal_ip(self, ip):

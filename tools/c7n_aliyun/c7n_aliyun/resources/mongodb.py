@@ -15,17 +15,14 @@ import logging
 import os
 
 import jmespath
-from aliyunsdkr_kvstore.request.v20150101.DescribeInstancesRequest import DescribeInstancesRequest
-from aliyunsdkdds.request.v20151201.DescribeSecurityIpsRequest import DescribeSecurityIpsRequest
-from aliyunsdkdds.request.v20151201.DescribeSecurityGroupConfigurationRequest import DescribeSecurityGroupConfigurationRequest
-
-
+from aliyunsdkdds.request.v20151201.DescribeDBInstanceAttributeRequest import DescribeDBInstanceAttributeRequest
+from aliyunsdkdds.request.v20151201.DescribeDBInstancesRequest import DescribeDBInstancesRequest
 
 from c7n.utils import type_schema
+from c7n_aliyun.client import Session
 from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
-from c7n_aliyun.client import Session
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 
@@ -37,11 +34,11 @@ class MongoDB(QueryResourceManager):
 
     class resource_type(TypeInfo):
         service = 'mongodb'
-        enum_spec = (None, 'Instances.KVStoreInstance', None)
+        enum_spec = (None, 'DBInstances.DBInstance', None)
         id = 'InstanceId'
 
     def get_request(self):
-        return DescribeInstancesRequest()
+        return DescribeDBInstancesRequest()
 
 @MongoDB.filter_registry.register('network-type')
 class NetworkTypeMongoDBFilter(AliyunRdsFilter):
@@ -89,23 +86,15 @@ class InternetAccessMongoDBFilter(AliyunRdsFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        request1 = DescribeSecurityIpsRequest()
-        request1.set_accept_format('json')
-        response1 = Session.client(self, service).do_action_with_exception(request1)
-        string1 = str(response1, encoding="utf-8").replace("false", "False").replace("true", "True")
-        SecurityIpGroups = jmespath.search('SecurityIpGroups.SecurityIpGroup', eval(string1))
-
-        request2 = DescribeSecurityGroupConfigurationRequest()
-        request2.set_accept_format('json')
-        response2 = Session.client(self, service).do_action_with_exception(request2)
-        string2 = str(response2, encoding="utf-8").replace("false", "False").replace("true", "True")
-
-        RdsEcsSecurityGroupRel = jmespath.search('Items.RdsEcsSecurityGroupRel', eval(string2))
-        if self.data['value']:
-            if len(SecurityIpGroups) == 0 and len(RdsEcsSecurityGroupRel) == 0:
-                return False
+        DBInstanceNetType = i.get('DBInstanceNetType', '')
+        if self.data.get('value', ''):
+            if DBInstanceNetType == "Internet":
+                return i
+            else:
+                return None
         else:
-            return False
-        i['SecurityIpGroups'] = SecurityIpGroups
-        i['RdsEcsSecurityGroupRel'] = RdsEcsSecurityGroupRel
+            if DBInstanceNetType == "Intranet":
+                return i
+            else:
+                return None
         return i

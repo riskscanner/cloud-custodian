@@ -183,8 +183,12 @@ class IPPermission(AliyunSgFilter):
                 if ports['PortRange'] == self.data['PortRange']:
                     return sg
                 values = self.data['PortRange'].split('/')
-                fromPort = int(values[0])
-                toPort = int(values[1])
+                if values[0].replace("”", "") == "-1":
+                    fromPort = 0
+                    toPort = 65535
+                else:
+                    fromPort = int(values[0].replace("”", ""))
+                    toPort = int(values[1].replace("”", ""))
                 if '/' in ports['PortRange']:
                     strs = ports['PortRange'].split('/')
                     port1 = int(strs[0])

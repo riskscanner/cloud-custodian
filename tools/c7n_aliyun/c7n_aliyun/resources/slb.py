@@ -319,23 +319,16 @@ class AclsSlbFilter(AliyunSlbFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        request = DescribeAccessControlListsRequest()
-        request.set_accept_format('json')
-        response = Session.client(self, service).do_action_with_exception(request)
-        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
-        data = eval(string)
-        if self.data['value']:
-            if len(data) == 0:
-                return False
+        DBInstanceNetType = i.get('DBInstanceNetType', '')
+        if self.data.get('value', ''):
+            if DBInstanceNetType == "Internet":
+                return i
             else:
-                for obj in data['Acls']['Acl']:
-                    req = DescribeAccessControlListAttributeRequest()
-                    req.set_accept_format('json')
-                    req.set_AclId(obj['AclId'])
-                    res = Session.client(self, service).do_action_with_exception(req)
-                    string = str(res, encoding="utf-8").replace("false", "False").replace("true", "True")
-                    data2 = eval(string)
-                    if len(data2) == 0:
-                        return False
+                return None
+        else:
+            if DBInstanceNetType == "Intranet":
+                return i
+            else:
+                return None
         return i
 

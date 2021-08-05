@@ -41,22 +41,42 @@ class ResourceQuery:
 
         pageNumber = 1
         pageSize = 100
+        res = []
+        buckets = []
         if m.service == 'oss':
-            buckets = []
             marker_param = ""
             while 1 <= pageNumber:
                 request = resource_manager.get_request()
                 result = client.list_buckets(marker=marker_param)
                 for b in result.buckets:
-                    b.__dict__['F2CId'] = b.__dict__[m.id]
-                    buckets.append(b.__dict__)
+                    if request in b.__dict__['location']:
+                        b.__dict__['F2CId'] = b.__dict__[m.id]
+                        buckets.append(b.__dict__)
                 if len(result.buckets) == pageSize:
                     marker_param = result.next_marker
                 else:
                     return buckets
             return buckets
+        elif m.service == 'ram':
+            marker_param = None
+            while 1 <= pageNumber:
+                request = resource_manager.get_request()
+                request.set_accept_format('json')
+                if marker_param is not None:
+                    request.set_Marker(marker_param)
+                result = client.do_action_with_exception(request)
+                false = "false"
+                true = "true"
+                response = jmespath.search(path, eval(result))
+                for data in response:
+                    data['F2CId'] = data[m.id]
+                res = res + response
+                if len(response) == pageSize:
+                    marker_param = eval(result).get('Marker', None)
+                else:
+                    return res
+            return res
         else:
-            res = []
 
             while 1 <= pageNumber:
                 request = resource_manager.get_request()
