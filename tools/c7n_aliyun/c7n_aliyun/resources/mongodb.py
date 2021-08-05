@@ -14,12 +14,9 @@
 import logging
 import os
 
-import jmespath
-from aliyunsdkdds.request.v20151201.DescribeDBInstanceAttributeRequest import DescribeDBInstanceAttributeRequest
 from aliyunsdkdds.request.v20151201.DescribeDBInstancesRequest import DescribeDBInstancesRequest
 
 from c7n.utils import type_schema
-from c7n_aliyun.client import Session
 from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
