@@ -15,11 +15,13 @@ import logging
 import os
 
 from aliyunsdkdds.request.v20151201.DescribeDBInstancesRequest import DescribeDBInstancesRequest
+from aliyunsdkdds.request.v20151201.DescribeShardingNetworkAddressRequest import DescribeShardingNetworkAddressRequest
 
 from c7n.utils import type_schema
 from c7n_aliyun.filters.filter import AliyunRdsFilter
 from c7n_aliyun.provider import resources
 from c7n_aliyun.query import QueryResourceManager, TypeInfo
+from c7n_aliyun.client import Session
 
 logging.basicConfig(level=logging.ERROR, format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s', datefmt='%a, %d %b %Y %H:%M:%S')
 
@@ -83,15 +85,21 @@ class InternetAccessMongoDBFilter(AliyunRdsFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        DBInstanceNetType = i.get('DBInstanceNetType', '')
-        if self.data.get('value', ''):
-            if DBInstanceNetType == "Internet":
-                return i
-            else:
-                return None
-        else:
-            if DBInstanceNetType == "Intranet":
-                return i
-            else:
-                return None
-        return i
+
+        request = DescribeShardingNetworkAddressRequest()
+        request.set_accept_format('json')
+
+        request.set_DBInstanceId(i.get('DBInstanceId', ''))
+        response = Session.client(self, service).do_action_with_exception(request)
+        string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
+        data = eval(string)
+        CompatibleConnections = data.get('CompatibleConnections', {}).get('CompatibleConnection', [])
+        NetworkAddresses = data.get('NetworkAddresses', {}).get('NetworkAddress', [])
+        if self.data.get('value', '') == True:
+            for c in CompatibleConnections:
+                if c.get('NetworkType', '') == 'Public':
+                    return i
+            for n in NetworkAddresses:
+                if n.get('NetworkType', '') == 'Public':
+                    return i
+        return None

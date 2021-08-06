@@ -112,7 +112,7 @@ class InternetAccessPolarDBFilter(AliyunRdsFilter):
     def get_request(self, i):
         request = DescribeDBClusterAccessWhitelistRequest()
         request.set_accept_format('json')
-        request.set_DBClusterId(i['DBClusterId'])
+        request.set_DBClusterId(i.get('DBClusterId', ''))
         response = Session.client(self, service).do_action_with_exception(request)
         string = str(response, encoding="utf-8").replace("false", "False").replace("true", "True")
         data = eval(string)

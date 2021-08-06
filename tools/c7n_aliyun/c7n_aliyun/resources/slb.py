@@ -319,14 +319,14 @@ class AclsSlbFilter(AliyunSlbFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        DBInstanceNetType = i.get('DBInstanceNetType', '')
+        AddressType = i.get('AddressType', '')
         if self.data.get('value', ''):
-            if DBInstanceNetType == "Internet":
+            if AddressType == "Internet":
                 return i
             else:
                 return None
         else:
-            if DBInstanceNetType == "Intranet":
+            if AddressType == "Intranet":
                 return i
             else:
                 return None
