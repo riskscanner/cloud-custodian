@@ -102,4 +102,11 @@ class InternetAccessMongoDBFilter(AliyunRdsFilter):
             for n in NetworkAddresses:
                 if n.get('NetworkType', '') == 'Public':
                     return i
+        else:
+            for c in CompatibleConnections:
+                if c.get('NetworkType', '') != 'Public':
+                    return i
+            for n in NetworkAddresses:
+                if n.get('NetworkType', '') != 'Public':
+                    return i
         return None
