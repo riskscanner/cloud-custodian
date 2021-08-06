@@ -56,7 +56,7 @@ COPY --from=build-env /src /src
 COPY --from=build-env /usr/local /usr/local
 COPY --from=build-env /output /output
 
-RUN rm -Rf /var/cache/apk
+RUN rm -Rf /var/cache/apk/*
 
 USER root
 WORKDIR /home/custodian
