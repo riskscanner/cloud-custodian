@@ -94,7 +94,7 @@ class ResourceQuery:
                     response = []
                 res = res + response
                 if len(response) == pageSize:
-                    pageNumber = pageNumber + 1
+                    pageNumber += 1
                 else:
                     return res
             return res

@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 
 import jmespath
@@ -36,26 +37,41 @@ class SecurityGroup(QueryResourceManager):
         id = 'SecurityGroupId'
 
     def get_request(self):
+        offset = 0
+        limit = 100
+        res = []
         try:
-            req = models.DescribeSecurityGroupsRequest()
-            resp = Session.client(self, service).DescribeSecurityGroups(req)
-            for res in resp.SecurityGroupSet:
-                req2 = models.DescribeSecurityGroupPoliciesRequest()
-                params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
-                req2.from_json_string(params)
-                resp2 = Session.client(self, service).DescribeSecurityGroupPolicies(req2)
-                res.IpPermissions = resp2.SecurityGroupPolicySet
-            # 输出json格式的字符串回包
-            # print(resp.to_json_string(indent=2))
+            while 0 <= offset:
+                req = models.DescribeSecurityGroupsRequest()
+                params = {
+                    "Offset": offset,
+                    "Limit": limit
+                }
+                req.from_json_string(json.dumps(params))
+                resp = Session.client(self, service).DescribeSecurityGroups(req)
+                for sg in resp.SecurityGroupSet:
+                    req2 = models.DescribeSecurityGroupPoliciesRequest()
+                    params = '{"SecurityGroupId":"' + sg.SecurityGroupId + '"}'
+                    req2.from_json_string(params)
+                    resp2 = Session.client(self, service).DescribeSecurityGroupPolicies(req2)
+                    sg.IpPermissions = resp2.SecurityGroupPolicySet
+                respose = resp.to_json_string().replace('null', 'None').replace('false', 'False').replace('true', 'True')
+                result = jmespath.search('InstanceSet', eval(respose))
+                res = res + result
+                if len(result) == limit:
+                    offset += 1
+                else:
+                    return res
+                # 输出json格式的字符串回包
+                # print(resp.to_json_string(indent=2))
 
-            # 也可以取出单个值。
-            # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
-            # print(resp.to_json_string())
+                # 也可以取出单个值。
+                # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
+                # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
             return False
-        # tencent 返回的json里居然不是None，而是java的null，活久见
-        return resp.to_json_string().replace('null', 'None')
+        return res
 
 
 @SecurityGroup.action_registry.register('delete')
@@ -183,6 +199,6 @@ class SourceCidrIp(TencentFilter):
 
     def get_request(self, sg):
         for cidr in jmespath.search(self.ip_permissions_key, sg):
-            if cidr['CidrBlock'] == self.data['value']:
+            if cidr['CidrBlock'] == self.data.get('value', ''):
                 return sg
         return False

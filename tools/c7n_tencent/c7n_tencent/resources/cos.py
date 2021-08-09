@@ -112,7 +112,7 @@ class GlobalGrantsFilter(Filter):
                 b['Permission'] = response
                 return b
             else:
-                if self.data['value'] in i.get('Permission'):
+                if self.data.get('value', '') in i.get('Permission'):
                     b['Permission'] = response
                     return b
         return False
@@ -139,7 +139,7 @@ class BucketRefererCosFilter(TencentFilter):
         result = Session.client(self, service).get_bucket_referer(
             Bucket=i['Name']
         )
-        if self.data['value']:
+        if self.data.get('value', ''):
             if result and result.Status == 'Eabled':
                 return False
         else:
@@ -173,7 +173,7 @@ class BucketEncryptionCosFilter(TencentFilter):
             result = Session.client(self, service).get_bucket_encryption(
                 Bucket=i['Name']
             )
-            if self.data['value']:
+            if self.data.get('value', ''):
                 if 'Error' in result:
                     return i
                 else:

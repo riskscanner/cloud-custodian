@@ -11,8 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 
+import jmespath
 from tencentcloud.cdb.v20170320 import models
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 
@@ -34,20 +36,35 @@ class Cdb(QueryResourceManager):
         id = 'InstanceId'
 
     def get_request(self):
+        offset = 0
+        limit = 100
+        res = []
         try:
-            req = models.DescribeDBInstancesRequest()
-            resp = Session.client(self, service).DescribeDBInstances(req)
-            # 输出json格式的字符串回包
-            # print(resp.to_json_string(indent=2))
+            while 0 <= offset:
+                req = models.DescribeDBInstancesRequest()
+                params = {
+                    "Offset": offset,
+                    "Limit": limit
+                }
+                req.from_json_string(json.dumps(params))
+                resp = Session.client(self, service).DescribeDBInstances(req)
+                respose = resp.to_json_string().replace('null', 'None').replace('false', 'False').replace('true', 'True')
+                result = jmespath.search('InstanceSet', eval(respose))
+                res = res + result
+                if len(result) == limit:
+                    offset += 1
+                else:
+                    return res
+                # 输出json格式的字符串回包
+                # print(resp.to_json_string(indent=2))
 
-            # 也可以取出单个值。
-            # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
-            # print(resp.to_json_string())
+                # 也可以取出单个值。
+                # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
+                # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
             return False
-        # tencent 返回的json里居然不是None，而是java的null，活久见
-        return resp.to_json_string().replace('null', 'None')
+        return res
 
 @Cdb.filter_registry.register('Internet')
 class TencentCdbFilter(TencentCdbFilter):
@@ -102,11 +119,11 @@ class InternetAccessCdbFilter(TencentFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        if self.data['value']:
-            if i['WanStatus'] == 1:
+        if self.data.get('value', ''):
+            if i.get('WanStatus', '') == 1:
                 return i
         else:
-            if i['WanStatus'] != 1:
+            if i.get('WanStatus', '') != 1:
                 return i
         return False
 
@@ -130,7 +147,7 @@ class DeviceTypeCdbFilter(TencentFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        if i['DeviceType'] == self.data['value']:
+        if i.get('DeviceType', '') == self.data.get('value', ''):
             return i
         return False
 
@@ -155,12 +172,12 @@ class AvailablezonesCdbFilter(TencentFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        if self.data['value']:
-            if i['DeployMode'] == 1:
+        if self.data.get('value', ''):
+            if i.get('DeployMode', '') == 1:
                 return i
             return False
         else:
-            if i['DeployMode'] != 1:
+            if i.get('DeployMode', '') != 1:
                 return i
             return False
 
@@ -183,12 +200,12 @@ class NetworkTypeCdbFilter(TencentFilter):
         **{'value': {'type': 'string'}})
 
     def get_request(self, i):
-        if self.data['value'] == "vpc":
-            if i['VpcId']:
+        if self.data.get('value', '') == "vpc":
+            if i.get('VpcId', ''):
                 return False
             return i
         else:
-            if i['VpcId']:
+            if i.get('VpcId', ''):
                 return i
             return False
 

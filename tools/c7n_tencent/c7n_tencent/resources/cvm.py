@@ -11,9 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
 import logging
 import operator
 
+import jmespath
 from tencentcloud.common.exception.tencent_cloud_sdk_exception import TencentCloudSDKException
 # 导入对应产品模块的client models。
 from tencentcloud.cvm.v20170312 import models
@@ -39,24 +41,39 @@ class Cvm(QueryResourceManager):
         dimension = 'InstanceId'
 
     def get_request(self):
+        offset = 0
+        limit = 100
+        res = []
         try:
-            # 实例化一个cvm实例信息查询请求对象,每个接口都会对应一个request对象。
-            req = models.DescribeInstancesRequest()
-            # 通过client对象调用DescribeInstances方法发起请求。注意请求方法名与请求对象是对应的。
-            # 返回的resp是一个DescribeInstancesResponse类的实例，与请求对象对应。
-            resp = Session.client(self, service).DescribeInstances(req)
-            # 输出json格式的字符串回包
-            # print(resp.to_json_string(indent=2))
+            while 0 <= offset:
+                # 实例化一个cvm实例信息查询请求对象,每个接口都会对应一个request对象。
+                req = models.DescribeInstancesRequest()
+                params = {
+                    "Offset": offset,
+                    "Limit": limit
+                }
+                req.from_json_string(json.dumps(params))
+                # 通过client对象调用DescribeInstances方法发起请求。注意请求方法名与请求对象是对应的。
+                # 返回的resp是一个DescribeInstancesResponse类的实例，与请求对象对应。
+                resp = Session.client(self, service).DescribeInstances(req)
+                respose = resp.to_json_string().replace('null', 'None').replace('false', 'False').replace('true', 'True')
+                result = jmespath.search('InstanceSet', eval(respose))
+                res = res + result
+                if len(result) == limit:
+                    offset += 1
+                else:
+                    return res
+                # 输出json格式的字符串回包
+                # print(resp.to_json_string(indent=2))
 
-            # 也可以取出单个值。
-            # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
-            # print(resp.InstanceSet)
-            # print(resp.to_json_string())
+                # 也可以取出单个值。
+                # 你可以通过官网接口文档或跳转到response对象的定义处查看返回字段的定义。
+                # print(resp.InstanceSet)
+                # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
             return False
-        # tencent 返回的json里居然不是None，而是java的null，活久见
-        return resp.to_json_string().replace('null', 'None')
+        return res
 
 @Cvm.filter_registry.register('metrics')
 class CvmMetricsFilter(MetricsFilter):
@@ -94,7 +111,7 @@ class CvmAgeFilter(TencentAgeFilter):
 
     def get_resource_date(self, i):
         # '2019-11-20T08:21:02Z'
-        return i['CreatedTime']
+        return i.get('CreatedTime', '2021-08-10T08:21:02Z')
 
 @Cvm.action_registry.register('start')
 class Start(MethodAction):
@@ -209,6 +226,6 @@ class StopChargingMode(TencentFilter):
 
     def get_request(self, i):
         data = i[self.stop_charging_mode]
-        if data == self.data['value']:
+        if data == self.data.get('value', ''):
             return False
         return i

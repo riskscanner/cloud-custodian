@@ -546,7 +546,7 @@ class MetricsFilter(Filter):
         self.statistics = self.data.get('statistics', 'Average')
         self.model = self.manager.get_model()
         self.op = OPERATORS[self.data.get('op', 'less-than')]
-        self.value = self.data['value']
+        self.value = self.data.get('value', '')
         self.namespace = self.model.namespace
         self.log.debug("Querying metrics for %d", len(resources))
         matched = []

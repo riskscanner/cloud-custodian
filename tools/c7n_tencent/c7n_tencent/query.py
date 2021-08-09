@@ -48,16 +48,9 @@ class ResourceQuery:
                 buckets.append(b.__dict__)
             return buckets
         else:
-            request = resource_manager.get_request()
-            if request:
-                result = request
-            else:
-                return None
+            res = resource_manager.get_request()
             false = "false"
             true = "true"
-            if path is None:
-                return result
-            res = jmespath.search(path, eval(result))
             for data in res:
                 data['F2CId'] = data[m.id]
             return res
