@@ -180,6 +180,12 @@ class AliyunEcsFilter(AliyunEcsFilter):
     # Stopped：已停止
     schema = type_schema('Stopped')
 
+    def get_request(self, i):
+        status = i.get('Status', '')
+        if self.data.get('type', '') != status:
+            return False
+        return i
+
 @Ecs.filter_registry.register('instance-age')
 class EcsAgeFilter(AliyunAgeFilter):
     """Filters instances based on their age (in days)
@@ -209,21 +215,6 @@ class EcsAgeFilter(AliyunAgeFilter):
 
     def get_resource_date(self, i):
         return i['CreationTime']
-
-@Ecs.filter_registry.register('metrics')
-class EcsMetricsFilter(MetricsFilter):
-
-    def get_request(self, r):
-        request = DescribeMetricListRequest()
-        request.set_accept_format('json')
-        request.set_StartTime(self.start)
-        dimensions = self.get_dimensions(r)
-        request.set_Dimensions(dimensions)
-        request.set_Period(self.period)
-        request.set_Namespace(self.namespace)
-        request.set_MetricName(self.metric)
-        return request
-
 
 @Ecs.filter_registry.register('stopped')
 class AliyunEcsFilter(AliyunEcsFilter):

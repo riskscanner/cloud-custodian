@@ -195,6 +195,8 @@ class SlbMetricsFilter(MetricsFilter):
         request.set_accept_format('json')
         request.set_StartTime(self.start)
         request.set_Period(self.period)
+        dimensions = self.get_dimensions(r)
+        request.set_Dimensions(dimensions)
         request.set_Namespace(self.namespace)
         request.set_MetricName(self.metric)
         return request

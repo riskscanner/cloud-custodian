@@ -58,7 +58,8 @@ class AliyunDiskFilter(AliyunDiskFilter):
         **{'value': {'type': 'boolean'}})
 
     def get_request(self, i):
-        if i['Status'] != type:
+        encrypted = self.data.get('type', '')
+        if i.get('Encrypted', '').lower() != str(encrypted).lower():
             return False
         return i
 
@@ -83,8 +84,7 @@ class AliyunDiskFilter(AliyunDiskFilter):
     schema = type_schema('Available')
 
     def get_request(self, i):
-        encrypted = self.data['type']
-        if i['Encrypted'].lower() != str(encrypted).lower():
+        if i.get('Status', '') != self.data.get('type', ''):
             return False
         return i
 

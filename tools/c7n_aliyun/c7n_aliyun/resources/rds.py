@@ -186,6 +186,8 @@ class RdsMetricsFilter(MetricsFilter):
     def get_request(self, rds):
         request = DescribeMetricListRequest()
         request.set_accept_format('json')
+        dimensions = self.get_dimensions(rds)
+        request.set_Dimensions(dimensions)
         request.set_StartTime(self.start)
         request.set_Period(self.period)
         request.set_Namespace(self.namespace)

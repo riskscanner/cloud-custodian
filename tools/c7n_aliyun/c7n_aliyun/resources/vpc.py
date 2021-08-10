@@ -142,6 +142,7 @@ class IPPermission(AliyunSgFilter):
         data = eval(string)
         for cidr in jmespath.search(self.ip_permissions_key, data):
             if cidr['SourceCidrIp'] == self.data['value']:
+                sg['cidr'] = cidr
                 return sg
         return False
 
