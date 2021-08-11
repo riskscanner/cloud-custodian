@@ -43,9 +43,12 @@ class ResourceQuery:
         if extra_args:
             params.update(extra_args)
 
+        offset = 1
+        limit = 100
+        res = []
+        buckets = []
         if m.service == 'obs':
             result = resource_manager.get_request()
-            buckets = []
             if result is None:
                 return buckets
             for b in result.body.buckets:
@@ -53,17 +56,19 @@ class ResourceQuery:
                 buckets.append(b)
             return buckets
         else:
-            request = resource_manager.get_request()
-            if request:
-                result = request
-            else:
-                return None
-            if path is None:
-                return result
-            res = jmespath.search(path, eval(str(result).replace('null', 'None').replace('false', 'False').replace('true', 'True')))
-            if res is not None:
-                for data in res:
-                    data['F2CId'] = data[m.id]
+            while 1 <= offset:
+                request = resource_manager.get_request()
+                request.limit = limit
+                request.offset = offset
+                response = jmespath.search(path, eval(str(request).replace('null', 'None').replace('false', 'False').replace('true', 'True')))
+                if response is not None:
+                    for data in response:
+                        data['F2CId'] = data[m.id]
+                res = res + response
+                if len(response) == limit:
+                    offset += 1
+                else:
+                    return res
             return res
 
     def _invoke_client_enum(self, client, request, params, path):
