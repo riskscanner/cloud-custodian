@@ -48,7 +48,7 @@ class MongoDB(QueryResourceManager):
                 req.from_json_string(json.dumps(params))
                 resp = Session.client(self, service).DescribeDBInstances(req)
                 respose = resp.to_json_string().replace('null', 'None').replace('false', 'False').replace('true', 'True')
-                result = jmespath.search('InstanceSet', eval(respose))
+                result = jmespath.search('InstanceDetails', eval(respose))
                 res = res + result
                 if len(result) == limit:
                     offset += 1
