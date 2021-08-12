@@ -64,7 +64,6 @@ class Vpc(QueryResourceManager):
                 # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
-            return False
         return res
 
 @Vpc.filter_registry.register('unused')

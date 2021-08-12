@@ -63,7 +63,6 @@ class Eip(QueryResourceManager):
                 # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
-            return False
         return res
 
 @Eip.filter_registry.register('unused')

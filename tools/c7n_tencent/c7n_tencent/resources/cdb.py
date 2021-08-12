@@ -63,7 +63,6 @@ class Cdb(QueryResourceManager):
                 # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
-            return False
         return res
 
 @Cdb.filter_registry.register('Internet')

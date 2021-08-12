@@ -72,7 +72,6 @@ class Cvm(QueryResourceManager):
                 # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
-            return False
         return res
 
 @Cvm.filter_registry.register('metrics')

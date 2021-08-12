@@ -40,6 +40,7 @@ class Cos(QueryResourceManager):
         id = 'Name'
 
     def get_request(self):
+        resp = []
         try:
             resp = Session.client(self, service).list_buckets()
             _resp_ = []
@@ -64,11 +65,9 @@ class Cos(QueryResourceManager):
                     obj['Objects'] = objects
                 except Exception as e:  # 捕获requests抛出的如timeout等客户端错误,转化为客户端错误
                     logging.error(str(e))
-                    return json.dumps(resp)
         except TencentCloudSDKException as err:
             logging.error(err)
-            return json.dumps(resp)
-        return json.dumps(resp)
+        return eval(json.dumps(resp.get('Buckets',{}).get('Bucket', [])))
 
 
 

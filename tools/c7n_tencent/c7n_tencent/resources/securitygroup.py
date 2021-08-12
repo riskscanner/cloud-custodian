@@ -37,11 +37,12 @@ class SecurityGroup(QueryResourceManager):
         id = 'SecurityGroupId'
 
     def get_request(self):
-        offset = 0
-        limit = 100
+        # 为什么设置成字符串，不晓得sd可怎么设计的，全靠猜。
+        offset = '0'
+        limit = '100'
         res = []
         try:
-            while 0 <= offset:
+            while 0 <= int(offset):
                 req = models.DescribeSecurityGroupsRequest()
                 params = {
                     "Offset": offset,
@@ -70,7 +71,6 @@ class SecurityGroup(QueryResourceManager):
                 # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
-            return False
         return res
 
 

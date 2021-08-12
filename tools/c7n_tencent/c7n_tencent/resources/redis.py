@@ -62,7 +62,6 @@ class Redis(QueryResourceManager):
                 # print(resp.to_json_string())
         except TencentCloudSDKException as err:
             logging.error(err)
-            return False
         return res
 
 @Redis.filter_registry.register('network-type')

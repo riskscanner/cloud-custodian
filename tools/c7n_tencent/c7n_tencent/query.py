@@ -41,7 +41,7 @@ class ResourceQuery:
             params.update(extra_args)
 
         if m.service == 'cos':
-            result = client.listBuckets()
+            result = client.list_buckets()
             buckets = []
             for b in result.buckets:
                 b.__dict__['F2CId'] = b.__dict__[m.id]
