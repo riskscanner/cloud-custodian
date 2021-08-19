@@ -44,12 +44,16 @@ class Cos(QueryResourceManager):
         try:
             resp = Session.client(self, service).list_buckets()
             _resp_ = []
-            for i in resp['Buckets']['Bucket']:
+            Buckets = resp.get("Buckets", {})
+            if Buckets is None:
+                Buckets = {}
+            for i in Buckets.get("Bucket", []):
                 if i['Location'] == regionId:
                     _resp_.append(i)
+            resp['Buckets'] = Buckets
             resp['Buckets']['Bucket'] = _resp_
-            for obj in resp['Buckets']['Bucket']:
-                if regionId != obj['Location']:
+            for obj in Buckets.get("Bucket", []):
+                if regionId != obj.get('Location', ''):
                     continue
                 objects = list()
                 try:
@@ -60,14 +64,14 @@ class Cos(QueryResourceManager):
                         continue
                     objects.append(response['Contents'])
                     #响应条目是否被截断，布尔值，例如true或false
-                    if response['IsTruncated'] == 'false':
+                    if response.get('IsTruncated', '') == 'false':
                         continue
                     obj['Objects'] = objects
                 except Exception as e:  # 捕获requests抛出的如timeout等客户端错误,转化为客户端错误
                     logging.error(str(e))
         except TencentCloudSDKException as err:
             logging.error(err)
-        return eval(json.dumps(resp.get('Buckets',{}).get('Bucket', [])))
+        return eval(json.dumps(Buckets.get('Bucket', [])))
 
 
 
@@ -104,14 +108,14 @@ class GlobalGrantsFilter(Filter):
         response = Session.client(self, service).get_bucket_acl(
             Bucket=b['Name']
         )
-        Grant = response.get('AccessControlList').get('Grant')
+        Grant = response.get('AccessControlList', {}).get('Grant', [])
         for i in Grant:
             # 指明授予被授权者的存储桶权限，可选值有 FULL_CONTROL，WRITE，READ，分别对应读写权限、写权限、读权限
-            if i.get('Permission') == 'FULL_CONTROL':
+            if i.get('Permission', '') == 'FULL_CONTROL':
                 b['Permission'] = response
                 return b
             else:
-                if self.data.get('value', '') in i.get('Permission'):
+                if self.data.get('value', '') in i.get('Permission', ''):
                     b['Permission'] = response
                     return b
         return False
