@@ -38,7 +38,7 @@ class Vpc(QueryResourceManager):
 
     def get_request(self):
         offset = 0
-        limit = 100
+        limit = 20
         res = []
         try:
             while 0 <= offset:
@@ -53,7 +53,7 @@ class Vpc(QueryResourceManager):
                 result = jmespath.search('VpcSet', eval(respose))
                 res = res + result
                 if len(result) == limit:
-                    offset += 1
+                    offset += limit
                 else:
                     return res
                 # 输出json格式的字符串回包

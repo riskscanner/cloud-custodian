@@ -39,7 +39,7 @@ class SecurityGroup(QueryResourceManager):
     def get_request(self):
         # 为什么设置成字符串，不晓得sd可怎么设计的，全靠猜。
         offset = '0'
-        limit = '100'
+        limit = '20'
         res = []
         try:
             while 0 <= int(offset):
@@ -59,8 +59,8 @@ class SecurityGroup(QueryResourceManager):
                 respose = resp.to_json_string().replace('null', 'None').replace('false', 'False').replace('true', 'True')
                 result = jmespath.search('SecurityGroupSet', eval(respose))
                 res = res + result
-                if len(result) == limit:
-                    offset += 1
+                if len(result) == int(limit):
+                    offset = str(int(offset) + len(result))
                 else:
                     return res
                 # 输出json格式的字符串回包
