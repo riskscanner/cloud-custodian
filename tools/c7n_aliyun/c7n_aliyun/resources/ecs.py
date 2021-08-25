@@ -106,6 +106,7 @@ class EcsMetricsFilter(MetricsFilter):
         request.set_MetricName(self.metric)
         return request
 
+
 @Ecs.filter_registry.register('instance-network-type')
 class InstanceNetworkTypeEcsFilter(AliyunEcsFilter):
     """Filters
@@ -182,7 +183,7 @@ class AliyunEcsFilter(AliyunEcsFilter):
 
     def get_request(self, i):
         status = i.get('Status', '')
-        if self.data.get('type', '') != status:
+        if 'Stopped' != status:
             return False
         return i
 
@@ -215,29 +216,3 @@ class EcsAgeFilter(AliyunAgeFilter):
 
     def get_resource_date(self, i):
         return i['CreationTime']
-
-@Ecs.filter_registry.register('stopped')
-class AliyunEcsFilter(AliyunEcsFilter):
-    """Filters
-
-       :Example:
-
-       .. code-block:: yaml
-
-           policies:
-             - name: aliyun-ecs
-               resource: aliyun.ecs
-               filters:
-                 - type: stopped
-    """
-    # 实例状态。取值范围：
-    #
-    # Pending：创建中
-    # Running：运行中
-    # Starting：启动中
-    # Stopping：停止中
-    # Stopped：已停止
-    schema = type_schema('Stopped')
-
-    def get_request(self, r):
-        return r

@@ -84,7 +84,7 @@ class AliyunDiskFilter(AliyunDiskFilter):
     schema = type_schema('Available')
 
     def get_request(self, i):
-        if i.get('Status', '') != self.data.get('type', ''):
+        if i.get('Status', '') != 'Available':
             return False
         return i
 
