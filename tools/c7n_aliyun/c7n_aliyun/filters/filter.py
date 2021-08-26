@@ -577,7 +577,9 @@ class MetricsFilter(Filter):
         return matched
 
     def get_dimensions(self, resource):
-        return [{self.model.dimension.lower(): resource[self.model.dimension]}]
+        start = self.model.dimension[:1]
+        end = self.model.dimension[1:]
+        return [{start.lower() + end: resource[self.model.dimension]}]
 
     def get_user_dimensions(self):
         dims = []
