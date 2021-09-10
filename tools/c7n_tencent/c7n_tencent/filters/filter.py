@@ -277,7 +277,7 @@ class SGPermission(Filter):
         return super(SGPermission, self).process(resources, event)
 
     def process_ports(self, perm):
-        found = None
+        found = False
         if self.ip_permissions_type == 'ingress':
             poms = perm['IpPermissions']['Ingress']
         else:
@@ -312,7 +312,7 @@ class SGPermission(Filter):
                     if port == FromPort:
                         only_found = True
                 if self.only_ports and not only_found:
-                    found = found is None or found and True or False
+                    found = found is False or found and True or False
                 if self.only_ports and only_found:
                     found = False
             if found:
@@ -320,7 +320,7 @@ class SGPermission(Filter):
         return found
 
     def cidr_process_ports(self, poms):
-        found = None
+        found = False
         for pom in poms:
             if pom['Action'] != 'ACCEPT':
                 found = False
@@ -328,8 +328,7 @@ class SGPermission(Filter):
                 FromPort = pom['Port']
                 for port in self.ports:
                     if FromPort == "ALL":
-                        found = True
-                        break
+                        return True
                     else:
                         if ',' in FromPort:
                             strs = FromPort.split(',')
@@ -351,67 +350,55 @@ class SGPermission(Filter):
                     if port == FromPort:
                         only_found = True
                 if self.only_ports and not only_found:
-                    found = found is None or found and True or False
+                    found = found is False or found and True or False
                 if self.only_ports and only_found:
                     found = False
         return found
 
     def _process_cidr(self, cidr_key, cidr_type, cidr, perm):
-        found = None
-        protocol = None
+        found = False
         if not cidr:
             return False
         if self.ip_permissions_type == 'ingress':
-            items = perm.get('IpPermissions').get('Ingress')
+            items = perm.get('IpPermissions', {}).get('Ingress', [])
         else:
-            items = perm.get('IpPermissions').get('Egress')
-        for str in items:
-            IpProtocol = self.data['IpProtocol']
+            items = perm.get('IpPermissions', {}).get('Egress', [])
+        for ip_Permission in items:
+            #0.0.0.0/0
+            CidrBlock = ip_Permission.get(cidr, "")
+            if CidrBlock == self.data.get(cidr_key, ""):
+                found = True
+            else:
+                found = False
+                continue
+            IpProtocol = self.data.get('IpProtocol', "").upper()
             if IpProtocol in ["-1", -1]:
                 IpProtocol = "ALL"
-            outProtocol = str.get("Protocol")
-            if re.search(IpProtocol, outProtocol, re.IGNORECASE):
-                protocol = True
+            outProtocol = ip_Permission.get("Protocol", "").upper()
+            if outProtocol=="ALL" or IpProtocol == "ALL":
+                found = True
             else:
-                if re.search(outProtocol, "ALL", re.IGNORECASE):
-                    protocol = True
-                else:
-                    protocol = False
-            if not protocol:
-                continue
-            Cidr = str.get(cidr)
-            if Cidr:
-                sci = {cidr_type: Cidr}
-                match_range = self.data[cidr_key]
-                if isinstance(match_range, dict):
-                    match_range['key'] = cidr_type
-                else:
-                    match_range = {cidr_type: match_range}
-                vf = ValueFilter(match_range, self.manager)
-                vf.annotate = False
-                found = vf(sci)
-                if found:
-                    pass
+                if IpProtocol == outProtocol:
+                    found = True
                 else:
                     found = False
+                    continue
+            if found:
+                break
         if found:
             found = self.cidr_process_ports(items)
-        if not found:
-            return False
-        if found and protocol:
-            return True
-        return False
+        return found
 
     def process_cidrs(self, perm, CidrBlock, Ipv6CidrBlock):
-        found_v6 = found_v4 = None
+        found_v6 = found_v4 = False
         if 'CidrV6' in self.data:
             found_v6 = self._process_cidr('CidrV6', 'CidrIpv6', Ipv6CidrBlock, perm)
         if 'Cidr' in self.data:
             found_v4 = self._process_cidr('Cidr', 'CidrIp', CidrBlock, perm)
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
-        cidr_match = [k for k in (found_v6, found_v4) if k is not None]
+        cidr_match = [k for k in (found_v6, found_v4) if k is not False]
         if not cidr_match:
-            return None
+            return False
         return match_op(cidr_match)
 
     def process_description(self, perm):
@@ -447,7 +434,7 @@ class SGPermission(Filter):
     def process_sg_references(self, perm, owner_id):
         sg_refs = self.data.get('SGReferences')
         if not sg_refs:
-            return None
+            return False
 
         sg_perm = perm.get('UserIdGroupPairs', [])
         if not sg_perm:
@@ -464,28 +451,34 @@ class SGPermission(Filter):
         return False
 
     def __call__(self, resource):
-        result = self.securityGroupAttributeRequst(resource)
+        perm = self.securityGroupAttributeRequst(resource)
         matched = []
         match_op = self.data.get('match-operator', 'and') == 'and' and all or any
-        for perm in jmespath.search(self.ip_permissions_key, json.loads(result)):
-            if perm.get('IpPermissions') is None or len(perm.get('IpPermissions').get(self.direction)) == 0:
-                continue
-            perm_matches = {}
-            # 将cidrs和ports合并，关联判断
-            perm_matches['cidrs'] = self.process_self_cidrs(perm)
-            # perm_matches['ports'] = self.process_ports(perm)
-            perm_match_values = list(filter(
-                lambda x: x is not None, perm_matches.values()))
-            # account for one python behavior any([]) == False, all([]) == True
-            if match_op == all and not perm_match_values:
-                continue
-
-            match = match_op(perm_match_values)
-            if match:
-                matched.append(perm)
-        if matched:
-            resource['Matched%s' % self.ip_permissions_key] = matched
-            return True
+        if len(perm.get('IpPermissions', {}).get(self.direction, [])) == 0:
+            return False
+        # result = self.securityGroupAttributeRequst(resource)
+        # matched = []
+        # match_op = self.data.get('match-operator', 'and') == 'and' and all or any
+        # for perm in jmespath.search(self.ip_permissions_key, json.loads(result)):
+        #     if perm.get('IpPermissions') is None or len(perm.get('IpPermissions', {}).get(self.direction, [])) == 0:
+        #         continue
+        perm_matches = {}
+        # 将cidrs和ports合并，关联判断
+        perm_matches['cidrs'] = self.process_self_cidrs(perm)
+        return perm_matches['cidrs']
+        # perm_matches['ports'] = self.process_ports(perm)
+        # perm_match_values = list(filter(
+        #     lambda x: x is not None, perm_matches.values()))
+        # # account for one python behavior any([]) == False, all([]) == True
+        # if match_op == all and not perm_match_values:
+        #     return False
+        # match = match_op(perm_match_values)
+        # if match:
+        #     matched.append(perm)
+        #
+        # if matched:
+        #     resource['Matched%s' % self.ip_permissions_key] = matched
+        #     return True
 
 class MetricsFilter(Filter):
     """Supports   metrics filters on resources.
@@ -620,7 +613,7 @@ SGPermissionSchema = {
     'Policy': {},
     'IpProtocol': {
         'oneOf': [
-            {'enum': ["-1", -1, 'TCP', 'UDP', 'ICMP', 'ICMPV6']},
+            {'enum': ["-1", -1, 'TCP', 'UDP', 'ICMP', 'ICMPV6', 'tcp', 'udp', 'icmp', 'icmpv6']},
             {'$ref': '#/definitions/filters/value'}
         ]
     },
