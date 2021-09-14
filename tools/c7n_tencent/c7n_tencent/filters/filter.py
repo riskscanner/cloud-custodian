@@ -243,7 +243,7 @@ class SGPermission(Filter):
     perm_attrs = {
         'IpProtocol', "Priority", 'Policy'}
     filter_attrs = {
-        'Cidr', 'CidrV6', 'Ports', 'OnlyPorts',
+        'Cidr', 'CidrV6', 'Ports', 'OnlyPorts', 'Action',
         'SelfReference', 'Description', 'SGReferences'}
     attrs = perm_attrs.union(filter_attrs)
     attrs.add('match-operator')
@@ -359,11 +359,18 @@ class SGPermission(Filter):
         found = False
         if not cidr:
             return False
+        action = self.data.get('Action', '')
         if self.ip_permissions_type == 'ingress':
             items = perm.get('IpPermissions', {}).get('Ingress', [])
         else:
             items = perm.get('IpPermissions', {}).get('Egress', [])
         for ip_Permission in items:
+            ip_action = ip_Permission.get('Action', '')
+            if action == ip_action:
+                found = True
+            else:
+                found = False
+                continue
             #0.0.0.0/0
             CidrBlock = ip_Permission.get(cidr, "")
             if CidrBlock == self.data.get(cidr_key, ""):
@@ -465,11 +472,7 @@ class SGPermission(Filter):
         perm_matches = {}
         # 将cidrs和ports合并，关联判断
         perm_matches['cidrs'] = self.process_self_cidrs(perm)
-        action = self.data.get('Action', '')
-        if action == 'ACCEPT':
-            return perm_matches['cidrs']
-        else:
-            return not perm_matches['cidrs']
+        return perm_matches['cidrs']
         # perm_matches['ports'] = self.process_ports(perm)
         # perm_match_values = list(filter(
         #     lambda x: x is not None, perm_matches.values()))
