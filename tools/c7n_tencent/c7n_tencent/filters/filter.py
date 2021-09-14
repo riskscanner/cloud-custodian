@@ -465,7 +465,11 @@ class SGPermission(Filter):
         perm_matches = {}
         # 将cidrs和ports合并，关联判断
         perm_matches['cidrs'] = self.process_self_cidrs(perm)
-        return perm_matches['cidrs']
+        action = self.data.get('Action', '')
+        if action == 'ACCEPT':
+            return perm_matches['cidrs']
+        else:
+            return not perm_matches['cidrs']
         # perm_matches['ports'] = self.process_ports(perm)
         # perm_match_values = list(filter(
         #     lambda x: x is not None, perm_matches.values()))
@@ -617,6 +621,7 @@ SGPermissionSchema = {
             {'$ref': '#/definitions/filters/value'}
         ]
     },
+    'Action':  {'type': 'string', 'enum': ['ACCEPT', 'DROP']},
     'FromPort': {'oneOf': [
         {'$ref': '#/definitions/filters/value'},
         {'type': 'integer'}]},

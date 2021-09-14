@@ -111,13 +111,15 @@ class IPPermission(SGPermission):
               filters:
                   - or:
                       - type: ingress
-                        IpProtocol: TCP
+                        IpProtocol: "-1"
                         Ports: [20,21,22,25,80,443,465,1433,1434,3306,3389,4333,5432,5500]
                         Cidr: "0.0.0.0/0"
+                        Action: "ACCEPT"
                       - type: ingress
-                        IpProtocol: TCP
+                        IpProtocol: "-1"
                         Ports: [20,21,22,25,80,443,465,1433,1434,3306,3389,4333,5432,5500]
                         CidrV6: "::/0"
+                        Action: "ACCEPT"
     """
     ip_permissions_key = "SecurityGroupSet"
     ip_permissions_type = "ingress"
