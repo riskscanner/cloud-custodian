@@ -276,56 +276,15 @@ class SGPermission(Filter):
 
         return super(SGPermission, self).process(resources, event)
 
-    def process_ports(self, perm):
+    def cidr_process_ports(self, pom, cidr, cidr_key, items):
         found = False
-        if self.ip_permissions_type == 'ingress':
-            poms = perm['IpPermissions']['Ingress']
-        else:
-            poms = perm['IpPermissions']['Egress']
-        for ingress in poms:
-            if ingress['Action'] != 'ACCEPT':
-                found = False
-            if ingress['Port']:
-                FromPort = ingress['Port']
-                for port in self.ports:
-                    if FromPort == "ALL":
-                        found = True
-                        break
-                    else:
-                        if ',' in FromPort:
-                            strs = FromPort.split(',')
-                            for str in strs:
-                                if port == int(str):
-                                    return True
-                        elif '-' in FromPort:
-                            strs = FromPort.split('-')
-                            p1 = int(strs[0])
-                            p2 = int(strs[1])
-                            if port >= p1 and port <= p2:
-                                return True
-                        else:
-                            if port == int(FromPort):
-                                return True
-                    found = False
-                only_found = False
-                for port in self.only_ports:
-                    if port == FromPort:
-                        only_found = True
-                if self.only_ports and not only_found:
-                    found = found is False or found and True or False
-                if self.only_ports and only_found:
-                    found = False
-            if found:
-                return found
-        return found
-
-    def cidr_process_ports(self, poms):
-        found = False
-        for pom in poms:
-            if pom['Action'] != 'ACCEPT':
-                found = False
-            if pom['Port']:
-                FromPort = pom['Port']
+        accept_drop = pom.get('Action', '')
+        action = self.data.get('Action', '')
+        if accept_drop == 'ACCEPT':
+            # 查询ACCEPT 实际ACCEPT
+            if accept_drop == action:
+                if pom['Port']:
+                    FromPort = pom['Port']
                 for port in self.ports:
                     if FromPort == "ALL":
                         return True
@@ -353,24 +312,96 @@ class SGPermission(Filter):
                     found = found is False or found and True or False
                 if self.only_ports and only_found:
                     found = False
+            else:
+                # 查询DROP 实际ACCEPT
+                found = False
+        else:
+            # 查询DROP 实际DROP
+            if accept_drop == action:
+                if pom['Port']:
+                    FromPort = pom['Port']
+                for port in self.ports:
+                    if FromPort == "ALL":
+                        return True
+                    else:
+                        if ',' in FromPort:
+                            strs = FromPort.split(',')
+                            for str in strs:
+                                if port == int(str):
+                                    return True
+                        elif '-' in FromPort:
+                            strs = FromPort.split('-')
+                            p1 = int(strs[0])
+                            p2 = int(strs[1])
+                            if port >= p1 and port <= p2:
+                                return True
+                        else:
+                            if port == int(FromPort):
+                                return True
+                    found = False
+                only_found = False
+                for port in self.only_ports:
+                    if port == FromPort:
+                        only_found = True
+                if self.only_ports and not only_found:
+                    found = found is False or found and True or False
+                if self.only_ports and only_found:
+                    found = False
+            else:
+                # 查询ACCEPT 实际DROP
+                #0.0.0.0/0
+                CidrBlock = pom.get(cidr, "")
+                if CidrBlock != self.data.get(cidr_key, ""):
+                    return False
+                IpProtocol = self.data.get('IpProtocol', "").upper()
+                if IpProtocol in ["-1", -1]:
+                    IpProtocol = "ALL"
+                outProtocol = pom.get("Protocol", "").upper()
+                if outProtocol=="ALL" or IpProtocol == "ALL":
+                    found = True
+                else:
+                    if IpProtocol != outProtocol:
+                        return False
+                if pom['Port']:
+                    dropPort = pom['Port']
+                for port in self.ports:
+                    if dropPort == "ALL":
+                        return True
+                    else:
+                        if ',' in dropPort:
+                            strs = dropPort.split(',')
+                            for str in strs:
+                                if port == int(str):
+                                    self.ports.remove(port)
+                        elif '-' in dropPort:
+                            strs = dropPort.split('-')
+                            p1 = int(strs[0])
+                            p2 = int(strs[1])
+                            if port >= p1 and port <= p2:
+                                self.ports.remove(port)
+                        else:
+                            if port == int(dropPort):
+                                self.ports.remove(port)
+                    found = False
+                only_found = False
+                for port in self.only_ports:
+                    if port == dropPort:
+                        only_found = True
+                if self.only_ports and not only_found:
+                    found = found is False or found and True or False
+                if self.only_ports and only_found:
+                    return False
         return found
 
     def _process_cidr(self, cidr_key, cidr_type, cidr, perm):
         found = False
         if not cidr:
             return False
-        action = self.data.get('Action', '')
         if self.ip_permissions_type == 'ingress':
             items = perm.get('IpPermissions', {}).get('Ingress', [])
         else:
             items = perm.get('IpPermissions', {}).get('Egress', [])
         for ip_Permission in items:
-            ip_action = ip_Permission.get('Action', '')
-            if action == ip_action:
-                found = True
-            else:
-                found = False
-                continue
             #0.0.0.0/0
             CidrBlock = ip_Permission.get(cidr, "")
             if CidrBlock == self.data.get(cidr_key, ""):
@@ -390,10 +421,10 @@ class SGPermission(Filter):
                 else:
                     found = False
                     continue
+            found = self.cidr_process_ports(ip_Permission, cidr, cidr_key, items)
             if found:
                 break
-        if found:
-            found = self.cidr_process_ports(items)
+        print(1111, items)
         return found
 
     def process_cidrs(self, perm, CidrBlock, Ipv6CidrBlock):
@@ -473,7 +504,6 @@ class SGPermission(Filter):
         # 将cidrs和ports合并，关联判断
         perm_matches['cidrs'] = self.process_self_cidrs(perm)
         return perm_matches['cidrs']
-        # perm_matches['ports'] = self.process_ports(perm)
         # perm_match_values = list(filter(
         #     lambda x: x is not None, perm_matches.values()))
         # # account for one python behavior any([]) == False, all([]) == True
