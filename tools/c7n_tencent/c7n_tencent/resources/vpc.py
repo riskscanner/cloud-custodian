@@ -94,7 +94,6 @@ class TencentVpcFilter(TencentVpcFilter):
         clbs_req = eval(clbs.replace('false', 'False'))['LoadBalancerSet']
         if clbs_req:
             for clb in clbs_req:
-                print(clb['VpcId'])
                 if VpcId == clb['VpcId']:
                     return None
         return i
