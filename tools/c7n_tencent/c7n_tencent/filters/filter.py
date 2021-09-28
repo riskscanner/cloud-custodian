@@ -278,8 +278,8 @@ class SGPermission(Filter):
 
     def cidr_process_ports(self, pom, cidr, cidr_key, items):
         found = False
-        accept_drop = pom.get('Action', '')
-        action = self.data.get('Action', '')
+        accept_drop = pom.get('Action', 'ACCEPT')
+        action = self.data.get('Action', 'ACCEPT')
         if accept_drop == 'ACCEPT':
             # 查询ACCEPT 实际ACCEPT
             if accept_drop == action:
@@ -424,7 +424,6 @@ class SGPermission(Filter):
             found = self.cidr_process_ports(ip_Permission, cidr, cidr_key, items)
             if found:
                 break
-        print(1111, items)
         return found
 
     def process_cidrs(self, perm, CidrBlock, Ipv6CidrBlock):

@@ -136,19 +136,6 @@ class IPPermission(SGPermission):
     def securityGroupAttributeRequst(self, sg):
         self.direction = 'Ingress'
         return sg
-        # req = models.DescribeSecurityGroupsRequest()
-        # params = '{"SecurityGroupId" :"' + sg["SecurityGroupId"] + '"}'
-        # req.from_json_string(params)
-        # resp = Session.client(self, service).DescribeSecurityGroups(req)
-        # for res in resp.SecurityGroupSet:
-        #     if sg["SecurityGroupId"] != res.SecurityGroupId:
-        #         continue
-        #     req2 = models.DescribeSecurityGroupPoliciesRequest()
-        #     params = '{"SecurityGroupId":"' + res.SecurityGroupId + '"}'
-        #     req2.from_json_string(params)
-        #     resp2 = Session.client(self, service).DescribeSecurityGroupPolicies(req2)
-        #     res.IpPermissions = resp2.SecurityGroupPolicySet
-        # return resp.to_json_string().replace('null', 'None')
 
 @SecurityGroup.filter_registry.register('egress')
 class IPPermission(SGPermission):
@@ -161,10 +148,6 @@ class IPPermission(SGPermission):
         'required': ['type']}
     schema['properties'].update(SGPermissionSchema)
 
-    # params = {
-    #     "SecurityGroupIds": [ sg.get("SecurityGroupId", "") ]
-    # }
-    # req.from_json_string(json.dumps(params))
     def securityGroupAttributeRequst(self, sg):
         self.direction = 'Egress'
         return sg
