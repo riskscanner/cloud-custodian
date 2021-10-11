@@ -293,16 +293,19 @@ class SGPermission(Filter):
                             strs = FromPort.split(',')
                             for str in strs:
                                 if port == int(str):
-                                    return True
+                                    found = True
+                                    continue
                         elif '-' in FromPort:
                             strs = FromPort.split('-')
                             p1 = int(strs[0])
                             p2 = int(strs[1])
                             if port >= p1 and port <= p2:
-                                return True
+                                found = True
+                                continue
                         else:
                             if port == int(FromPort):
-                                return True
+                                found = True
+                                continue
                     found = False
                 only_found = False
                 for port in self.only_ports:
