@@ -10,5 +10,6 @@ ResourceMap = {
     "tencent.redis": "c7n_tencent.resources.redis.Redis",
     "tencent.mongodb": "c7n_tencent.resources.mongodb.MongoDB",
     "tencent.security-group": "c7n_tencent.resources.securitygroup.SecurityGroup",
-
+    "tencent.postgres": "c7n_tencent.resources.postgres.Postgres",
+    "tencent.es": "c7n_tencent.resources.es.es"
 }

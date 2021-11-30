@@ -3,3 +3,4 @@ crcmod==1.7
 tencentcloud-sdk-python==3.0.234
 cos-python-sdk-v5==1.8.2
 cryptography==2.9.2
+jsonpath==0.82

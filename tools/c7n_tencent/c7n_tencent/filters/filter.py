@@ -5,6 +5,7 @@ from concurrent.futures import as_completed
 from datetime import timedelta
 
 import jmespath
+from c7n_tencent import filter_util
 from dateutil.parser import parse
 from dateutil.tz import tzutc
 
@@ -24,6 +25,36 @@ class TencentFilter(Filter):
     def __call__(self, i):
         return self.get_request(i)
 
+
+class TencentEsFilter(Filter):
+    schema = None
+
+    def get_request(self, i):
+        return filter_util.filter_res(self, i)
+
+    def validate(self):
+        keys = ['is_empty', 'value', 'like', 'ge', 'le', 'in', 'in_like']
+        hits = []
+        for key in self.data:
+            if keys == 'type':
+                continue
+            if keys.__contains__(key):
+                hits.append(key)
+        # ge 和 le是可以同时出现的
+        if len(hits) > 1:
+            if len(hits) == 2:
+                if not list(hits).__contains__('ge') or not list(hits).__contains__('le'):
+                    raise PolicyValidationError(
+                        '过滤类型只能配置一个,ge 和 le 可以同时使用,', self.data)
+            else:
+                raise PolicyValidationError(
+                    '过滤类型只能配置一个,ge 和 le 可以同时使用,', self.data)
+        return self
+
+    def __call__(self, i):
+        return self.get_request(i)
+
+
 class TencentEipFilter(Filter):
     schema = None
 
@@ -35,6 +66,7 @@ class TencentEipFilter(Filter):
             return False
         return i
 
+
 class TencentDiskFilter(Filter):
     schema = None
 
@@ -45,6 +77,7 @@ class TencentDiskFilter(Filter):
         if i['DiskState'] != self.data['type']:
             return False
         return i
+
 
 class TencentCdbFilter(Filter):
     schema = None
@@ -60,6 +93,7 @@ class TencentCdbFilter(Filter):
             return False
         return i
 
+
 class TencentClbFilter(Filter):
 
     def validate(self):
@@ -68,6 +102,7 @@ class TencentClbFilter(Filter):
     def __call__(self, i):
         return self.get_request(i)
 
+
 class TencentVpcFilter(Filter):
 
     def validate(self):
@@ -75,6 +110,7 @@ class TencentVpcFilter(Filter):
 
     def __call__(self, i):
         return self.get_request(i)
+
 
 class TencentAgeFilter(Filter):
     """Automatically filter resources older than a given date.
@@ -107,7 +143,6 @@ class TencentAgeFilter(Filter):
         op = OPERATORS[self.data.get('op', 'greater-than')]
 
         if not self.threshold_date:
-
             days = self.data.get('days', 0)
             hours = self.data.get('hours', 0)
             minutes = self.data.get('minutes', 0)
@@ -116,6 +151,7 @@ class TencentAgeFilter(Filter):
             self.threshold_date = n - timedelta(days=days, hours=hours, minutes=minutes)
 
         return op(self.threshold_date, v)
+
 
 class SGPermission(Filter):
     """Filter for verifying security group ingress and egress permissions
@@ -262,7 +298,7 @@ class SGPermission(Filter):
         fattrs = list(sorted(self.perm_attrs.intersection(self.data.keys())))
         self.ports = 'Ports' in self.data and self.data['Ports'] or ()
         self.only_ports = (
-            'OnlyPorts' in self.data and self.data['OnlyPorts'] or ())
+                'OnlyPorts' in self.data and self.data['OnlyPorts'] or ())
         for f in fattrs:
             fv = self.data.get(f)
             if isinstance(fv, dict):
@@ -352,7 +388,7 @@ class SGPermission(Filter):
                     found = False
             else:
                 # 查询ACCEPT 实际DROP
-                #0.0.0.0/0
+                # 0.0.0.0/0
                 CidrBlock = pom.get(cidr, "")
                 if CidrBlock != self.data.get(cidr_key, ""):
                     return False
@@ -360,7 +396,7 @@ class SGPermission(Filter):
                 if IpProtocol in ["-1", -1]:
                     IpProtocol = "ALL"
                 outProtocol = pom.get("Protocol", "").upper()
-                if outProtocol=="ALL" or IpProtocol == "ALL":
+                if outProtocol == "ALL" or IpProtocol == "ALL":
                     found = True
                 else:
                     if IpProtocol != outProtocol:
@@ -405,7 +441,7 @@ class SGPermission(Filter):
         else:
             items = perm.get('IpPermissions', {}).get('Egress', [])
         for ip_Permission in items:
-            #0.0.0.0/0
+            # 0.0.0.0/0
             CidrBlock = ip_Permission.get(cidr, "")
             if CidrBlock == self.data.get(cidr_key, ""):
                 found = True
@@ -416,7 +452,7 @@ class SGPermission(Filter):
             if IpProtocol in ["-1", -1]:
                 IpProtocol = "ALL"
             outProtocol = ip_Permission.get("Protocol", "").upper()
-            if outProtocol=="ALL" or IpProtocol == "ALL":
+            if outProtocol == "ALL" or IpProtocol == "ALL":
                 found = True
             else:
                 if IpProtocol == outProtocol:
@@ -518,6 +554,7 @@ class SGPermission(Filter):
         # if matched:
         #     resource['Matched%s' % self.ip_permissions_key] = matched
         #     return True
+
 
 class MetricsFilter(Filter):
     """Supports   metrics filters on resources.
@@ -627,12 +664,12 @@ class MetricsFilter(Filter):
             collected_metrics = r.setdefault('c7n_tencent.metrics', {})
             key = "%s.%s.%s" % (self.namespace, self.metric, self.statistics)
             if key not in collected_metrics:
-
                 collected_metrics[key] = json.loads(reponse)["DataPoints"]
             if len(collected_metrics[key]) == 0:
                 if 'missing-value' not in self.data:
                     continue
-                collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'], 'c7n_tencent:detail': 'Fill value for missing data'})
+                collected_metrics[key].append({'timestamp': self.start, self.statistics: self.data['missing-value'],
+                                               'c7n_tencent:detail': 'Fill value for missing data'})
             if self.data.get('percent-attr', None) != None:
                 rvalue = r[self.data.get('percent-attr')]
                 if self.data.get('attr-multiplier'):
@@ -645,6 +682,7 @@ class MetricsFilter(Filter):
                 matched.append(r)
         return matched
 
+
 SGPermissionSchema = {
     'match-operator': {'type': 'string', 'enum': ['or', 'and']},
     'Ports': {'type': 'array', 'items': {'type': 'integer'}},
@@ -656,7 +694,7 @@ SGPermissionSchema = {
             {'$ref': '#/definitions/filters/value'}
         ]
     },
-    'Action':  {'type': 'string', 'enum': ['ACCEPT', 'DROP']},
+    'Action': {'type': 'string', 'enum': ['ACCEPT', 'DROP']},
     'FromPort': {'oneOf': [
         {'$ref': '#/definitions/filters/value'},
         {'type': 'integer'}]},
